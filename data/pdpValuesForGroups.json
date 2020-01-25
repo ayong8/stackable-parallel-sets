@@ -1,0 +1,876 @@
+[
+  {
+    "group": {
+      "idx": 0,
+      "name": "conservative",
+      "abbr": "con"
+    },
+    "valuesForFeatures": [
+      {
+        "feature": "valence",
+        "values": [
+          {
+            "pdpValue": 0.3930240236425552,
+            "featureValue": 0
+          },
+          {
+            "pdpValue": 0.3930240236425552,
+            "featureValue": 0.020833333
+          },
+          {
+            "pdpValue": 0.3930240236425552,
+            "featureValue": 0.041666667
+          },
+          {
+            "pdpValue": 0.3930240236425552,
+            "featureValue": 0.0625
+          },
+          {
+            "pdpValue": 0.3930240236425552,
+            "featureValue": 0.083333333
+          },
+          {
+            "pdpValue": 0.3930240236425552,
+            "featureValue": 0.104166667
+          },
+          {
+            "pdpValue": 0.3930240236425552,
+            "featureValue": 0.125
+          },
+          {
+            "pdpValue": 0.3930240236425552,
+            "featureValue": 0.145833333
+          },
+          {
+            "pdpValue": 0.3930240236425552,
+            "featureValue": 0.166666667
+          },
+          {
+            "pdpValue": 0.38785177846074836,
+            "featureValue": 0.1875
+          },
+          {
+            "pdpValue": 0.38785177846074836,
+            "featureValue": 0.208333333
+          },
+          {
+            "pdpValue": 0.4046465335352265,
+            "featureValue": 0.229166667
+          },
+          {
+            "pdpValue": 0.41118921884500365,
+            "featureValue": 0.25
+          },
+          {
+            "pdpValue": 0.41118921884500365,
+            "featureValue": 0.270833333
+          },
+          {
+            "pdpValue": 0.41118921884500365,
+            "featureValue": 0.291666667
+          },
+          {
+            "pdpValue": 0.41118921884500365,
+            "featureValue": 0.3125
+          },
+          {
+            "pdpValue": 0.42897877221366265,
+            "featureValue": 0.333333333
+          },
+          {
+            "pdpValue": 0.42897877221366265,
+            "featureValue": 0.354166667
+          },
+          {
+            "pdpValue": 0.42897877221366265,
+            "featureValue": 0.375
+          },
+          {
+            "pdpValue": 0.42897877221366265,
+            "featureValue": 0.395833333
+          },
+          {
+            "pdpValue": 0.4200839955293332,
+            "featureValue": 0.416666667
+          },
+          {
+            "pdpValue": 0.34114749163091485,
+            "featureValue": 0.4375
+          },
+          {
+            "pdpValue": 0.34114749163091485,
+            "featureValue": 0.458333333
+          },
+          {
+            "pdpValue": 0.3643949166762209,
+            "featureValue": 0.479166667
+          },
+          {
+            "pdpValue": 0.4349585592273439,
+            "featureValue": 0.5
+          },
+          {
+            "pdpValue": 0.45896253618755256,
+            "featureValue": 0.520833333
+          },
+          {
+            "pdpValue": 0.45896253618755256,
+            "featureValue": 0.541666667
+          },
+          {
+            "pdpValue": 0.511311078534333,
+            "featureValue": 0.5625
+          },
+          {
+            "pdpValue": 0.511311078534333,
+            "featureValue": 0.583333333
+          },
+          {
+            "pdpValue": 0.4100921614623256,
+            "featureValue": 0.604166667
+          },
+          {
+            "pdpValue": 0.38019037085462,
+            "featureValue": 0.625
+          },
+          {
+            "pdpValue": 0.648850173943746,
+            "featureValue": 0.645833333
+          },
+          {
+            "pdpValue": 0.648850173943746,
+            "featureValue": 0.666666667
+          },
+          {
+            "pdpValue": 0.648850173943746,
+            "featureValue": 0.6875
+          },
+          {
+            "pdpValue": 0.6363623644082447,
+            "featureValue": 0.708333333
+          },
+          {
+            "pdpValue": 0.584003897001017,
+            "featureValue": 0.729166667
+          },
+          {
+            "pdpValue": 0.584003897001017,
+            "featureValue": 0.75
+          },
+          {
+            "pdpValue": 0.584003897001017,
+            "featureValue": 0.770833333
+          },
+          {
+            "pdpValue": 0.584003897001017,
+            "featureValue": 0.791666667
+          },
+          {
+            "pdpValue": 0.584003897001017,
+            "featureValue": 0.8125
+          },
+          {
+            "pdpValue": 0.5033014148675722,
+            "featureValue": 0.833333333
+          },
+          {
+            "pdpValue": 0.5033014148675722,
+            "featureValue": 0.854166667
+          },
+          {
+            "pdpValue": 0.5033014148675722,
+            "featureValue": 0.875
+          },
+          {
+            "pdpValue": 0.5033014148675722,
+            "featureValue": 0.895833333
+          },
+          {
+            "pdpValue": 0.49131554557663093,
+            "featureValue": 0.916666667
+          },
+          {
+            "pdpValue": 0.49131554557663093,
+            "featureValue": 0.9375
+          },
+          {
+            "pdpValue": 0.49131554557663093,
+            "featureValue": 0.979166667
+          }
+        ]
+      },
+      {
+        "feature": "dominance",
+        "values": [
+          {
+            "pdpValue": 0.4180635837070152,
+            "featureValue": 0.041666667
+          },
+          {
+            "pdpValue": 0.4180635837070152,
+            "featureValue": 0.0625
+          },
+          {
+            "pdpValue": 0.4180635837070152,
+            "featureValue": 0.083333333
+          },
+          {
+            "pdpValue": 0.4180635837070152,
+            "featureValue": 0.104166667
+          },
+          {
+            "pdpValue": 0.4180635837070152,
+            "featureValue": 0.125
+          },
+          {
+            "pdpValue": 0.4180635837070152,
+            "featureValue": 0.145833333
+          },
+          {
+            "pdpValue": 0.4180635837070152,
+            "featureValue": 0.166666667
+          },
+          {
+            "pdpValue": 0.3733036900288389,
+            "featureValue": 0.1875
+          },
+          {
+            "pdpValue": 0.3733036900288389,
+            "featureValue": 0.208333333
+          },
+          {
+            "pdpValue": 0.42952831324816293,
+            "featureValue": 0.229166667
+          },
+          {
+            "pdpValue": 0.3869339880864244,
+            "featureValue": 0.25
+          },
+          {
+            "pdpValue": 0.3869339880864244,
+            "featureValue": 0.270833333
+          },
+          {
+            "pdpValue": 0.3869339880864244,
+            "featureValue": 0.291666667
+          },
+          {
+            "pdpValue": 0.3869339880864244,
+            "featureValue": 0.3125
+          },
+          {
+            "pdpValue": 0.39149541202710586,
+            "featureValue": 0.333333333
+          },
+          {
+            "pdpValue": 0.39149541202710586,
+            "featureValue": 0.354166667
+          },
+          {
+            "pdpValue": 0.39149541202710586,
+            "featureValue": 0.375
+          },
+          {
+            "pdpValue": 0.3930094165691194,
+            "featureValue": 0.395833333
+          },
+          {
+            "pdpValue": 0.42952553980762775,
+            "featureValue": 0.416666667
+          },
+          {
+            "pdpValue": 0.42952553980762775,
+            "featureValue": 0.4375
+          },
+          {
+            "pdpValue": 0.432642607982362,
+            "featureValue": 0.458333333
+          },
+          {
+            "pdpValue": 0.432642607982362,
+            "featureValue": 0.479166667
+          },
+          {
+            "pdpValue": 0.432642607982362,
+            "featureValue": 0.5
+          },
+          {
+            "pdpValue": 0.432642607982362,
+            "featureValue": 0.520833333
+          },
+          {
+            "pdpValue": 0.432642607982362,
+            "featureValue": 0.541666667
+          },
+          {
+            "pdpValue": 0.38491304923317426,
+            "featureValue": 0.5625
+          },
+          {
+            "pdpValue": 0.5462305710395798,
+            "featureValue": 0.583333333
+          },
+          {
+            "pdpValue": 0.5462305710395798,
+            "featureValue": 0.604166667
+          },
+          {
+            "pdpValue": 0.6611705390499832,
+            "featureValue": 0.625
+          },
+          {
+            "pdpValue": 0.6611705390499832,
+            "featureValue": 0.645833333
+          },
+          {
+            "pdpValue": 0.717642908467091,
+            "featureValue": 0.666666667
+          },
+          {
+            "pdpValue": 0.717642908467091,
+            "featureValue": 0.6875
+          },
+          {
+            "pdpValue": 0.7132645272206585,
+            "featureValue": 0.708333333
+          },
+          {
+            "pdpValue": 0.8900583014258309,
+            "featureValue": 0.729166667
+          },
+          {
+            "pdpValue": 0.8900583014258309,
+            "featureValue": 0.75
+          },
+          {
+            "pdpValue": 0.8900583014258309,
+            "featureValue": 0.770833333
+          },
+          {
+            "pdpValue": 0.8703762423796533,
+            "featureValue": 0.791666667
+          },
+          {
+            "pdpValue": 0.8771892628187149,
+            "featureValue": 0.8125
+          },
+          {
+            "pdpValue": 0.8771892628187149,
+            "featureValue": 0.833333333
+          },
+          {
+            "pdpValue": 0.9107625181330768,
+            "featureValue": 0.854166667
+          },
+          {
+            "pdpValue": 0.9107625181330768,
+            "featureValue": 0.875
+          },
+          {
+            "pdpValue": 0.9304445771792552,
+            "featureValue": 0.895833333
+          },
+          {
+            "pdpValue": 0.9304445771792552,
+            "featureValue": 0.9375
+          },
+          {
+            "pdpValue": 0.9304445771792552,
+            "featureValue": 0.958333333
+          },
+          {
+            "pdpValue": 0.9304445771792552,
+            "featureValue": 1
+          }
+        ]
+      },
+      {
+        "feature": "fairness",
+        "values": [
+          {
+            "pdpValue": 0.3991364822382048,
+            "featureValue": 0
+          },
+          {
+            "pdpValue": 0.5717136260540003,
+            "featureValue": 1
+          },
+          {
+            "pdpValue": 0.4130605209445142,
+            "featureValue": 2
+          }
+        ]
+      },
+      {
+        "feature": "care",
+        "values": [
+          {
+            "pdpValue": 0.3570926633688343,
+            "featureValue": 0
+          },
+          {
+            "pdpValue": 0.4436518327295728,
+            "featureValue": 1
+          },
+          {
+            "pdpValue": 0.47527675362979355,
+            "featureValue": 2
+          },
+          {
+            "pdpValue": 0.4743904674048771,
+            "featureValue": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "group": {
+      "idx": 1,
+      "name": "liberal",
+      "abbr": "lib"
+    },
+    "valuesForFeatures": [
+      {
+        "feature": "valence",
+        "values": [
+          {
+            "pdpValue": 0.5082788839064057,
+            "featureValue": 0
+          },
+          {
+            "pdpValue": 0.5082788839064057,
+            "featureValue": 0.020833333
+          },
+          {
+            "pdpValue": 0.5082788839064057,
+            "featureValue": 0.041666667
+          },
+          {
+            "pdpValue": 0.5082788839064057,
+            "featureValue": 0.0625
+          },
+          {
+            "pdpValue": 0.5082788839064057,
+            "featureValue": 0.083333333
+          },
+          {
+            "pdpValue": 0.5082788839064057,
+            "featureValue": 0.104166667
+          },
+          {
+            "pdpValue": 0.5082788839064057,
+            "featureValue": 0.125
+          },
+          {
+            "pdpValue": 0.5082788839064057,
+            "featureValue": 0.145833333
+          },
+          {
+            "pdpValue": 0.5082788839064057,
+            "featureValue": 0.166666667
+          },
+          {
+            "pdpValue": 0.5019621251091212,
+            "featureValue": 0.1875
+          },
+          {
+            "pdpValue": 0.5019621251091212,
+            "featureValue": 0.208333333
+          },
+          {
+            "pdpValue": 0.6097441523575077,
+            "featureValue": 0.229166667
+          },
+          {
+            "pdpValue": 0.6264970758940983,
+            "featureValue": 0.25
+          },
+          {
+            "pdpValue": 0.6264970758940983,
+            "featureValue": 0.270833333
+          },
+          {
+            "pdpValue": 0.6264970758940983,
+            "featureValue": 0.291666667
+          },
+          {
+            "pdpValue": 0.6264970758940983,
+            "featureValue": 0.3125
+          },
+          {
+            "pdpValue": 0.6476000584489671,
+            "featureValue": 0.333333333
+          },
+          {
+            "pdpValue": 0.6476000584489671,
+            "featureValue": 0.354166667
+          },
+          {
+            "pdpValue": 0.6476000584489671,
+            "featureValue": 0.375
+          },
+          {
+            "pdpValue": 0.6476000584489671,
+            "featureValue": 0.395833333
+          },
+          {
+            "pdpValue": 0.6370485671715327,
+            "featureValue": 0.416666667
+          },
+          {
+            "pdpValue": 0.6014901964119748,
+            "featureValue": 0.4375
+          },
+          {
+            "pdpValue": 0.6014901964119748,
+            "featureValue": 0.458333333
+          },
+          {
+            "pdpValue": 0.6340646750190949,
+            "featureValue": 0.479166667
+          },
+          {
+            "pdpValue": 0.6649156818711224,
+            "featureValue": 0.5
+          },
+          {
+            "pdpValue": 0.6754104186917005,
+            "featureValue": 0.520833333
+          },
+          {
+            "pdpValue": 0.6754104186917005,
+            "featureValue": 0.541666667
+          },
+          {
+            "pdpValue": 0.6982976334137029,
+            "featureValue": 0.5625
+          },
+          {
+            "pdpValue": 0.6982976334137029,
+            "featureValue": 0.583333333
+          },
+          {
+            "pdpValue": 0.6601406747673283,
+            "featureValue": 0.604166667
+          },
+          {
+            "pdpValue": 0.525018561231189,
+            "featureValue": 0.625
+          },
+          {
+            "pdpValue": 0.785133191677255,
+            "featureValue": 0.645833333
+          },
+          {
+            "pdpValue": 0.785133191677255,
+            "featureValue": 0.666666667
+          },
+          {
+            "pdpValue": 0.785133191677255,
+            "featureValue": 0.6875
+          },
+          {
+            "pdpValue": 0.7678330553000234,
+            "featureValue": 0.708333333
+          },
+          {
+            "pdpValue": 0.7479773661735838,
+            "featureValue": 0.729166667
+          },
+          {
+            "pdpValue": 0.7479773661735838,
+            "featureValue": 0.75
+          },
+          {
+            "pdpValue": 0.7479773661735838,
+            "featureValue": 0.770833333
+          },
+          {
+            "pdpValue": 0.7479773661735838,
+            "featureValue": 0.791666667
+          },
+          {
+            "pdpValue": 0.7479773661735838,
+            "featureValue": 0.8125
+          },
+          {
+            "pdpValue": 0.7230382873920622,
+            "featureValue": 0.833333333
+          },
+          {
+            "pdpValue": 0.7230382873920622,
+            "featureValue": 0.854166667
+          },
+          {
+            "pdpValue": 0.7230382873920622,
+            "featureValue": 0.875
+          },
+          {
+            "pdpValue": 0.7230382873920622,
+            "featureValue": 0.895833333
+          },
+          {
+            "pdpValue": 0.6888045601363891,
+            "featureValue": 0.916666667
+          },
+          {
+            "pdpValue": 0.6888045601363891,
+            "featureValue": 0.9375
+          },
+          {
+            "pdpValue": 0.6888045601363891,
+            "featureValue": 0.958333333
+          },
+          {
+            "pdpValue": 0.6888045601363891,
+            "featureValue": 0.979166667
+          },
+          {
+            "pdpValue": 0.6888045601363891,
+            "featureValue": 1
+          }
+        ]
+      },
+      {
+        "feature": "dominance",
+        "values": [
+          {
+            "pdpValue": 0.6629723385724272,
+            "featureValue": 0
+          },
+          {
+            "pdpValue": 0.6629723385724272,
+            "featureValue": 0.020833333
+          },
+          {
+            "pdpValue": 0.6629723385724272,
+            "featureValue": 0.041666667
+          },
+          {
+            "pdpValue": 0.6629723385724272,
+            "featureValue": 0.0625
+          },
+          {
+            "pdpValue": 0.6629723385724272,
+            "featureValue": 0.083333333
+          },
+          {
+            "pdpValue": 0.6629723385724272,
+            "featureValue": 0.104166667
+          },
+          {
+            "pdpValue": 0.6629723385724272,
+            "featureValue": 0.125
+          },
+          {
+            "pdpValue": 0.6629723385724272,
+            "featureValue": 0.145833333
+          },
+          {
+            "pdpValue": 0.6629723385724272,
+            "featureValue": 0.166666667
+          },
+          {
+            "pdpValue": 0.6310538971524567,
+            "featureValue": 0.1875
+          },
+          {
+            "pdpValue": 0.6310538971524567,
+            "featureValue": 0.208333333
+          },
+          {
+            "pdpValue": 0.652052236818622,
+            "featureValue": 0.229166667
+          },
+          {
+            "pdpValue": 0.6265068044665423,
+            "featureValue": 0.25
+          },
+          {
+            "pdpValue": 0.6265068044665423,
+            "featureValue": 0.270833333
+          },
+          {
+            "pdpValue": 0.6265068044665423,
+            "featureValue": 0.291666667
+          },
+          {
+            "pdpValue": 0.6265068044665423,
+            "featureValue": 0.3125
+          },
+          {
+            "pdpValue": 0.5845389242881991,
+            "featureValue": 0.333333333
+          },
+          {
+            "pdpValue": 0.5845389242881991,
+            "featureValue": 0.354166667
+          },
+          {
+            "pdpValue": 0.5845389242881991,
+            "featureValue": 0.375
+          },
+          {
+            "pdpValue": 0.5890408938999048,
+            "featureValue": 0.395833333
+          },
+          {
+            "pdpValue": 0.6108874029967266,
+            "featureValue": 0.416666667
+          },
+          {
+            "pdpValue": 0.6108874029967266,
+            "featureValue": 0.4375
+          },
+          {
+            "pdpValue": 0.6460314549900644,
+            "featureValue": 0.458333333
+          },
+          {
+            "pdpValue": 0.6460314549900644,
+            "featureValue": 0.479166667
+          },
+          {
+            "pdpValue": 0.6460314549900644,
+            "featureValue": 0.5
+          },
+          {
+            "pdpValue": 0.6460314549900644,
+            "featureValue": 0.520833333
+          },
+          {
+            "pdpValue": 0.6460314549900644,
+            "featureValue": 0.541666667
+          },
+          {
+            "pdpValue": 0.5625605271184596,
+            "featureValue": 0.5625
+          },
+          {
+            "pdpValue": 0.686100528498997,
+            "featureValue": 0.583333333
+          },
+          {
+            "pdpValue": 0.686100528498997,
+            "featureValue": 0.604166667
+          },
+          {
+            "pdpValue": 0.7720265702230321,
+            "featureValue": 0.625
+          },
+          {
+            "pdpValue": 0.7720265702230321,
+            "featureValue": 0.645833333
+          },
+          {
+            "pdpValue": 0.80556624383023,
+            "featureValue": 0.666666667
+          },
+          {
+            "pdpValue": 0.80556624383023,
+            "featureValue": 0.6875
+          },
+          {
+            "pdpValue": 0.7639609628681413,
+            "featureValue": 0.708333333
+          },
+          {
+            "pdpValue": 0.9059328332144734,
+            "featureValue": 0.729166667
+          },
+          {
+            "pdpValue": 0.9059328332144734,
+            "featureValue": 0.75
+          },
+          {
+            "pdpValue": 0.9059328332144734,
+            "featureValue": 0.770833333
+          },
+          {
+            "pdpValue": 0.8958034015881368,
+            "featureValue": 0.791666667
+          },
+          {
+            "pdpValue": 0.8991798787969156,
+            "featureValue": 0.8125
+          },
+          {
+            "pdpValue": 0.8991798787969156,
+            "featureValue": 0.833333333
+          },
+          {
+            "pdpValue": 0.9268009833004095,
+            "featureValue": 0.854166667
+          },
+          {
+            "pdpValue": 0.9268009833004095,
+            "featureValue": 0.875
+          },
+          {
+            "pdpValue": 0.936930414926746,
+            "featureValue": 0.895833333
+          },
+          {
+            "pdpValue": 0.936930414926746,
+            "featureValue": 0.916666667
+          },
+          {
+            "pdpValue": 0.936930414926746,
+            "featureValue": 0.9375
+          },
+          {
+            "pdpValue": 0.936930414926746,
+            "featureValue": 0.958333333
+          },
+          {
+            "pdpValue": 0.936930414926746,
+            "featureValue": 0.979166667
+          },
+          {
+            "pdpValue": 0.936930414926746,
+            "featureValue": 1
+          }
+        ]
+      },
+      {
+        "feature": "fairness",
+        "values": [
+          {
+            "pdpValue": 0.5744840562898573,
+            "featureValue": 0
+          },
+          {
+            "pdpValue": 0.7771876821297572,
+            "featureValue": 1
+          },
+          {
+            "pdpValue": 0.5709084673322342,
+            "featureValue": 2
+          }
+        ]
+      },
+      {
+        "feature": "care",
+        "values": [
+          {
+            "pdpValue": 0.6329886419169438,
+            "featureValue": 0
+          },
+          {
+            "pdpValue": 0.6994915518608388,
+            "featureValue": 1
+          },
+          {
+            "pdpValue": 0.7223842583676024,
+            "featureValue": 2
+          },
+          {
+            "pdpValue": 0.7060446715599217,
+            "featureValue": 3
+          }
+        ]
+      }
+    ]
+  }
+]

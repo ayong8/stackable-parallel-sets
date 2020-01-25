@@ -1,0 +1,82 @@
+[
+  {
+    "clusterId": 1,
+    "numTweets": 657,
+    "groupRatio": {
+      "lib": 0.9,
+      "con": 0.09999999999999998
+    }
+  },
+  {
+    "clusterId": 2,
+    "numTweets": 224,
+    "groupRatio": {
+      "lib": 0.77,
+      "con": 0.22999999999999998
+    }
+  },
+  {
+    "clusterId": 7,
+    "numTweets": 175,
+    "groupRatio": {
+      "lib": 0.7,
+      "con": 0.30000000000000004
+    }
+  },
+  {
+    "clusterId": 8,
+    "numTweets": 91,
+    "groupRatio": {
+      "lib": 0.69,
+      "con": 0.31000000000000005
+    }
+  },
+  {
+    "clusterId": 9,
+    "numTweets": 82,
+    "groupRatio": {
+      "lib": 0.69,
+      "con": 0.31000000000000005
+    }
+  },
+  {
+    "clusterId": 6,
+    "numTweets": 155,
+    "groupRatio": {
+      "lib": 0.62,
+      "con": 0.38
+    }
+  },
+  {
+    "clusterId": 4,
+    "numTweets": 279,
+    "groupRatio": {
+      "lib": 0.46,
+      "con": 0.54
+    }
+  },
+  {
+    "clusterId": 3,
+    "numTweets": 566,
+    "groupRatio": {
+      "lib": 0.37,
+      "con": 0.63
+    }
+  },
+  {
+    "clusterId": 0,
+    "numTweets": 343,
+    "groupRatio": {
+      "lib": 0.4,
+      "con": 0.6
+    }
+  },
+  {
+    "clusterId": 5,
+    "numTweets": 526,
+    "groupRatio": {
+      "lib": 0.41,
+      "con": 0.5900000000000001
+    }
+  }
+]

@@ -1,0 +1,28 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
+    'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.level {
+  border-top: 2px solid black;
+  border-bottom: 2px solid black;
+}
+
+#container {
+  color: gray;
+}
+
+.g_word_x_axis line {
+  stroke: none;
+}
+
+.g_word_x_axis path {
+  stroke: none;
+}
+
+.g_word_x_axis text {
+  fill: gray;
+}
