@@ -39,6 +39,17 @@ const featureLevelData = [
 	}
 ];
 
+fetch('http://localhost:8000/dataset/loadData/', {
+  method: 'get'
+})
+.then((response) => {
+  console.log('test get');
+  return response.json();
+})
+.then((response) => {
+  console.log('response: ', response);
+});
+
 const tweetsCorrPred = tweets.filter(d => d.group === d.pred),
   tweetsWrongPred = tweets.filter(d => d.group !== d.pred);
 

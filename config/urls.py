@@ -15,6 +15,7 @@ urlpatterns = [
     # User management
     path("users/", include("app.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    path("dataset/", include(("app.dataset.urls", "dataset"), namespace="dataset")),
     # Your stuff: custom urls includes go here
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
