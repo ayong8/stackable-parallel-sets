@@ -1,18 +1,16 @@
-console.log('data in');
-
 import * as d3 from 'd3';
 import _ from 'lodash';
 
 import {l, ll, lCom} from './style';
 
-import tweets from '../data/tweets';
-import groups from '../data/groups';
-import words from '../data/words';
-import goals from '../data/goals';
-import features from '../data/features';
-import pdpValues from '../data/pdpValues';
-import pdpValuesForGroups from '../data/pdpValuesForGroups';
-import cooc from '../data/cooc';
+import tweets from '../../data/tweets';
+import groups from '../../data/groups';
+import words from '../../data/words';
+import goals from '../../data/goals';
+import features from '../../data/features';
+import pdpValues from '../../data/pdpValues';
+import pdpValuesForGroups from '../../data/pdpValuesForGroups';
+import cooc from '../../data/cooc';
 
 // feature-level data
 const featureLevelData = [
@@ -39,16 +37,20 @@ const featureLevelData = [
 	}
 ];
 
-fetch('http://localhost:8000/dataset/loadData/', {
-  method: 'get'
-})
-.then((response) => {
-  console.log('test get');
-  return response.json();
-})
-.then((response) => {
-  console.log('response: ', response);
-});
+// async function async1() { // 함수 앞에 async 키워드가 붙습니다.
+//   return 1
+// }
+
+// fetch('http://localhost:8000/dataset/loadData/', {
+//   method: 'get'
+// })
+// .then((response) => {
+//   console.log('test get');
+//   return response.json();
+// })
+// .then((response) => {
+//   console.log('response: ', response);
+// });
 
 const tweetsCorrPred = tweets.filter(d => d.group === d.pred),
   tweetsWrongPred = tweets.filter(d => d.group !== d.pred);

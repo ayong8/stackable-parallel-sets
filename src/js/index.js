@@ -21,6 +21,7 @@ import "../css/index.css";
 const data = require('./data');
 
 const {
+  demoData,
   featureLevelData,
   tweets,
   features, 
@@ -226,15 +227,56 @@ function clusterBy(tweets, feature) {
 
 
 // For new codes
-const svg2 = container
-  .append('svg')
-  .attr('width', l.w)
-  .attr('height', l.h)
-  .attr('class', 'svg2');
-const container1 = Container();
+console.log('demoData: ', demoData);
 
-svg2.call(
-  container1
-    .data(featureLevelData)
-);
+fetch('/dataset/loadData', {
+  method: 'get'
+})
+.then((response) => {
+  return response.json();
+})
+.then((dataset) => {
+  console.log('response in fetch index.js: ', dataset);
+
+  // Structure of the dataset
+  const featureLevelData = [
+    { 
+      lvId: 1, 
+      lvName: 'demographic',
+      features: [
+        { 
+          name: 'dd',
+          type: 'categorical',
+          clusters: []
+        }
+      ],
+      cls: [
+        {
+          id: 1,
+          size: 100
+        },
+        {
+          id: 1,
+          size: 200
+        }
+      ]
+    }
+  ];
+
+  
+
+  const svg2 = container
+    .append('svg')
+    .attr('width', l.w)
+    .attr('height', l.h)
+    .attr('class', 'svg2');
+  const container1 = Container();
+
+  svg2.call(
+    container1
+      .data(featureLevelData)
+  );
+})
+
+
 

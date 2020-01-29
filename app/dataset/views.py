@@ -6,7 +6,7 @@ import numpy as np
 
 class LoadData(APIView):
     def get(self, request, format=None):
-        file_name = './app/static/data/' + 'demoemo' + '.csv'
+        file_name = './app/static/data/' + 'demoemo_simple' + '.csv'
         df_dataset = pd.read_csv(file_name)
 
         # tweet_objects = models.Tweet.objects.all()
@@ -19,4 +19,4 @@ class LoadData(APIView):
         #     tweet_json.update({ 'tweet_id': tweet['pk'] })
         #     tweets_json.append(tweet_json)
 
-        return Response(df_dataset.loc[0:100].to_json(orient='records'))
+        return Response(df_dataset.to_json(orient='records'))

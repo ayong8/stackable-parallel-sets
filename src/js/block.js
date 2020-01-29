@@ -5,12 +5,17 @@ import {globalColors, l, llv, lbl} from './style';
 import data from './data';
 
 function Level(selection) { // User-defined sementic category
+	let id = 0;
 	let data = [];
 
 	function _level(selection) {
-		const levels = selection
+		const gLevels = selection
 			.selectAll('.level_rect')
 			.data(data).enter()
+			.append('g')
+			.attr('class', 'g_level');
+
+		gLevels
 			.append('rect')
 			.attr('class', 'level_rect')
 			.attr('x', 3)
@@ -20,14 +25,23 @@ function Level(selection) { // User-defined sementic category
 			.style('fill', 'none')
 			.style('stroke', 'red');
 
-		levels.each(function(lvData) {
-			const block = Block();
-
-			level.call(
-				block
-				.data(lvData.features)
-			);
+		gLevels.each(function(lvData) {
+			const level = d3.select(this);
+			lvData.features.forEach(function(feature, featureId) {
+				const block = Block();
+				level.call(
+					block
+					.id(featureId)
+					.data(feature)
+				);
+			})
 		});
+	}
+
+	_level.id = function(id) {
+		if (!arguments.length) return id;
+		id = id;
+		return _block;
 	}
 
 	_level.data = function(dataset) {
@@ -54,7 +68,7 @@ function Bar() {
 			.attr('y', lbl.t)
 			.attr('width', lbl.w)
 			.attr('height', lbl.h)
-			.style('stroke', 'red');f
+			.style('stroke', 'red');
 	}
 
 	_bar.data = function(value) {
@@ -73,40 +87,56 @@ function Bar() {
 }
 
 function Block() {
-		let data = [];
-    let axisRight = null;
+	let id = 0;
+	let data = [];
+	let axisRight = null;
 
-    let axis = {
-        right: null,
-        left: null
-    }
+	let axis = {
+			right: null,
+			left: null
+	}
 
-    function _block(selection) {
-			selection
-				.append('rect')
-				.attr('class', 'block_rect')
-				.attr('x', 3)
-				.attr('y', lbl.t)
-				.attr('width', lbl.w)
-				.attr('height', lbl.h)
-				.style('stroke', 'red');
-    }
+	function _block(selection) {
+		selection
+			.append('rect')
+			.attr('class', 'block_rect')
+			.attr('x', 3)
+			.attr('y', lbl.t)
+			.attr('width', lbl.w)
+			.attr('height', lbl.h)
+			.style('stroke', 'red')
+			.on('click', function() {
+				const selectedBlock = d3.select(this);
+				fetch('/dataset/loadData', {
+					method: 'get'
+				})
+				.then((response) => {
+					selectedBlock.style('fill', 'red');
+				})
+			});
+	}
+	
+	_block.id = function(id) {
+		if (!arguments.length) return id;
+		id = id;
+		return _block;
+	}
 
-    _block.data = function(dataset) {
-			if (!arguments.length) return data;
-			data = dataset;
-			return _block;
-    }
+	_block.data = function(dataset) {
+		if (!arguments.length) return data;
+		data = dataset;
+		return _block;
+	}
 
-    _block.addAxis = function(direction, scale) {
-        axis[direction] = ddd;
-    }
+	_block.addAxis = function(direction, scale) {
+			axis[direction] = ddd;
+	}
 
-    _block.removeAxis = function(direction, scale) {
+	_block.removeAxis = function(direction, scale) {
 
-    }
+	}
 
-    return _block;
+	return _block;
 }
 
 function Container() {
@@ -116,11 +146,17 @@ function Container() {
 		const gContainer1 = svg.append('g')
 			.attr('class', 'container1');
 
+		console.log('data in container: ', data);
 
 		const level1 = Level();
+		const level2 = Level();
 
 		gContainer1.call(
 			level1
+			.data(data)
+		);
+		gContainer1.call(
+			level2
 			.data(data)
 		);
 

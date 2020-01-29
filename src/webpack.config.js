@@ -17,7 +17,16 @@ module.exports = {
     filename: 'bundle.js'
   },
   devServer: {
-    contentBase: dir_build
+    publicPath: '/',
+    contentBase: dir_html,
+    hot: true,
+    proxy: {
+      '/dataset/**': {
+        target: 'http://localhost:8000',
+        secure: false,
+        changeOrigin: true,
+      }
+    }
   },
   module: {
     // rules: [
@@ -51,10 +60,10 @@ module.exports = {
     ]
   },
   plugins: [
-    // Simply copies the files over
-    new CopyWebpackPlugin([
-      {from: dir_html} // to: output.path
-    ]),
+    // // Simply copies the files over
+    // new CopyWebpackPlugin([
+    //   {from: dir_html} // to: output.path
+    // ]),
     // Avoid publishing files when compilation fails
     new webpack.NoErrorsPlugin()
   ],
