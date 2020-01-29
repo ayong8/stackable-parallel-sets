@@ -23,7 +23,7 @@ function Level(selection) { // User-defined sementic category
 			.attr('width', llv.w)
 			.attr('height', llv.h)
 			.style('fill', 'none')
-			.style('stroke', 'blue');
+			.style('stroke', 'red');
 
 		gLevels.each(function(lvData) {
 			const level = d3.select(this);
