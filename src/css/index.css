@@ -27,3 +27,21 @@ body {
 .g_word_x_axis text {
   fill: gray;
 }
+
+/* Level */
+.level_rect {
+  fill: whitesmoke;
+}
+.level_bar {
+  stroke: gray;
+  stroke-width: 5;
+}
+
+/* Block */
+.block_rect {
+  stroke: black;
+  stroke-width: 3;
+  fill: whitesmoke;
+  fill-opacity: 0.5;
+  rx: 4;
+}

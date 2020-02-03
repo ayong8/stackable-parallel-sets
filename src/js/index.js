@@ -235,35 +235,16 @@ fetch('/dataset/loadData', {
 .then((response) => {
   return response.json();
 })
-.then((dataset) => {
-  console.log('response in fetch index.js: ', dataset);
+.then((response) => {
+  console.log('response in fetch index.js: ', response);
+  const rawData = response.dataset,
+        features = response.features;
 
   // Structure of the dataset
-  const featureLevelData = [
-    { 
-      lvId: 1, 
-      lvName: 'demographic',
-      features: [
-        { 
-          name: 'dd',
-          type: 'categorical',
-          clusters: []
-        }
-      ],
-      cls: [
-        {
-          id: 1,
-          size: 100
-        },
-        {
-          id: 1,
-          size: 200
-        }
-      ]
-    }
-  ];
+  const dataset = mapLevelToFeatures('demoemo', features);
+  console.log('dataset: ', dataset);
 
-  
+  // userid,tweet,relationship,iq,gender,age,political,optimism,children,religion,race,income,education,life_satisfaction
 
   const svg2 = container
     .append('svg')
@@ -274,9 +255,45 @@ fetch('/dataset/loadData', {
 
   svg2.call(
     container1
-      .data(featureLevelData)
+      .data(dataset)
   );
-})
+});
+
+const mapLevelToFeatures = (dataAbbr, features) => {
+  switch(dataAbbr) {
+    case 'demoemo':
+      const levels = [
+        { lvId: 1, name: 'demographic' },
+        { lvId: 2, name: 'social_status' },
+      ]
+
+      // map features to levels
+
+      return [
+        { 
+          lvId: 1, 
+          lvName: 'demographic',
+          features: [
+            _.find(features, ['name', 'gender']),
+            _.find(features, ['name', 'age'])
+          ],
+          cls: [
+            {
+              id: 1,
+              size: 100
+            },
+            {
+              id: 1,
+              size: 200
+            }
+          ]
+        }
+      ];
+  }
+  
+
+
+}
 
 
 

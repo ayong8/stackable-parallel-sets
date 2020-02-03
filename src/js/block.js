@@ -4,12 +4,16 @@ import _ from 'lodash';
 import {globalColors, l, llv, lbl} from './style';
 import data from './data';
 
+import "../css/index.css";
+
 function Level(selection) { // User-defined sementic category
 	let id = 0;
 	let data = [];
 
 	function _level(selection) {
-		const gLevels = selection
+		let gLevels;
+		
+		gLevels = selection
 			.selectAll('.level_rect')
 			.data(data).enter()
 			.append('g')
@@ -21,9 +25,23 @@ function Level(selection) { // User-defined sementic category
 			.attr('x', 3)
 			.attr('y', 3)
 			.attr('width', llv.w)
-			.attr('height', llv.h)
-			.style('fill', 'none')
-			.style('stroke', 'red');
+			.attr('height', llv.h);
+
+		gLevels
+      .append('line')
+      .attr('class', 'level_bar level_bar_top')
+      .attr('x1', 0)
+      .attr('y1', 0)
+      .attr('x2', llv.w)
+      .attr('y2', 0);
+
+		gLevels
+      .append('line')
+      .attr('class', 'level_bar level_bar_bottom')
+      .attr('x1', 0)
+      .attr('y1', llv.h)
+      .attr('x2', llv.w)
+      .attr('y2', llv.h);
 
 		gLevels.each(function(lvData) {
 			const level = d3.select(this);
@@ -104,7 +122,6 @@ function Block() {
 			.attr('y', lbl.t)
 			.attr('width', lbl.w)
 			.attr('height', lbl.h)
-			.style('stroke', 'red')
 			.on('click', function() {
 				const selectedBlock = d3.select(this);
 				fetch('/dataset/loadData', {
