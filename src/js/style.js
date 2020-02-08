@@ -1,4 +1,4 @@
-console.log('style in');
+import * as d3 from 'd3';
 
 export const globalColors = {
   system: 'mediumpurple',
@@ -30,13 +30,82 @@ export const l = {
 
 export const llv = {
   w: l.w * 0.5,
-  h: 200
+  h: 100,
+  maxH: 200,
+  maxNumFeatures: 10,
+  minFeatureAreaRatio: 0.7,
+  maxFeatureAreaRatio: 0.9,
+  m: {
+    l: 10,
+    r: 10
+  }
+}
+
+export const lBtn = {
+  h: llv.h * 0.8
+}
+
+llv.getLVT = function(idx) {
+  return this.h * idx + lBtn.h * idx;
+}
+
+llv.setLVM = function(LVWForFeatures) {
+  console.log('this in llv: ', this);
+  this.m.l = this.w - (LVWForFeatures * 2);
+  this.m.r = this.w - (LVWForFeatures * 2);
 }
 
 export const lbl = {
-  w: llv.w * 0.1,
-  h: llv.w * 0.1,
-  t: (llv.h - llv.h * 0.1) / 2
+  s: llv.w * 0.1,
+  maxS: llv.h * 0.3,
+  t: (llv.h - llv.h * 0.1) / 2,
+  m: {
+    btn: 0
+  },
+}
+
+lbl.setBLS = function(LVWForFeatures, numFeatures) {
+  console.log(this);
+  this.s = Math.min(this.maxS, (LVWForFeatures * 0.7) / numFeatures);
+  this.m.btn = (LVWForFeatures * 0.3) / numFeatures;
+},
+lbl.getBLX = function(idx) {
+  return this.s * idx + this.m.btn * idx;
+}
+
+export const lbr = {
+  h: 20
+}
+
+export const getElLayout = function(el) {
+  const l = el.node().getBBox();
+  const y2 = l.y + l.height;	
+  const x2 = l.x + l.width;
+  
+  return {
+    x1: l.x,
+    x2: x2,
+    y1: l.y,
+    y2: y2,
+    width: l.width,
+    height: l.height
+  }
+}
+
+export const addAxis = function(el, idx, direction, scale) {
+  let gAxis;
+  let axisSetting;
+
+  axisSetting = d3
+    .axisLeft(scale)
+    .tickSize(0);
+  
+  gAxis = el
+    .append('g')
+    .attr('class', function(d) {
+      return 'g_axis g_feature_axis g_feature_axis_';
+    })
+    .call(axisSetting);
 }
 
 export const ll = {

@@ -7,6 +7,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+svg {
+  border: 2px dashed black;
+}
+
 .level {
   border-top: 2px solid black;
   border-bottom: 2px solid black;

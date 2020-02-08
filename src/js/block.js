@@ -1,141 +1,70 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 
-import {globalColors, l, llv, lbl} from './style';
+import {globalColors, l, llv, lbl, getElLayout, addAxis} from './style';
 import data from './data';
 
 import "../css/index.css";
 
-function Level(selection) { // User-defined sementic category
-	let id = 0;
-	let data = [];
-
-	function _level(selection) {
-		let gLevels;
-		
-		gLevels = selection
-			.selectAll('.level_rect')
-			.data(data).enter()
-			.append('g')
-			.attr('class', 'g_level');
-
-		gLevels
-			.append('rect')
-			.attr('class', 'level_rect')
-			.attr('x', 3)
-			.attr('y', 3)
-			.attr('width', llv.w)
-			.attr('height', llv.h);
-
-		gLevels
-      .append('line')
-      .attr('class', 'level_bar level_bar_top')
-      .attr('x1', 0)
-      .attr('y1', 0)
-      .attr('x2', llv.w)
-      .attr('y2', 0);
-
-		gLevels
-      .append('line')
-      .attr('class', 'level_bar level_bar_bottom')
-      .attr('x1', 0)
-      .attr('y1', llv.h)
-      .attr('x2', llv.w)
-      .attr('y2', llv.h);
-
-		gLevels.each(function(lvData) {
-			const level = d3.select(this);
-			lvData.features.forEach(function(feature, featureId) {
-				const block = Block();
-				level.call(
-					block
-					.id(featureId)
-					.data(feature)
-				);
-			})
-		});
-	}
-
-	_level.id = function(id) {
-		if (!arguments.length) return id;
-		id = id;
-		return _block;
-	}
-
-	_level.data = function(dataset) {
-		if (!arguments.length) return data;
-		data = dataset;
-		return _level;
-	}
-
-	return _level;
-}
-
-function Bar() {
-	let axisRight = null;
-
-	let axis = {
-			right: null,
-			left: null
-	}
-
-	function _bar(selection) {
-		selection.append('rect')
-			.attr('class', 'block_rect')
-			.attr('x', 3)
-			.attr('y', lbl.t)
-			.attr('width', lbl.w)
-			.attr('height', lbl.h)
-			.style('stroke', 'red');
-	}
-
-	_bar.data = function(value) {
-			
-	}
-
-	_bar.addAxis = function(direction, scale) {
-			axis[direction] = ddd;
-	}
-
-	_bar.removeAxis = function(direction, scale) {
-
-	}
-
-	return _bar;
-}
-
 function Block() {
-	let id = 0;
+	let idx;
 	let data = [];
-	let axisRight = null;
-
 	let axis = {
 			right: null,
 			left: null
 	}
+	console.log('this in Block: ', this);
 
 	function _block(selection) {
-		selection
+		let gBL;
+
+		gBL = selection
+			.append('g')
+			.attr('class', 'g_block')
+			.attr('transform', 'translate(' + lbl.getBLX(idx) + ',' + lbl.t + ')');
+		gBL
 			.append('rect')
 			.attr('class', 'block_rect')
-			.attr('x', 3)
-			.attr('y', lbl.t)
-			.attr('width', lbl.w)
-			.attr('height', lbl.h)
+			.attr('x', 0)
+			.attr('y', 0)
+			.attr('width', lbl.s)
+			.attr('height', lbl.s)
 			.on('click', function() {
 				const selectedBlock = d3.select(this);
-				fetch('/dataset/loadData', {
+				fetch('/dataset/loadData', {	
 					method: 'get'
 				})
 				.then((response) => {
 					selectedBlock.style('fill', 'red');
 				})
 			});
+
+		const gBLl = getElLayout(gBL);
+
+		const sampleScale = d3.scaleLinear()
+				.domain([0, 1])
+				.range([gBLl.y1, gBLl.y2]);
+		
+		console.log('layout in _block: ', );
+		addAxis(gBL, idx, 'right', sampleScale);
+		// switch (idx) {
+		// 	case 0:
+		// axis[direction] = selection
+		// .enter()
+		// .append('g')
+		// .attr('class', function(d) {
+		//   return 'g_axis g_feature_axis g_feature_axis_' + d.key;
+		// })
+		// .attr('transform', function(d, i) {
+		//   return 'translate(' + xFeatureScale(d.key) + ',' + 0 + ')';
+		// });
 	}
+
+		
 	
-	_block.id = function(id) {
-		if (!arguments.length) return id;
-		id = id;
+	_block.id = function(featureId) {
+		if (!arguments.length) return featureId;
+		idx = featureId;
 		return _block;
 	}
 
@@ -145,9 +74,7 @@ function Block() {
 		return _block;
 	}
 
-	_block.addAxis = function(direction, scale) {
-			axis[direction] = ddd;
-	}
+	
 
 	_block.removeAxis = function(direction, scale) {
 
@@ -156,37 +83,4 @@ function Block() {
 	return _block;
 }
 
-function Container() {
-	let data = [];  // data
-	let levels = [];
-	function _container(svg) {
-		const gContainer1 = svg.append('g')
-			.attr('class', 'container1');
-
-		console.log('data in container: ', data);
-
-		const level1 = Level();
-		const level2 = Level();
-
-		gContainer1.call(
-			level1
-			.data(data)
-		);
-		gContainer1.call(
-			level2
-			.data(data)
-		);
-
-	}
-
-	// Data
-	_container.data = function(dataset) {
-		if (!arguments.length) return data;
-		data = dataset;
-		return _container;
-	}
-
-	return _container;
-}
-
-export default Container;
+export default Block;
