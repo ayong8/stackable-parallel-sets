@@ -8,7 +8,7 @@ import {
 } from './render';
 
 import Axes from './Axes';
-import {globalColors, l, ll, lCom} from './style';
+import {gColors, l, ll, lCom} from './layout';
 import {globalScales, scales} from './scale';
 
 let layout = {

@@ -6,7 +6,7 @@ import {
   renderClRectsBtnLv
 } from './render';
 
-import {globalColors, lCom} from './style';
+import {gColors, lCom} from './layout';
 
 function Level3Plot() {
   var width = 720, // default width
@@ -42,7 +42,7 @@ function Level3Plot() {
     const groupColorScale = d3
       .scaleOrdinal()
       .domain([1, 0])
-      .range(globalColors.groups.map(d => d.color));
+      .range(gColors.groups.map(d => d.color));
 
     const coocScale = d3
       .scaleLinear()
@@ -117,7 +117,7 @@ function Level3Plot() {
         //   });
 
         //   return globalColors.groups[groupIdx].color;
-        return d.countGroup[0]['count'] > d.countGroup[1]['count'] ? globalColors.group.con : globalColors.group.lib;
+        return d.countGroup[0]['count'] > d.countGroup[1]['count'] ? gColors.group.con : gColors.group.lib;
       })
       .style('fill-opacity', 0.5)
       .style('stroke', 'black')

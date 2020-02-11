@@ -11,7 +11,7 @@ var dir_build = path.resolve(__dirname, 'build');
 var dir_css = path.resolve(__dirname, 'css');
 
 module.exports = {
-  entry: [path.resolve(dir_js, 'data.js'), path.resolve(dir_js, 'index.js')],
+  entry: [path.resolve(dir_js, 'dataMapping.js'), path.resolve(dir_js, 'index.js')],
   output: {
     path: dir_build,
     filename: 'bundle.js'
@@ -72,5 +72,5 @@ module.exports = {
     colors: true
   },
   // Create Sourcemaps for the bundle
-  devtool: 'source-map'
+  devtool: 'eval-source-map'
 };

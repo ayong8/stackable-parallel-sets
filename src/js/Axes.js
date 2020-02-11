@@ -3,9 +3,9 @@ console.log('Axes in');
 import * as d3 from 'd3';
 import _ from 'lodash';
 
-import {globalColors, l, ll, lCom} from './style';
+import {gColors, l, ll, lCom} from './layout';
 
-const data = require('./data');
+const data = require('./dataMapping');
 
 console.log('data in Axes: ', data);
 
@@ -27,7 +27,7 @@ const {
   dataBinWrongPredTweets,
   dataBinWrongPredTweetsForGroups,
   dataBinCorrPredTweetsForGroups
-} = data.data;
+} = data.dataMapping;
 
 function Axes() {
   var width = 720,
@@ -147,8 +147,8 @@ function Axes() {
               )
               .attr('width', e => feature.pdScale(e.pdpValue))
               .attr('height', 5)
-              .style('stroke', d3.rgb(globalColors.groups[groupIdx].color).darker())
-              .style('fill', globalColors.groups[groupIdx].color)
+              .style('stroke', d3.rgb(gColors.groups[groupIdx].color).darker())
+              .style('fill', gColors.groups[groupIdx].color)
               .style('fill-opacity', 0.3);
           });
           // if it's continuous, render area chart PDP
@@ -206,7 +206,7 @@ function Axes() {
               .datum(pdpvaluesForGroupsPerFeature)
               .attr('class', 'path_pdp_' + feature.key + '_for_' + groupName)
               .attr('d', drawPDPLine)
-              .style('stroke', globalColors.groups[groupIdx].color)
+              .style('stroke', gColors.groups[groupIdx].color)
               .style('stroke-width', 2)
               .style('fill', 'none')
               .style('shape-rendering', 'crispedges')
@@ -219,7 +219,7 @@ function Axes() {
               .attr('class', 'area_pdp_' + feature.key + '_for_' + groupName)
               .attr('d', drawPDPArea)
               .style('stroke', 'none')
-              .style('fill', globalColors.groups[groupIdx].color)
+              .style('fill', gColors.groups[groupIdx].color)
               .style('stroke-dasharray', '8,3')
               .style('shape-rendering', 'crispedges')
               .style('fill-opacity', 0.3);

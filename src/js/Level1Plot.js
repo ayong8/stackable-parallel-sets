@@ -8,7 +8,7 @@ import {
   renderClRectsBtnLv
 } from './render';
 
-import {globalColors, l, ll, lCom} from './style';
+import {gColors, l, ll, lCom} from './layout';
 import {globalScales, scales} from './scale';
 
 const layout = {

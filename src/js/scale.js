@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
-import {l, ll, lCom, globalColors} from './style';
+import { gLayout, gColors, l, ll, lbl, llv, lCom} from './layout';
 
-const data = require('./data');
+const data = require('./dataMapping');
 const {
   features, 
   goals, 
@@ -14,7 +14,7 @@ const {
   dataBinWrongPredTweets,
   dataBinWrongPredTweetsForGroups,
   dataBinCorrPredTweetsForGroups
-} = data.data;
+} = data.dataMapping;
 console.log('scale in: ');
 console.log('data in scale: ', data);
 
@@ -27,24 +27,24 @@ const xFeatureScale = d3
 const groupColorScale = d3
   .scaleOrdinal()
   .domain([0, 1])
-  .range(globalColors.groups.map(d => d.color));
+  .range(gColors.groups.map(d => d.color));
 
 const groupColorScales = groups.map((group, group_idx) => {
   return d3
     .scaleLinear()
     .domain([0, 1])
-    .range(['whitesmoke', globalColors.groups[group_idx].color]);
+    .range(['whitesmoke', gColors.groups[group_idx].color]);
 });
 
 const groupWrongColorScale = d3
   .scaleOrdinal()
   .domain([1, 0])
-  .range(['gray', globalColors.group.wrong.con]);
+  .range(['gray', gColors.group.wrong.con]);
 
 const groupRatioScale = d3
   .scaleLinear()
   .domain([0, 0.5, 1])
-  .range([globalColors.group.con, 'whitesmoke', globalColors.group.lib]);
+  .range([gColors.group.con, 'whitesmoke', gColors.group.lib]);
 
 // For level 1
 const xGoalScale = d3
@@ -88,20 +88,26 @@ export const globalScales = {
   groupColorScale: d3
     .scaleOrdinal()
     .domain([1, 0])
-    .range(globalColors.groups.map(d => d.color)),
+    .range(gColors.groups.map(d => d.color)),
 
   groupColorScales: [],
 
   groupWrongColorScale: d3
     .scaleOrdinal()
     .domain([1, 0])
-    .range(['gray', globalColors.group.wrong.con]),
+    .range(['gray', gColors.group.wrong.con]),
 
   groupRatioScale: d3
     .scaleLinear()
     .domain([0, 0.5, 1])
-    .range([globalColors.group.con, 'whitesmoke', globalColors.group.lib])
+    .range([gColors.group.con, 'whitesmoke', gColors.group.lib])
 };
+
+// For new
+const catWidthScale = d3
+    .scaleLinear()
+    .domain([0, 2000]) // size of whole instances
+    .range([llv.m.l, llv.w]); // from llv.x1 to llv.x2
 
 export const scales = {
   xFeatureScale: xFeatureScale,
@@ -115,5 +121,18 @@ export const scales = {
   yOutputProbScale: yOutputProbScale,
   yGroupScale: yGroupScale,
   yOutputProbHistScale: yOutputProbHistScale,
-  xWordScale: xWordScale
+  xWordScale: xWordScale,
+  // For new
+  catWidthScale: catWidthScale
 };
+
+scales.addScaleToFeatures = function(rawData, features, wholeWidth) {
+  features.forEach(function(feature) {
+    feature.scale = d3.scaleOrdinal()
+                    .domain([0, 1]);
+
+    feature.catScales = gLayout.calculateScalesForCats(rawData, feature, wholeWidth);
+  });
+  
+  return features;
+}

@@ -49,3 +49,10 @@ svg {
   fill-opacity: 0.5;
   rx: 4;
 }
+
+.cat_rect {
+  fill: gray;
+  stroke: black;
+  stroke-width: 3px;
+  filter: url(#drop-shadow);
+}

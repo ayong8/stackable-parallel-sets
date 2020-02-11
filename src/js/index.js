@@ -3,7 +3,7 @@ console.log('index in: ');
 import * as d3 from 'd3';
 import skmeans from 'skmeans';
 import { globalScales, scales } from './scale';
-import { l, ll, lCom } from './style';
+import { gLayout, l, ll, lCom } from './layout';
 import {
   renderClBars,
   renderClRectsBtnLv,
@@ -21,7 +21,7 @@ import Level3Plot from './Level3Plot';
 
 import "../css/index.css";
 
-const data = require('./data');
+const data = require('./dataMapping');
 
 const {
   demoData,
@@ -44,7 +44,7 @@ const {
   dataBinWrongPredTweetsForGroups,
   dataBinCorrPredTweetsForGroups,
   cooc
-} = data.data;
+} = data.dataMapping;
 
 const {
   xFeatureScale,
@@ -243,14 +243,7 @@ fetch('/dataset/loadData', {
   const rawData = JSON.parse(response.dataset),
         features = response.features;
 
-  // Structure of the dataset
-  const updatedFeatures = addScaleToFeatures(features)
-  const LVData = mapLevelToFeatures('cancer', updatedFeatures);
-  
-  console.log('dataset: ', LVData);
-
   // userid,tweet,relationship,iq,gender,age,political,optimism,children,religion,race,income,education,life_satisfaction
-
   const svg2 = container
     .append('svg')
     .attr('width', l.w)
@@ -260,100 +253,12 @@ fetch('/dataset/loadData', {
 
   svg2.call(
     container1
-      .data(LVData)
+      .data([
+        rawData, 
+        features
+      ])
   );
 });
-
-function addScaleToFeatures(features) {
-  features.forEach(function(feature) {
-    feature.scale = d3.scaleOrdinal()
-                    .domain([0, 1]);
-  });
-  return features;
-}
-
-function mapLevelToFeatures(dataAbbr, features) {
-  let levels = [];
-  switch(dataAbbr) {
-    case 'demoemo':
-      levels = [
-        { id: 1, name: 'demographic' },
-        { id: 2, name: 'social_status' },
-      ]
-
-      // map features to levels
-      return [
-        { 
-          id: 1, 
-          name: 'demographic',
-          features: [
-            _.find(features, ['name', 'gender']),
-            _.find(features, ['name', 'age'])
-          ],
-          cls: [
-            {
-              id: 1,
-              size: 100
-            },
-            {
-              id: 1,
-              size: 200
-            }
-          ]
-        }
-      ];
-    case 'cancer':
-      levels = [
-        { id: 1, name: 'environmental' },
-        { id: 2, name: 'symptom' },
-        { id: 2, name: 'diagnosis' },
-      ]
-
-      // map features to levels
-      return [
-        { 
-          id: 1, 
-          name: 'environmental',
-          features: [
-            _.find(features, ['name', 'Air Pollution']),
-            _.find(features, ['name', 'Occupational Hazards'])
-          ],
-          cls: [
-            {
-              id: 1,
-              size: 100
-            },
-            {
-              id: 1,
-              size: 200
-            }
-          ]
-        },
-        { 
-          id: 2, 
-          name: 'symptom',
-          features: [
-            _.find(features, ['name', 'Chest Pain']),
-            _.find(features, ['name', 'Fatigue']),
-            _.find(features, ['name', 'Dry Cough']),
-          ],
-          cls: [
-            {
-              id: 1,
-              size: 100
-            },
-            {
-              id: 1,
-              size: 200
-            }
-          ]
-        }
-      ];
-  }
-  
-
-
-}
 
 
 

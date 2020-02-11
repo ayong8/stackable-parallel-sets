@@ -59,21 +59,21 @@ dataset_features = {
         },
         { 
             'name': 'Chest Pain', 
-            'type': 'categorical',
+            'type': 'continuous',
             'scale': '',
             'domain': [],
             'instances': []
         },
         { 
             'name': 'Fatigue', 
-            'type': 'categorical',
+            'type': 'continuous',
             'scale': '',
             'domain': [],
             'instances': []
         },
         { 
             'name': 'Dry Cough', 
-            'type': 'categorical',
+            'type': 'continuous',
             'scale': '',
             'domain': [],
             'instances': []
@@ -84,12 +84,15 @@ dataset_features = {
 # For per-feature clustering (when a feature is continuous)
 # For per-level clustering (to generate clusters onto multiple features within a level)
 # parameter - data (numpy array - (n_instances x n_features))
+
+n_cls = 4
+
 def hClustering(data):
     # dist_mat = euclidean_distances(data)
     # dhcl_model = cl.DivisiveClustering(dist_mat)
     # dhcl.fit()
     X = euclidean_distances(data)
-    cl_fit = AgglomerativeClustering(n_clusters=4).fit(X)
+    cl_fit = AgglomerativeClustering(n_clusters=n_cls).fit(X)
 
     return cl_fit.labels_, cl_fit.n_clusters_
 
@@ -119,6 +122,7 @@ class LoadData(APIView):
                 print('instances_for_cont: ', instances_np)
                 instances_for_cat, _ = hClustering(instances_np) # Do clustering, and output the cluster labels
                 feature_obj['instances'] = instances_for_cat
+                feature_obj['domain'] = list(range(n_cls))
 
         print(selected_dataset_features)
         return Response({ 
@@ -151,7 +155,10 @@ class HClusteringForAllLVs(APIView):
         json_request = json.loads(request.body.decode(encoding='UTF-8'))
         lv_data = json_request['data']
 
-        for lv in lv_data:
+        # Clustering for levels
+        lv_cl_list_dict = {}
+        for idx, lv in enumerate(lv_data):
+            print('lv data: ', lv)
             df_instances_for_lv = pd.DataFrame({ feature['name']:feature['instances'] for feature in lv['features'] })
 
             cl_labels_np, n_cls = hClustering(df_instances_for_lv.values)
@@ -165,9 +172,8 @@ class HClusteringForAllLVs(APIView):
                 cl_list.append({
                     'instances': instances_for_cl.values
                 })
-            lv['cls'] = cl_list
+            lv_cl_list_dict[idx] = cl_list
 
         return Response({
-            'data': lv_data
+            'cls': lv_cl_list_dict
         })
-

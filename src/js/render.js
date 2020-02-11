@@ -1,7 +1,7 @@
 
 import * as d3 from 'd3';
 import { globalScales, scales, groupRatioScale } from './scale';
-import { l, ll, lCom } from './style';
+import { l, ll, lCom } from './layout';
 
 export function renderClBars(selection, lv) {
     const lvW = (lv == 1) ? lCom.hPlot.goalPlot.w

@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 
-import {l, ll, lCom} from './style';
+import {l, ll, lCom} from './layout';
 
 import tweets from '../../data/tweets';
 import groups from '../../data/groups';
@@ -122,7 +122,7 @@ features.forEach(feature => {
   }
 });
 
-export const data = {
+export const dataMapping = {
   featureLevelData: featureLevelData,
   tweets: tweets,
   groups: groups,
@@ -143,3 +143,86 @@ export const data = {
   maxFreqWrong: maxFreqWrong,
   cooc: cooc
 };
+
+dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
+  let levels = [];
+  switch(dataAbbr) {
+    case 'demoemo':
+      levels = [
+        { id: 1, name: 'demographic' },
+        { id: 2, name: 'social_status' },
+      ]
+
+      // map features to levels
+      return [
+        { 
+          id: 1, 
+          name: 'demographic',
+          features: [
+            _.find(features, ['name', 'gender']),
+            _.find(features, ['name', 'age'])
+          ],
+          cls: [
+            {
+              id: 1,
+              size: 100
+            },
+            {
+              id: 1,
+              size: 200
+            }
+          ]
+        }
+      ];
+    case 'cancer':
+      levels = [
+        { id: 1, name: 'environmental' },
+        { id: 2, name: 'symptom' },
+        { id: 2, name: 'diagnosis' },
+      ]
+
+      // map features to levels
+      return [
+        { 
+          id: 1, 
+          name: 'environmental',
+          features: [
+            _.find(features, ['name', 'Air Pollution']),
+            _.find(features, ['name', 'Occupational Hazards'])
+          ],
+          cls: [
+            {
+              id: 1,
+              size: 100
+            },
+            {
+              id: 1,
+              size: 200
+            }
+          ]
+        },
+        { 
+          id: 2, 
+          name: 'symptom',
+          features: [
+            _.find(features, ['name', 'Chest Pain']),
+            _.find(features, ['name', 'Fatigue']),
+            _.find(features, ['name', 'Dry Cough']),
+          ],
+          cls: [
+            {
+              id: 1,
+              size: 100
+            },
+            {
+              id: 1,
+              size: 200
+            }
+          ]
+        }
+      ];
+  }
+  
+
+
+}
