@@ -190,16 +190,8 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             _.find(features, ['name', 'Air Pollution']),
             _.find(features, ['name', 'Occupational Hazards'])
           ],
-          cls: [
-            {
-              id: 1,
-              size: 100
-            },
-            {
-              id: 1,
-              size: 200
-            }
-          ]
+          cls: [],
+          clScales: []
         },
         { 
           id: 2, 
@@ -209,16 +201,8 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             _.find(features, ['name', 'Fatigue']),
             _.find(features, ['name', 'Dry Cough']),
           ],
-          cls: [
-            {
-              id: 1,
-              size: 100
-            },
-            {
-              id: 1,
-              size: 200
-            }
-          ]
+          cls: [],
+          clScales: []
         }
       ];
   }

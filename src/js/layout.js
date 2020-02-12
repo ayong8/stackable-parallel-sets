@@ -132,8 +132,8 @@ gLayout.addAxis = function(el, idx, direction, scale) {
 }
 
 // feature categories to feature categories, clusters to clusters
-gLayout.renderAuxAxisForCats = function(tweets, catFeature, catScales, direction) {  // auxilary axis on the left? or right?
-  const tweetsGrpByFeature = _.groupBy(tweets, d => d[catFeature.key]);
+gLayout.renderCatBars = function(instances, catFeature, catScales, direction) {  // auxilary axis on the left? or right?
+  const instancesGrpByFeature = _.groupBy(instances, d => d[catFeature.key]);
   const catsInFeature = catFeature.domain;
 
   gFeaturePlot
@@ -149,55 +149,107 @@ gLayout.renderAuxAxisForCats = function(tweets, catFeature, catScales, direction
     .attr('width', 5)
     .attr('height', cat => catScales[cat].range()[1] - catScales[cat].range()[0])
     .style('fill', cat => {
-      const numTweetsInCat = tweetsGrpByFeature[cat].length;
-      const tweetsGrpByGrp = _.groupBy(tweetsGrpByFeature[cat], d => d.group);
-      const numLibTweetsInCat = tweetsGrpByGrp[1].length; // 0 = liberal
+      const numInstancesInCat = instancesGrpByFeature[cat].length;
+      const instancesGrpByGrp = _.groupBy(instancesGrpByFeature[cat], d => d.group);
+      const numLibInstancesInCat = instancesGrpByGrp[1].length; // 0 = liberal
 
-      return groupRatioScale(numLibTweetsInCat / numTweetsInCat);
+      return groupRatioScale(numLibInstancesInCat / numInstancesInCat);
     })
     .style('fill-opacity', 0.5)
     .style('stroke', cat => {
-      const numTweetsInCat = tweetsGrpByFeature[cat].length;
-      const tweetsGrpByGrp = _.groupBy(tweetsGrpByFeature[cat], d => d.group);
-      const numLibTweetsInCat = tweetsGrpByGrp[1].length; // 0 = liberal
+      const numInstancesInCat = instancesGrpByFeature[cat].length;
+      const instancesGrpByGrp = _.groupBy(instancesGrpByFeature[cat], d => d.group);
+      const numLibInstancesInCat = instancesGrpByGrp[1].length; // 0 = liberal
 
-      return d3.rgb(groupRatioScale(numLibTweetsInCat / numTweetsInCat)).darker();
+      return d3.rgb(groupRatioScale(numLibInstancesInCat / numInstancesInCat)).darker();
     })
     .style('stroke-width', 2);
 }
 
-gLayout.calculateScalesForCats = function(rawData, feature, wholeWidth) { //feature
-  // Get scales for each category
-  // - get the height of each category
-  // - get the cumulative height for y position
-  const catsInFeature = feature.domain;
-  const instancesGrpByFeature = _.groupBy(feature.instances);
-  const catScales = {};
+gLayout.renderCatToCatLines = function(selection, instances, currFeature, nextFeature, wholeWidth) {
+  console.log('currFeature: ', currFeature, currFeature);
+  const catsInCurrFeature = currFeature.domain,
+    catsInNextFeature = nextFeature.domain;
 
-  // Define the scales of categorical axis for heights
-  const catWidthScale = d3
-    .scaleLinear()
-    .domain([0, 1])
-    .range([0, wholeWidth]);
+  const catScalesForCurr = scales.calculateScalesForCats(instances, currFeature, wholeWidth);
+  const catScalesForNext = scales.calculateScalesForCats(instances, nextFeature, wholeWidth);
 
-  let cumulativeCatHeight = 0;
-  catsInFeature.forEach(cat => {
-    const numInstancesInCat = instancesGrpByFeature[cat],
-      numTweetRatioPerCat = numInstancesInCat.length / rawData.length,
-      catHeight = catWidthScale(numTweetRatioPerCat),
-      catStartY = wholeWidth - cumulativeCatHeight,
-      catEndY = wholeWidth - (cumulativeCatHeight + catHeight);
-    cumulativeCatHeight += catHeight; // Reflect it for the next loop
+  // { catInCurr: 0, catInNext: 0, catIdxInCurr: 0, catIdxInNext: 0, numInstances: 50 }
+  let instancesBtnCats = [];
+  let dataForCatToCatLines = [];
+  let cumNumInstancesRatioInCurr = {},
+    cumNumInstancesRatioInNext = {};
+  for (const cat of catsInCurrFeature) {
+    cumNumInstancesRatioInCurr[cat] = 0;
+  }
+  for (const cat of catsInNextFeature) {
+    cumNumInstancesRatioInNext[cat] = 0;
+  }
 
-    const yWithinCatScale = d3
-      .scaleLinear()
-      .domain([0, 1])
-      .range([catEndY, catStartY]);
+  catsInCurrFeature.forEach(catCurr => {
+    catsInNextFeature.forEach(catNext => {
+      const filteredInstances = instances.filter(d => d[currFeature.name] == catCurr && d[nextFeature.name] == catNext);
+      const instancesInCurr = instances.filter(d => d[currFeature.name] == catCurr),
+            instancesInNext = instances.filter(d => d[nextFeature.name] == catNext);
+      // const libRatioFilteredInstances = filteredInstances.filter(d => d.group === '1').length / numFilteredInstances;
 
-    catScales[cat] = yWithinCatScale;
+      instancesBtnCats.push({
+        catCurr: catCurr,
+        catNext: catNext,
+        // groupRatio: libRatioFilteredInstances,
+        numInstancesRatioInCurr: filteredInstances.length / instancesInCurr.length,
+        cumNumInstancesRatioInCurr: cumNumInstancesRatioInCurr[catCurr] / instancesInCurr.length,
+        cumNumInstancesRatioInNext: cumNumInstancesRatioInNext[catNext] / instancesInNext.length,
+        instancesInCurr: instancesInCurr,
+        instancesInCatToCat: filteredInstances
+      });
+
+      cumNumInstancesRatioInCurr[catCurr] += filteredInstances.length;
+      cumNumInstancesRatioInNext[catNext] += filteredInstances.length;
+    });
   });
 
-  return catScales;
+  dataForCatToCatLines = instancesBtnCats.map((d, i) => {
+    const widthForCurrCat = catScalesForCurr[d.catCurr].range()[1] - catScalesForCurr[d.catCurr].range()[0];
+    const lineWidth = widthForCurrCat * d.numInstancesRatioInCurr;
+    return {
+      catCurr: d.catCurr,
+      catNext: d.catNext,
+      // groupRatio: d.groupRatio,
+      // numInstancesRatio: d.numInstancesRatio,
+      numInstancesRatioInCurr: d.numInstancesRatioInCurr,
+      lineHeight: lineWidth,
+      heightForCat: widthForCurrCat,
+      instancesInCurr: d.instancesInCurr,
+      instancesInCatToCat: d.instancesInCatToCat,
+      source: {
+        x: catScalesForCurr[d.catCurr](d.cumNumInstancesRatioInCurr) + lineWidth / 2,
+        y: 0
+      },
+      target: {
+        x: catScalesForNext[d.catNext](d.cumNumInstancesRatioInNext) + lineWidth / 2,
+        y: 30
+      }
+    };
+  });
+
+  const drawTweetLine = d3
+    .linkVertical()
+    .x(d => d.x)
+    .y(d => d.y);
+
+  selection
+    .selectAll('.cat_lines')
+    .data(dataForCatToCatLines)
+    .enter()
+    .append('path')
+    .attr('class', d => 'cat_lines cat_line_' + d.catCurr + '_' + d.catNext)
+    .attr('d', drawTweetLine)
+    .style('fill', 'none')
+    .style('stroke', 'black')
+    //.style('stroke-width', d => d.lineHeight)
+    .style('stroke-width', d => d.lineHeight / 3)
+    .style('opacity', 0.5)
 }
 
 export const ll = {

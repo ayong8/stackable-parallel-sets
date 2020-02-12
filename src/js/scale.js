@@ -126,12 +126,78 @@ export const scales = {
   catWidthScale: catWidthScale
 };
 
+scales.calculateScalesForCats = function(rawData, feature, wholeWidth) { //feature
+  // Get scales for each category
+  // - get the height of each category
+  // - get the cumulative height for y position
+  const catsInFeature = feature.domain;
+  const instancesGrpByFeature = _.groupBy(feature.instances);
+  const catScales = {};
+
+  // Define the scales of categorical axis for heights
+  const catWidthScale = d3
+    .scaleLinear()
+    .domain([0, 1])
+    .range([0, wholeWidth]);
+
+  let cumulativeCatHeight = 0;
+  catsInFeature.forEach(cat => {
+    console.log('calculateScalesForCats: ', feature, instancesGrpByFeature, cat, instancesGrpByFeature[cat]);
+    const numInstancesInCat = instancesGrpByFeature[cat].length, 
+      numTweetRatioPerCat = numInstancesInCat / rawData.length,
+      catWidth = catWidthScale(numTweetRatioPerCat),
+      catStartY = cumulativeCatHeight,
+      catEndY = cumulativeCatHeight + catWidth;
+    cumulativeCatHeight += catWidth; // Reflect it for the next loop
+
+    const yWithinCatScale = d3
+      .scaleLinear()
+      .domain([0, 1])
+      .range([catStartY, catEndY]);
+
+    catScales[cat] = yWithinCatScale;
+  });
+
+  return catScales;
+}
+
+scales.calculateScalesForCls = function(rawData, cls, wholeWidth) { //feature
+  // Get scales for each category
+  // - get the height of each category
+  // - get the cumulative height for y position
+  const clScales = {};
+
+  // Define the scales of categorical axis for heights
+  const barWidthScale = d3
+    .scaleLinear()
+    .domain([0, 1])
+    .range([0, wholeWidth]);
+
+  let cumulativeCatWidth = 0;
+  cls.forEach((cl, clIdx) => {
+    const numTweetRatioPerCl = cl.length / rawData.length,
+      catWidth = barWidthScale(numTweetRatioPerCl),
+      clStartY = wholeWidth - cumulativeCatWidth,
+      clEndY = wholeWidth - (cumulativeCatWidth + catWidth);
+    cumulativeCatWidth += catWidth; // Reflect it for the next loop
+
+    const yWithinClScale = d3
+      .scaleLinear()
+      .domain([0, 1])
+      .range([clEndY, clStartY]);
+
+    clScales[clIdx] = yWithinClScale;
+  });
+
+  return clScales;
+}
+
 scales.addScaleToFeatures = function(rawData, features, wholeWidth) {
   features.forEach(function(feature) {
     feature.scale = d3.scaleOrdinal()
                     .domain([0, 1]);
 
-    feature.catScales = gLayout.calculateScalesForCats(rawData, feature, wholeWidth);
+    feature.catScales = scales.calculateScalesForCats(rawData, feature, wholeWidth);
   });
   
   return features;

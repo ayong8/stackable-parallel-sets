@@ -1,13 +1,13 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 
-import {gColors, l, llv, lbl, lbr, gLayout} from './layout';
+import {gColors, l, llv, lbl, lbr, lwbr, gLayout} from './layout';
 
 import "../css/index.css";
 
 function Bar() {
 	let idx;
-	let BRData = [];
+	let BRData = {};
 	let axis = {
 			right: null,
 			left: null
@@ -15,6 +15,7 @@ function Bar() {
 	console.log('this in Block: ', this);
 
 	function _bar(LV) {
+		const [ cls, clScales ] = BRData;
 		let gBR;
 
 		// If it is first or last, then only lower or upper bar set
@@ -29,12 +30,15 @@ function Bar() {
 			);
 
 		gBR
+			.selectAll('.bar_rect')
+			.data(cls).enter()
 			.append('rect')
 			.attr('class', 'bar_rect')
-			.attr('x', 0)
+			.attr('x', (cat, i) => clScales[i].range()[0] - i*lwbr.m.btn) // i*2 is cumulative margin
 			.attr('y', 0)
-			.attr('width', 20)
+			.attr('width', (cat, i) => clScales[i].range()[1] - clScales[i].range()[0])
 			.attr('height', 20)
+			.style("filter", "url(#drop-shadow)")
 	}
 	
 	_bar.id = function(clId) {

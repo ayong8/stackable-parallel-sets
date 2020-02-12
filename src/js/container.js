@@ -18,41 +18,24 @@ window.scales = scales;
 function Container() {
 	let data = [];  // data
 	let levels = [];
+
+
 	function _container(svg) {
-		const [ rawData, features ] = data;
+		const [ rawData, LVData, instances ] = data;
 
 		const gContainer1 = svg.append('g')
 			.attr('class', 'container1');
 
-		// Add the scale functions and organize the lv-wise data
-		const updatedFeatures = scales.addScaleToFeatures(rawData, features, llv.w); // 
-		const LVData = dataMapping.mapLevelToFeatures('cancer', updatedFeatures);
+		const LV = Level();
 
-		// Render the levels given clustering result
-		fetch('/dataset/hClusteringForAllLVs/', {
-			method: 'post',
-			body: JSON.stringify({
-				data: LVData
-			})
-		})
-		.then((response) => {
-			return response.json();
-		})
-		.then((response) => {
-			const clResults = response.cls;
-			const LV = Level();
-
-			LVData.forEach((LV, LVIdx) => {
-				LV['cls'].forEach((cls, clIdx) => {
-					cls.instances = clResults[LVIdx][clIdx]
-				}) 
-			})
-
-			gContainer1.call(
-				LV
-				.data(LVData)
-			);
-		});
+		gContainer1.call(
+			LV
+			.data([
+          rawData,
+          LVData,
+          instances
+        ])
+		);
 
 		// Render the edges between levels
 		const LVs = d3.selectAll('.g_level')
@@ -62,10 +45,43 @@ function Container() {
 				// pairwise edges 
 			});
 		});
-	}
 
+		// // Render the levels given clustering result
+		// fetch('/dataset/hClusteringForAllLVs/', {
+		// 	method: 'post',
+		// 	body: JSON.stringify({
+		// 		data: LVData
+		// 	})
+		// })
+		// .then((response) => {
+		// 	return response.json();
+		// })
+		// .then((response) => {
+		// 	const clResults = response;
+		// 	const LV = Level();
+
+		// 	console.log('clResults: ', clResults)
+		// 	LVData.forEach((lvData, LVIdx) => {
+		// 		const cls = lvData.cls;
+		// 		clResults[LVIdx].forEach((cl, clIdx) => {
+		// 			cls[clIdx].instances = cl;
+		// 		})
+		// 		lvData.clScales = scales.calculateScalesForCls(rawData, cls, llv.w);
+		// 	})
+
+			
+		// });
+
+		// // Render the edges between levels
+		// const LVs = d3.selectAll('.g_level')
+		// LVs.each(function(LVData, LVId) {
+		// 	const LV = d3.select(this);
+		// 	LVData.cls.forEach(function(CLData, CLId) {
+		// 		// pairwise edges 
+		// 	});
+		// });
+	}
 	
-	// Data
 	_container.data = function(dataset) {
 		if (!arguments.length) return data;
 		data = dataset;

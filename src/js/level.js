@@ -10,13 +10,15 @@ function Level(selection) { // User-defined sementic category
 	let data = [];
 
 	function _level(selection) {
+		const [ rawData, LVData, instances ] = data;
+
 		let gLVs;
 
 		console.log('llv: ', llv);
 		
 		gLVs = selection
 			.selectAll('.level_rect')
-			.data(data).enter()
+			.data(LVData).enter()
 			.append('g')
 			.attr('class', 'g_level')
 			.attr('transform', (d, i) => 'translate(0,' + llv.getT(i) + ')')
@@ -77,21 +79,30 @@ function Level(selection) { // User-defined sementic category
 
 			LV.call(
 				bar
-				.data(LVData.cls)
+				.data([
+					LVData.cls,
+					LVData.clScales
+				])
 			);
 
 			// Render the edges between blocks
-			// const BLs = d3.selectAll('.g_block');
-			// BLs.forEach(function(BL, BLId) {
+			const BLs = d3.selectAll('.g_block');
+			BLs.each(function(BLData, BLId) {
+				if (BLId < BLs.nodes().length-1){
+					const gBtnBls = LV.append('g')
+					.attr('class', 'g_btn_bls')
+					.attr('transform', 'translate(0,' + 40*(BLId+1) + ')');
 
-			// });
+					gLayout.renderCatToCatLines(gBtnBls, instances, BLData, BLs.data()[BLId+1], llv.w);
+				}
+			});
 		});
 	}
 
 	_level.id = function(lvId) {
 		if (!arguments.length) return lvId;
 		id = lvId;
-		return _block;
+		return _level;
 	}
 
 	_level.data = function(dataset) {

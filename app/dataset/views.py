@@ -87,12 +87,12 @@ dataset_features = {
 
 n_cls = 4
 
-def hClustering(data):
+def hClustering(X):
     # dist_mat = euclidean_distances(data)
     # dhcl_model = cl.DivisiveClustering(dist_mat)
     # dhcl.fit()
-    X = euclidean_distances(data)
-    cl_fit = AgglomerativeClustering(n_clusters=n_cls).fit(X)
+    #dist_mat = euclidean_distances(X, X)
+    cl_fit = AgglomerativeClustering(n_clusters=n_cls, affinity='euclidean').fit(X)
 
     return cl_fit.labels_, cl_fit.n_clusters_
 
@@ -113,21 +113,24 @@ class LoadData(APIView):
         #     tweet_json.update({ 'tweet_id': tweet['pk'] })
         #     tweets_json.append(tweet_json)
 
+        df_instances = pd.DataFrame()
         for feature_obj in selected_dataset_features:
+            feature_name = feature_obj['name']
             feature_type = feature_obj['type']
-            feature_obj['instances'] = list(df_dataset[feature_obj['name']])
+            feature_instances = list(df_dataset[feature_name])
             if feature_type == 'continuous':
-                instances_for_cont = list(df_dataset[feature_obj['name']])
-                instances_np = np.array(list(zip(range(len(instances_for_cont)), instances_for_cont)))
-                print('instances_for_cont: ', instances_np)
-                instances_for_cat, _ = hClustering(instances_np) # Do clustering, and output the cluster labels
-                feature_obj['instances'] = instances_for_cat
+                # instances_np = np.array(list(zip(range(len(feature_instances)), instances_for_cont)))
+                feature_instances, _ = hClustering(np.array(feature_instances).reshape(-1,1)) # Do clustering, and output the cluster labels
+                print('feature - clustering done: ', feature_name)
+                feature_obj['instances'] = feature_instances
                 feature_obj['domain'] = list(range(n_cls))
 
-        print(selected_dataset_features)
+            df_instances[feature_name] = feature_instances
+
         return Response({ 
             'dataset': df_dataset.to_json(orient='records'),
-            'features': selected_dataset_features
+            'features': selected_dataset_features,
+            'instances': df_instances.to_json(orient='records')
         })
 
 class HClustering(APIView):
@@ -158,7 +161,6 @@ class HClusteringForAllLVs(APIView):
         # Clustering for levels
         lv_cl_list_dict = {}
         for idx, lv in enumerate(lv_data):
-            print('lv data: ', lv)
             df_instances_for_lv = pd.DataFrame({ feature['name']:feature['instances'] for feature in lv['features'] })
 
             cl_labels_np, n_cls = hClustering(df_instances_for_lv.values)
@@ -168,12 +170,10 @@ class HClusteringForAllLVs(APIView):
             for cl_idx in range(n_cls):
                 instances_idx_for_cl = np.where(cl_labels_np == cl_idx)
                 instances_for_cl = df_instances_for_lv.loc[instances_idx_for_cl]
-                print('instances_for_cl: ', instances_for_cl)
-                cl_list.append({
-                    'instances': instances_for_cl.values
-                })
+                cl_list.append(instances_for_cl.values)
             lv_cl_list_dict[idx] = cl_list
 
         return Response({
-            'cls': lv_cl_list_dict
+            'LVData': lv_data,
+            'clResult': lv_cl_list_dict
         })

@@ -80,6 +80,7 @@ function Block() {
 		end -- For shadow
 		*/ 
 
+		// Render rectangles
 		gBLs.each(function(BLData) {
 			const gBL = d3.select(this);
 			const cats = BLData.domain,
@@ -91,9 +92,9 @@ function Block() {
 				.data(cats).enter()
 				.append('rect')
 				.attr('class', 'cat_rect')
-				.attr('x', (cat, i) => catScales[cat].range()[0] - i*lwbr.m.btn) // i*2 is cumulative margin
+				.attr('x', (cat, i) => catScales[cat].range()[0]) 
 				.attr('y', 0)
-				.attr('width', (cat) => catScales[cat].range()[1] - catScales[cat].range()[0])
+				.attr('width', (cat, i) => catScales[cat].range()[1] - catScales[cat].range()[0] - lwbr.m.btn) // i*2 is cumulative margin
 				.attr('height', 20)
 				.style("filter", "url(#drop-shadow)")
 		})

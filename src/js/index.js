@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import skmeans from 'skmeans';
 import { globalScales, scales } from './scale';
 import { gLayout, l, ll, lCom } from './layout';
+import {dataMapping} from './dataMapping';
 import {
   renderClBars,
   renderClRectsBtnLv,
@@ -231,8 +232,9 @@ function clusterBy(tweets, feature) {
 
 // For new codes
 console.log('demoData: ', demoData);
+let LVData = [];
 
-fetch('/dataset/loadData', {
+fetch('/dataset/loadData/', {
   method: 'get'
 })
 .then((response) => {
@@ -241,23 +243,54 @@ fetch('/dataset/loadData', {
 .then((response) => {
   console.log('response in fetch index.js: ', response);
   const rawData = JSON.parse(response.dataset),
-        features = response.features;
+        features = response.features,
+        instances = JSON.parse(response.instances);
 
-  // userid,tweet,relationship,iq,gender,age,political,optimism,children,religion,race,income,education,life_satisfaction
-  const svg2 = container
-    .append('svg')
-    .attr('width', l.w)
-    .attr('height', l.h)
-    .attr('class', 'svg2');
-  const container1 = Container();
+  console.log('features: ', features);
+  // Add the scale functions and organize the lv-wise data
+  const updatedFeatures = scales.addScaleToFeatures(rawData, features, llv.w);
+  LVData = dataMapping.mapLevelToFeatures('cancer', updatedFeatures);
+  
+  // Render the levels given clustering result
+  return fetch('/dataset/hClusteringForAllLVs/', {
+    method: 'post',
+    body: JSON.stringify({
+      data: LVData
+    })
+  }).then((response) => {
+    return response.json();
+  }).then((response) => {
+    const clResult = response.clResult;
 
-  svg2.call(
-    container1
-      .data([
-        rawData, 
-        features
-      ])
-  );
+    console.log('clResults: ', clResult)
+    LVData.forEach((lvData, LVIdx) => {
+      let cls = lvData.cls;
+      console.log('cls: ', cls);
+      clResult[LVIdx].forEach((cl, clIdx) => {
+        cls.push(cl);
+      })
+      lvData.clScales = scales.calculateScalesForCls(rawData, cls, llv.w);
+    });
+      
+    // userid,tweet,relationship,iq,gender,age,political,optimism,children,religion,race,income,education,life_satisfaction
+    const svg2 = container
+      .append('svg')
+      .attr('width', l.w)
+      .attr('height', l.h)
+      .attr('class', 'svg2');
+    const container1 = Container();
+
+    svg2.call(
+      container1
+        .data([
+          rawData,
+          LVData,
+          instances
+        ])
+    );
+  });
+
+  
 });
 
 
