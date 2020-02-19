@@ -184,25 +184,31 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
       // map features to levels
       return [
         { 
-          id: 1, 
+          idx: 0, 
           name: 'environmental',
+          mode: 'unfold',
+          order: 'first',
           features: [
             _.find(features, ['name', 'Air Pollution']),
             _.find(features, ['name', 'Occupational Hazards'])
           ],
           cls: [],
-          clScales: []
+          clScales: [],
+          blScale: d3.scalePoint()
         },
         { 
-          id: 2, 
+          idx: 1, 
           name: 'symptom',
+          mode: 'unfold',
+          order: 'last',
           features: [
             _.find(features, ['name', 'Chest Pain']),
             _.find(features, ['name', 'Fatigue']),
             _.find(features, ['name', 'Dry Cough']),
           ],
-          cls: [],
-          clScales: []
+          cls: [], // [ { clIdx: 0, instances: [ { idx: 0, Air Pollution: 1, ... } ], subcls: {} }, ... ]
+          clScales: [],
+          blScale: d3.scalePoint()
         }
       ];
   }

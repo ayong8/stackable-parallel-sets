@@ -4,8 +4,11 @@ from rest_framework.response import Response
 import pandas as pd
 import numpy as np
 import json
+
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.cluster import AgglomerativeClustering
+from pyclustering.cluster.kmedoids import kmedoids
+from pyclustering.utils import calculate_distance_matrix
 
 # import ..static.lib.clustering.divisive_clustering as cl
 # from ..static.lib.clustering.load_dist_matrix import read_data, load_dist_matrix
@@ -96,10 +99,25 @@ def hClustering(X):
 
     return cl_fit.labels_, cl_fit.n_clusters_
 
+# Input: Dataset itself
+def kmdeoidsClustering(X, k):
+    initial_medoids_idx = [1, 100, 130, 170] # random.sample(range(len(X)), 4)
+    dist_mat = calculate_distance_matrix(X)
+    kmedoids_instance = kmedoids(dist_mat, initial_medoids_idx, data_type='distance_matrix')
+    kmedoids_instance.process()
+    
+    # Store clusters and prototypes
+    cls_idx_list = kmedoids_instance.get_clusters() # [[1,3,100], [2,56,90], ...]
+    protos_idx_list = kmedoids_instance.get_medoids()
+
+    return cls_idx_list, protos_idx_list
+
+
 class LoadData(APIView):
     def get(self, request, format=None):
         dataset_abbr = 'cancer'
-        file_name = './app/static/data/' + dataset_abbr + '.csv'
+        file_name = './app/static/data/' + dataset_abbr + '_simple.csv'
+        print('file name: ', file_name)
         df_dataset = pd.read_csv(file_name)
         selected_dataset_features = dataset_features[dataset_abbr]
 
@@ -114,6 +132,7 @@ class LoadData(APIView):
         #     tweets_json.append(tweet_json)
 
         df_instances = pd.DataFrame()
+        df_instances['idx'] = list(df_dataset.index)
         for feature_obj in selected_dataset_features:
             feature_name = feature_obj['name']
             feature_type = feature_obj['type']
@@ -121,7 +140,6 @@ class LoadData(APIView):
             if feature_type == 'continuous':
                 # instances_np = np.array(list(zip(range(len(feature_instances)), instances_for_cont)))
                 feature_instances, _ = hClustering(np.array(feature_instances).reshape(-1,1)) # Do clustering, and output the cluster labels
-                print('feature - clustering done: ', feature_name)
                 feature_obj['instances'] = feature_instances
                 feature_obj['domain'] = list(range(n_cls))
 
@@ -164,13 +182,25 @@ class HClusteringForAllLVs(APIView):
             df_instances_for_lv = pd.DataFrame({ feature['name']:feature['instances'] for feature in lv['features'] })
 
             cl_labels_np, n_cls = hClustering(df_instances_for_lv.values)
+            num_cls = 4
+            cls_idx_list, protos_idx_list = kmdeoidsClustering(df_instances_for_lv.values, num_cls)
             # print('cl_labels: ', cl_labels_np)
             # Organize the cluster information to export
             cl_list = []
             for cl_idx in range(n_cls):
-                instances_idx_for_cl = np.where(cl_labels_np == cl_idx)
+                df_instances_for_lv['idx'] = list(df_instances_for_lv.index) # Add index as explicit column
+
+                instances_idx_for_cl = cls_idx_list[cl_idx]
+                prototypes_idx_for_cl = protos_idx_list[cl_idx]
                 instances_for_cl = df_instances_for_lv.loc[instances_idx_for_cl]
-                cl_list.append(instances_for_cl.values)
+                prototypes_for_cl = df_instances_for_lv.loc[prototypes_idx_for_cl]
+                print('prototypes_idx_for_cl: ', prototypes_idx_for_cl)
+                print('prototypes_for_cl: ', prototypes_for_cl)
+                cl_list.append({
+                    'idx': cl_idx,
+                    'instances': instances_for_cl.to_dict('records'),
+                    'prototype': prototypes_for_cl.to_dict()
+                })
             lv_cl_list_dict[idx] = cl_list
 
         return Response({

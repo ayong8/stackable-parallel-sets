@@ -45,6 +45,7 @@ matplotlib = "*"
 scipy = "*"
 line-profiler = "*"
 sklearn = "*"
+pyclustering = "*"
 
 [requires]
 python_version = "3.7"

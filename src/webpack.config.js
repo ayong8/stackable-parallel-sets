@@ -11,7 +11,7 @@ var dir_build = path.resolve(__dirname, 'build');
 var dir_css = path.resolve(__dirname, 'css');
 
 module.exports = {
-  entry: [path.resolve(dir_js, 'dataMapping.js'), path.resolve(dir_js, 'index.js')],
+  entry: [path.resolve(dir_js, 'dataMapping.js'), path.resolve(dir_js, 'index.js'), 'babel-polyfill'],
   output: {
     path: dir_build,
     filename: 'bundle.js'

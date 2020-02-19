@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { gLayout, gColors, l, ll, lbl, llv, lCom} from './layout';
+import { gLayout, gColors, l, ll, lbl, llv, lbr, lCom} from './layout';
 
 const data = require('./dataMapping');
 const {
@@ -104,6 +104,7 @@ export const globalScales = {
 };
 
 // For new
+
 const catWidthScale = d3
     .scaleLinear()
     .domain([0, 2000]) // size of whole instances
@@ -123,8 +124,26 @@ export const scales = {
   yOutputProbHistScale: yOutputProbHistScale,
   xWordScale: xWordScale,
   // For new
-  catWidthScale: catWidthScale
+  catWidthScale: catWidthScale,
+  yLvsScale: d3.scalePoint()
 };
+
+scales.calculateYLevelScale = function(LVData) {
+  const numLevels = LVData.length;
+
+  this.yLvsScale = d3.scaleBand()
+    .domain(d3.range(numLevels))
+    .range([l.sm+l.sm, l.h - (l.sm+l.sm)]);
+}
+
+scales.calculateYBlockScale = function(lvData) {
+  const mainRegionHeightInLV = (llv.h),
+      numFeatures = lvData.features.length;
+
+  return d3.scalePoint()
+    .domain(d3.range(numFeatures))
+    .range([llv.m.t+llv.m.b, mainRegionHeightInLV - (llv.m.t+llv.m.b+lbl.s)]);
+}
 
 scales.calculateScalesForCats = function(rawData, feature, wholeWidth) { //feature
   // Get scales for each category
@@ -138,21 +157,26 @@ scales.calculateScalesForCats = function(rawData, feature, wholeWidth) { //featu
   const catWidthScale = d3
     .scaleLinear()
     .domain([0, 1])
-    .range([0, wholeWidth]);
+    .range([60, wholeWidth]);
 
-  let cumulativeCatHeight = 0;
-  catsInFeature.forEach(cat => {
+  let cumulativeCatWidth = 0;
+  const widthDecayingRatio = 0.65;
+  const sumCatWidths = catWidthScale(1) * widthDecayingRatio; // ratio==1; all instances
+  lbl.m.btn = (wholeWidth - sumCatWidths) / (catsInFeature.length-1) // btnInterval
+  catsInFeature.forEach((cat, i) => {
     console.log('calculateScalesForCats: ', feature, instancesGrpByFeature, cat, instancesGrpByFeature[cat]);
     const numInstancesInCat = instancesGrpByFeature[cat].length, 
       numTweetRatioPerCat = numInstancesInCat / rawData.length,
-      catWidth = catWidthScale(numTweetRatioPerCat),
-      catStartY = cumulativeCatHeight,
-      catEndY = cumulativeCatHeight + catWidth;
-    cumulativeCatHeight += catWidth; // Reflect it for the next loop
+      catWidth = catWidthScale(numTweetRatioPerCat) * widthDecayingRatio,
+      catEndY = cumulativeCatWidth + catWidth;
+    let catStartY = 0;
+    if (i==0) catStartY = lbl.m.btn + cumulativeCatWidth;
+    else catStartY = cumulativeCatWidth + lbl.m.btn;
+    cumulativeCatWidth += catWidth; // Reflect it for the next loop
 
     const yWithinCatScale = d3
       .scaleLinear()
-      .domain([0, 1])
+      .domain([0, 1]) 
       .range([catStartY, catEndY]);
 
     catScales[cat] = yWithinCatScale;
@@ -171,20 +195,25 @@ scales.calculateScalesForCls = function(rawData, cls, wholeWidth) { //feature
   const barWidthScale = d3
     .scaleLinear()
     .domain([0, 1])
-    .range([0, wholeWidth]);
+    .range([50, wholeWidth]);
 
-  let cumulativeCatWidth = 0;
+  let cumulativeClWidth = 0;
+  const widthDecayingRatio = 0.7;
+  const sumClWidths = barWidthScale(1) * widthDecayingRatio; // ratio==1; all instances
+  lbr.m.btn = (wholeWidth - sumClWidths) / (cls.length-1) // btnInterval
   cls.forEach((cl, clIdx) => {
-    const numTweetRatioPerCl = cl.length / rawData.length,
-      catWidth = barWidthScale(numTweetRatioPerCl),
-      clStartY = wholeWidth - cumulativeCatWidth,
-      clEndY = wholeWidth - (cumulativeCatWidth + catWidth);
-    cumulativeCatWidth += catWidth; // Reflect it for the next loop
+    const numTweetRatioPerCl = cl.instances.length / rawData.length,
+      clWidth = barWidthScale(numTweetRatioPerCl) * widthDecayingRatio,
+      clEndY = cumulativeClWidth + clWidth;
+    let clStartY = 0;
+    if (clIdx==0) clStartY = lbl.m.btn + cumulativeClWidth;
+    else clStartY = cumulativeClWidth + lbr.m.btn;
+    cumulativeClWidth += clWidth; // Reflect it for the next loop
 
     const yWithinClScale = d3
       .scaleLinear()
       .domain([0, 1])
-      .range([clEndY, clStartY]);
+      .range([clStartY, clEndY]);
 
     clScales[clIdx] = yWithinClScale;
   });

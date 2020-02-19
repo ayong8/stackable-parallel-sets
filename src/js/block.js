@@ -24,6 +24,7 @@ function Block() {
 
 	function _block(LV) {
 		let gBLs;
+		const lvData = LV.data()[0];
 		const numFeatures = BLData.length;
 
 		gBLs = LV
@@ -31,14 +32,33 @@ function Block() {
 			.data(BLData).enter()
 			.append('g')
 			.attr('class', 'g_block')
-			.attr('transform', (d, i) => {
+			.attr('transform', (blData, blIdx) => {
 				return 'translate(' + 
 					gLayout.getElLayout(LV).x1 + 
 					',' + 
-					lbl.getY(gLayout.getElLayout(LV), numFeatures, i) +
+					lvData.blScale(blIdx) +
 					')';
 			});	// each block: x - (llv.m.wtn.l) and y - (llv.h / numFeatures) 
 
+		// Render the lengthy bar that indicates the width of block
+		gBLs
+			.append('rect')
+			.attr('class', 'block_rect')
+			.attr('x', llv.m.l/2)
+			.attr('y', (d, i) => {
+				if (i==0) return 0
+				else if (i==numFeatures-1) return lwbr.h/2
+				else return lwbr.h/4
+			})
+			.attr('width', llv.w - (llv.m.l + llv.m.r))
+			.attr('height', lwbr.h/2);
+
+		gBLs
+			.append('text')
+			.attr('class', 'block_label')
+			.attr('x', 0)
+			.attr('y', 0)
+			.text((d, i) => d.name)
 		/*  
 		start -- For shadow
 		*/ 
@@ -94,9 +114,8 @@ function Block() {
 				.attr('class', 'cat_rect')
 				.attr('x', (cat, i) => catScales[cat].range()[0]) 
 				.attr('y', 0)
-				.attr('width', (cat, i) => catScales[cat].range()[1] - catScales[cat].range()[0] - lwbr.m.btn) // i*2 is cumulative margin
-				.attr('height', 20)
-				.style("filter", "url(#drop-shadow)")
+				.attr('width', (cat, i) => (catScales[cat].range()[1] - catScales[cat].range()[0])) // i*2 is cumulative margin
+				.attr('height', lwbr.h);
 		})
 		// const gBLl = gLayout.getElLayout(gBLs);
 
@@ -135,23 +154,11 @@ function Block() {
 		//   return 'translate(' + xFeatureScale(d.key) + ',' + 0 + ')';
 		// });
 	}	
-	
-	_block.id = function(featureId) {
-		if (!arguments.length) return featureId;
-		idx = featureId;
-		return _block;
-	}
 
 	_block.data = function(dataset) {
 		if (!arguments.length) return BLData;
 		BLData = dataset;
 		return _block;
-	}
-
-	
-
-	_block.removeAxis = function(direction, scale) {
-
 	}
 
 	return _block;
