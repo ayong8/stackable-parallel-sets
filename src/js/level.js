@@ -33,9 +33,35 @@ function Level(selection) { // User-defined sementic category
 		gLVData
 			.transition()
 			.attr('transform', function(lvData, lvIdx) {
+				const gLV = d3.select(this);
+				
 				if (lvData.mode == 'unfold')
 					return 'translate(' + l.wForLabel + ',' + scales.yLvsScale(lvIdx) + ')'
 				else if (lvData.mode == 'fold') {
+					gLV.selectAll('*').remove();
+					gLV
+						.append('line')
+						.attr('class', 'level_bar level_bar_top')
+						.attr('x1', 0)
+						.attr('y1', -5)
+						.attr('x2', llv.w)
+						.attr('y2', -5);
+
+					gLV
+						.append('line')
+						.attr('class', 'level_bar level_bar_bottom')
+						.attr('x1', 0)
+						.attr('y1', 5)
+						.attr('x2', llv.w)
+						.attr('y2', 5);
+
+					const heightForMovingUp = llv.h;
+					const otherGLVs = d3.selectAll('.g_level')
+								.filter((d) => {
+									// only g_level elements below the selected level are moved up
+									return d.idx > lvIdx 
+								});
+					console.log('otherGLVs: ', otherGLVs)
 					return 'translate(' + l.wForLabel + ',' + 10 + ')'
 				}
 			});
@@ -109,7 +135,7 @@ function Level(selection) { // User-defined sementic category
 						.attr('class', 'g_btn_bls')
 						.attr('transform', 'translate(0,' + (lvData.blScale(blId)+lwbr.h) + ')');
 					console.log('gBtnBLs transform: ', gBtnBLs.attr('transform'))
-					gLayout.renderCatToCatLines(gBtnBLs, instances, lvData, blData, BLs.data()[blId+1], blId+1, llv.w);
+					gLayout.renderCatToCatLines(gBtnBLs, lvData, blData, BLs.data()[blId+1], blId+1, llv.w);
 				}	
 			});
 		});

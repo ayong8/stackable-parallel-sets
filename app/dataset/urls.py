@@ -17,4 +17,9 @@ urlpatterns = [
         view=views.HClusteringForAllLVs.as_view(),
         name='h_clustering_for_all_lvs'
     ),
+    url(
+        regex=r'^optimizeEdges/$',
+        view=views.OptimizeEdges.as_view(),
+        name='optimize_edges'
+    ),
 ]

@@ -101,21 +101,37 @@ function Block() {
 		*/ 
 
 		// Render rectangles
-		gBLs.each(function(BLData) {
+		gBLs.each(function(BLData, BLIdx) {
 			const gBL = d3.select(this);
 			const cats = BLData.domain,
+						sortedCatsIdx = BLData.sortedIdx,
 						featureValues = BLData.instances,
 						catScales = BLData.catScales;
+			let catRects, catLabels;
 
-			gBL
+			catRects = gBL
 				.selectAll('.cat_rect')
-				.data(cats).enter()
+				.data(sortedCatsIdx).enter()
 				.append('rect')
-				.attr('class', 'cat_rect')
-				.attr('x', (cat, i) => catScales[cat].range()[0]) 
+				.attr('class', (cat, i) => 'cat_rect cat_rect_' + BLData.id + '_' + cat)
+				.attr('x', (cat, i) => catScales[i].range()[0]) 
 				.attr('y', 0)
-				.attr('width', (cat, i) => (catScales[cat].range()[1] - catScales[cat].range()[0])) // i*2 is cumulative margin
+				.attr('width', (cat, i) => (catScales[i].range()[1] - catScales[i].range()[0])) // i*2 is cumulative margin
 				.attr('height', lwbr.h);
+
+			catLabels = gBL
+				.selectAll('.cat_label')
+				.data(sortedCatsIdx).enter()
+				.append('text')
+				.attr('class', 'cat_label')
+				.attr('x', (cat, i) => catScales[i].range()[0])
+				.attr('y', (d, i) => {
+					const extraYForText = 5;
+					if (BLIdx==0) return lwbr.h
+					else if (BLIdx==numFeatures-1) return lwbr.h/2
+					else return lwbr.h * 2/3
+				})
+				.text((cat, i) => cat);
 		})
 		// const gBLl = gLayout.getElLayout(gBLs);
 
@@ -123,7 +139,6 @@ function Block() {
 		// 		.domain([0, 1])
 		// 		.range([gBLl.y1, gBLl.y2]);
 		
-		console.log('layout in _block: ', );
 		// gLayout.addAxis(gBLs, idx, 'right', sampleScale);
 		// renderAuxAxisForCats...
 

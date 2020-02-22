@@ -206,13 +206,16 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             _.find(features, ['name', 'Fatigue']),
             _.find(features, ['name', 'Dry Cough']),
           ],
-          cls: [], // [ { clIdx: 0, instances: [ { idx: 0, Air Pollution: 1, ... } ], subcls: {} }, ... ]
+          cls: [], // [ { idx: 0, sortedIdx: 0, instances: [ { idx: 0, Air Pollution: 1, ... } ], subcls: {} }, ... ]
           clScales: [],
           blScale: d3.scalePoint()
         }
       ];
   }
-  
+}
 
-
+dataMapping.convertStrToUnderbar = function(str) {
+  // e.g., 'Air Pollution' to 'air_pollution'
+  const strLower = str.toLowerCase()
+  return strLower.split(' ').join('_')
 }

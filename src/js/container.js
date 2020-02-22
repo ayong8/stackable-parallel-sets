@@ -17,6 +17,7 @@ window.llv = llv
 window.lbl = lbl;
 window.lwbr = lwbr;
 window.scales = scales;
+window.dataMapping = dataMapping;
 
 function Container() {
 	let data = [];  // data
@@ -92,7 +93,11 @@ function Container() {
 			if (gBRSetClass.indexOf('g_bars_lower') != -1) {
 				const gBtnLVs = gContainer.append('g')
 						.attr('class', 'g_btn_lvs')
-						.attr('transform', 'translate(' + l.wForLabel + ',' + (scales.yLvsScale(brId)+llv.h+lbr.h) + ')');
+						.attr('transform', 'translate(' + 
+							l.wForLabel + 
+							',' + 
+							gLayout.getGlobalElLayout(gBRSet).y2 + 
+							')');
 				console.log('redundant: ', brData, BRs.data());
 				gLayout.renderClToClLines(gBtnLVs, BRs, instances, brData, BRs.data()[brId+1], brId, llv.w)
 			}

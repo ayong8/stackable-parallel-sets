@@ -248,8 +248,8 @@ fetch('/dataset/loadData/', {
 
   console.log('features: ', features);
   // Add the scale functions and organize the lv-wise data
-  const updatedFeatures = scales.addScaleToFeatures(rawData, features, llv.w);
-  LVData = dataMapping.mapLevelToFeatures('cancer', updatedFeatures);
+  
+  LVData = dataMapping.mapLevelToFeatures('cancer', features);
   
   // Render the levels given clustering result
   return fetch('/dataset/hClusteringForAllLVs/', {
@@ -260,16 +260,20 @@ fetch('/dataset/loadData/', {
   }).then((response) => {
     return response.json();
   }).then((response) => {
-    const clResult = response.clResult;
+    const clResult = response.clResult,
+      sortedCatsIdxForLvs = response.sortedCatsIdxForLvs;
 
     console.log('clResults: ', clResult)
-    LVData.forEach((lvData, LVIdx) => {
-      let cls = lvData.cls;
-      console.log('cls: ', cls);
-      clResult[LVIdx].forEach((cl, clIdx) => {
-        cls.push(cl);
+    LVData.forEach((lvData, lvIdx) => {
+      const sortedCls = _.sortBy(clResult[lvIdx], ['sortedIdx']);
+      lvData.cls = sortedCls;
+      lvData.clScales = scales.calculateScalesForCls(rawData, sortedCls, llv.w);
+      lvData.features.forEach((feature, featureIdx) => {
+        feature.sortedIdx = sortedCatsIdxForLvs[lvIdx][featureIdx];
+        const { scale, catScales } = scales.addScaleToFeature(rawData, feature, llv.w);
+        feature.scale = scale;
+        feature.catScales = catScales;
       })
-      lvData.clScales = scales.calculateScalesForCls(rawData, cls, llv.w);
     });
       
     // userid,tweet,relationship,iq,gender,age,political,optimism,children,religion,race,income,education,life_satisfaction

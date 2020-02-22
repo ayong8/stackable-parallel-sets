@@ -46,7 +46,12 @@ svg {
 }
 .level_bar {
   stroke: var(--bar-fill);
-  stroke-width: 5;
+  stroke-width: 10;
+}
+
+.level_label {
+  font-weight: bold;
+  font-style: italic;
 }
 
 /* Block */
@@ -55,6 +60,13 @@ svg {
   stroke: var(--block-fill);
 }
 
+.block_label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  font-style: italic;
+}
+
+/* Within-level bar/cat */
 .cat_rect {
   fill: var(--block-fill);
   stroke: var(--block-fill);
@@ -62,8 +74,9 @@ svg {
   /* filter: url(#drop-shadow); */
 }
 
-.block_label {
-  font-size: 0.8rem;
+.cat_label {
+  fill: gray;
+  font-size: 0.7rem;
   font-weight: bold;
   font-style: italic;
 }
@@ -72,6 +85,13 @@ svg {
   fill: var(--bar-fill);
   stroke: var(--bar-fill);
   fill-opacity: 0.5;
+}
+
+.cl_label {
+  fill: gray;
+  font-size: 0.7rem;
+  font-weight: bold;
+  font-style: italic;
 }
 
 .cat_lines {
@@ -83,5 +103,13 @@ svg {
 
 .proto_circle {
   fill: gray;
+  filter: url(#drop-shadow);
+}
+
+.proto_path {
+  stroke: slategray;
+  stroke-width: 2;
+  stroke-dasharray: 4, 1;
+  fill: none;
   filter: url(#drop-shadow);
 }

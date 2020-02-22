@@ -42,11 +42,14 @@ export const llv = {
     b: 5,
     l: 10,
     r: 10
+  },
+  p: {
+    b: 30
   }
 }
 
 export const lBtn = {
-  h: llv.h * 0.8
+  h: llv.h
 }
 
 export const lbl = {
@@ -127,15 +130,15 @@ gLayout.getElLayout = function(el) {
 }
 
 gLayout.getGlobalElLayout = function(el) {
-  const parentEl = el.node().parentNode;
+  const containerEl = d3.select('.container').node();
   const l = el.node().getBoundingClientRect(),
-        pl = parentEl.getBoundingClientRect();
+        container = containerEl.getBoundingClientRect();
   
   return {
     x1: l.x,
     x2: l.x + l.width,
-    y1: l.top - pl.top,
-    y2: l.top - pl.top + l.height,
+    y1: l.top - container.top,
+    y2: l.top - container.top + l.height,
     width: l.width,
     height: l.height
   }
@@ -192,16 +195,18 @@ gLayout.renderCatBars = function(instances, catFeature, catScales, direction) { 
     .style('stroke-width', 2);
 }
 
-gLayout.renderCatToCatLines = function(selection, instances, lvData, currFeature, nextFeature, nextFeatureIdx, wholeWidth) {
-  console.log('currFeature: ', currFeature, currFeature);
+gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeature, nextFeatureIdx, wholeWidth) {
   const catsInCurrFeature = currFeature.domain,
-    catsInNextFeature = nextFeature.domain;
+      catsInNextFeature = nextFeature.domain;
+  const sortedCatsInCurrFeature = currFeature.sortedIdx,
+      sortedCatsInNextFeature = nextFeature.sortedIdx;
 
-  const catScalesForCurr = scales.calculateScalesForCats(instances, currFeature, wholeWidth);
-  const catScalesForNext = scales.calculateScalesForCats(instances, nextFeature, wholeWidth);
+  const catScalesForCurr = scales.calculateScalesForCats(currFeature, wholeWidth);
+  const catScalesForNext = scales.calculateScalesForCats(nextFeature, wholeWidth);
 
   // { catInCurr: 0, catInNext: 0, catIdxInCurr: 0, catIdxInNext: 0, numInstances: 50 }
   let instancesBtnCats = [];
+  let sortedCurrNodesIdx, sortedNextNodesIdx, edgesWithOutlierInfo;  // For fetching results
   let dataForCatToCatLines = [];
   let cumNumInstancesRatioInCurr = {},
     cumNumInstancesRatioInNext = {};
@@ -212,67 +217,105 @@ gLayout.renderCatToCatLines = function(selection, instances, lvData, currFeature
     cumNumInstancesRatioInNext[cat] = 0;
   }
 
-  catsInCurrFeature.forEach(catCurr => {
-    catsInNextFeature.forEach(catNext => {
-      const filteredInstances = instances.filter(d => d[currFeature.name] == catCurr && d[nextFeature.name] == catNext);
-      const instancesInCurr = instances.filter(d => d[currFeature.name] == catCurr),
-            instancesInNext = instances.filter(d => d[nextFeature.name] == catNext);
-      // const libRatioFilteredInstances = filteredInstances.filter(d => d.group === '1').length / numFilteredInstances;
+  fetchForOptimizingEdges();  
 
-      instancesBtnCats.push({
-        catCurr: catCurr,
-        catNext: catNext,
-        // groupRatio: libRatioFilteredInstances,
-        numInstancesRatioInCurr: filteredInstances.length / instancesInCurr.length,
-        cumNumInstancesRatioInCurr: cumNumInstancesRatioInCurr[catCurr] / instancesInCurr.length,
-        cumNumInstancesRatioInNext: cumNumInstancesRatioInNext[catNext] / instancesInNext.length,
-        instancesInCurr: instancesInCurr,
-        instancesInCatToCat: filteredInstances
-      });
-
-      cumNumInstancesRatioInCurr[catCurr] += filteredInstances.length;
-      cumNumInstancesRatioInNext[catNext] += filteredInstances.length;
+  // Detect outliers here
+  async function fetchForOptimizingEdges (){
+    const response = await fetch('/dataset/optimizeEdges/', {
+      method: 'post',
+      body: JSON.stringify({
+        currNodes: currFeature.instances,
+        nextNodes: nextFeature.instances
+      })
+    })
+    .then((response) => response.json())
+    .then((response) => {
+      sortedCurrNodesIdx = response.sortedCurrNodes;
+      sortedNextNodesIdx = response.sortedNextNodes;
+      edgesWithOutlierInfo = response.edgesWithOutlierInfo;
+      
+      prepareCatData(sortedCatsInCurrFeature, sortedCatsInNextFeature);
+      renderCatToCatLines(instancesBtnCats, lvData);
     });
-  });
+  }
 
-  dataForCatToCatLines = instancesBtnCats.map((d, i) => {
-    const widthForCurrCat = catScalesForCurr[d.catCurr].range()[1] - catScalesForCurr[d.catCurr].range()[0];
-    const lineWidth = widthForCurrCat * d.numInstancesRatioInCurr;
-    return {
-      catCurr: d.catCurr,
-      catNext: d.catNext,
-      // groupRatio: d.groupRatio,
-      // numInstancesRatio: d.numInstancesRatio,
-      numInstancesRatioInCurr: d.numInstancesRatioInCurr,
-      lineWidth: lineWidth,
-      heightForCat: widthForCurrCat,
-      instancesInCurr: d.instancesInCurr,
-      instancesInCatToCat: d.instancesInCatToCat,
-      source: {
-        x: catScalesForCurr[d.catCurr](d.cumNumInstancesRatioInCurr) + lineWidth / 2,
-        y: 0
-      },
-      target: {
-        x: catScalesForNext[d.catNext](d.cumNumInstancesRatioInNext) + lineWidth / 2,
-        y: lvData.blScale(nextFeatureIdx) - lvData.blScale(nextFeatureIdx-1) - lwbr.h
-      }
-    };
-  });
+  function prepareCatData(sortedCatsInCurrFeature, sortedCatsInNextFeature) {
+    sortedCatsInCurrFeature.forEach((sortedCatCurr, catCurr) => { // [2,0,3,1]
+      sortedCatsInNextFeature.forEach((sortedCatNext, catNext) => {
+        const instancesInCurr = currFeature.instances[sortedCatCurr],
+              instancesInNext = nextFeature.instances[sortedCatNext];
+        const filteredInstances = _.intersectionBy(instancesInCurr, instancesInNext, 'idx');
+        const edge = _.find(edgesWithOutlierInfo, {'source': sortedCatCurr, 'target': sortedCatNext})
+        let isEdgeOutlier = false;
+        if (typeof(edge) !== 'undefined')
+          isEdgeOutlier = edge.isOutlier == 1 ? true: false;
+        else
+          isEdgeOutlier = false;
+  
+        instancesBtnCats.push({
+          catCurr: catCurr,
+          catNext: catNext,
+          sortedCatCurr: sortedCatCurr,
+          sortedCatNext: sortedCatNext,
+          // groupRatio: libRatioFilteredInstances,
+          numInstancesRatioInCurr: filteredInstances.length / instancesInCurr.length,
+          cumNumInstancesRatioInCurr: cumNumInstancesRatioInCurr[sortedCatCurr] / instancesInCurr.length,
+          cumNumInstancesRatioInNext: cumNumInstancesRatioInNext[sortedCatNext] / instancesInNext.length,
+          instancesInCurr: instancesInCurr,
+          instancesInCatToCat: filteredInstances,
+          isOutlier: isEdgeOutlier
+        });
+  
+        cumNumInstancesRatioInCurr[sortedCatCurr] += filteredInstances.length;
+        cumNumInstancesRatioInNext[sortedCatNext] += filteredInstances.length;
+      });
+    });
+  }
 
-  const drawTweetLine = d3.linkVertical()
-    .x(d => d.x)
-    .y(d => d.y);
-
-  selection
-    .selectAll('.cat_lines')
-    .data(dataForCatToCatLines)
-    .enter()
-    .append('path')
-    .attr('class', d => 'cat_lines cat_line_' + d.catCurr + '_' + d.catNext)
-    .attr('d', drawTweetLine)
-    .style('fill', 'none')
-    //.style('stroke-width', d => d.lineHeight)
-    .style('stroke-width', d => d.lineWidth)
+  function renderCatToCatLines(instancesBtnCats, lvData) {
+    dataForCatToCatLines = instancesBtnCats.map((d, i) => {
+      const widthForCurrCat = catScalesForCurr[d.catCurr].range()[1] - catScalesForCurr[d.catCurr].range()[0];
+      const lineWidth = widthForCurrCat * d.numInstancesRatioInCurr;
+      return {
+        catCurr: d.catCurr,
+        catNext: d.catNext,
+        sortedCatCurr: d.sortedCatCurr,
+        sortedCatNext: d.sortedCatNext,
+        // groupRatio: d.groupRatio,
+        // numInstancesRatio: d.numInstancesRatio,
+        numInstancesRatioInCurr: d.numInstancesRatioInCurr,
+        lineWidth: lineWidth,
+        heightForCat: widthForCurrCat,
+        instancesInCurr: d.instancesInCurr,
+        instancesInCatToCat: d.instancesInCatToCat,
+        source: {
+          x: catScalesForCurr[d.catCurr](d.cumNumInstancesRatioInCurr) + lineWidth / 2,
+          y: 0
+        },
+        target: {
+          x: catScalesForNext[d.catNext](d.cumNumInstancesRatioInNext) + lineWidth / 2,
+          y: lvData.blScale(nextFeatureIdx) - lvData.blScale(nextFeatureIdx-1) - lwbr.h
+        },
+        isOutlier: d.isOutlier
+      };
+    });
+  
+    const drawTweetLine = d3.linkVertical()
+      .x(d => d.x)
+      .y(d => d.y);
+  
+    selection
+      .selectAll('.cat_lines')
+      .data(dataForCatToCatLines)
+      .enter()
+      .append('path')
+      .attr('class', d => 'cat_lines cat_line_' + d.sortedCatCurr + '_' + d.sortedCatNext)
+      .attr('d', drawTweetLine)
+      .style('fill', 'none')
+      //.style('stroke-width', d => d.lineHeight)
+      .style('stroke-width', d => d.lineWidth)
+      .style('opacity', d => d.isOutlier ? 0 : 0.5);
+  }
 }
 
 gLayout.renderClToClLines = function(selection, BRs, instances, currBRData, nextBRData, BRId, wholeWidth) {
@@ -285,73 +328,87 @@ gLayout.renderClToClLines = function(selection, BRs, instances, currBRData, next
 
   // { catInCurr: 0, catInNext: 0, catIdxInCurr: 0, catIdxInNext: 0, numInstances: 50 }
   let instancesBtnCls = [];
+  let sortedCurrNodesIdx, sortedNextNodesIdx, edgesWithOutlierInfo;  // For fetching results
   let dataForClToClLines = [];
-  let cumNumInstancesRatioInCurr = {},
-    cumNumInstancesRatioInNext = {};
+  let cumNumInstancesInCurr = {},
+    cumNumInstancesInNext = {};
   for (const clIdx of d3.range(currCls.length)) {
-    cumNumInstancesRatioInCurr[clIdx] = 0;
+    cumNumInstancesInCurr[clIdx] = 0;
   }
   for (const clIdx of d3.range(nextCls.length)) {
-    cumNumInstancesRatioInNext[clIdx] = 0;
+    cumNumInstancesInNext[clIdx] = 0;
   }
 
-  // Prepare the btn-clustering instance data
-  currCls.forEach((clCurr, clCurrIdx) => {
-    nextCls.forEach((clNext, clNextIdx) => {
-      const filteredInstances = _.intersectionBy(clCurr.instances, clNext.instances, 'idx');
-      // const libRatioFilteredInstances = filteredInstances.filter(d => d.group === '1').length / numFilteredInstances;
-
-      instancesBtnCls.push({
-        clCurrIdx: clCurrIdx,
-        clNextIdx: clNextIdx,
-        // groupRatio: libRatioFilteredInstances,
-        numInstancesRatioInCurr: filteredInstances.length / clCurr.instances.length,
-        cumNumInstancesRatioInCurr: cumNumInstancesRatioInCurr[clCurrIdx] / clCurr.instances.length,
-        cumNumInstancesRatioInNext: cumNumInstancesRatioInNext[clNextIdx] / clNext.instances.length,
-        instancesInCurr: clCurr.instances,
-        instancesClToCl: filteredInstances,
-        isOutlier: false
-      });
-
-      cumNumInstancesRatioInCurr[clCurrIdx] += filteredInstances.length;
-      cumNumInstancesRatioInNext[clNextIdx] += filteredInstances.length;
-    });
-  });
-
+  
+  fetchForOptimizingEdges();  
 
   // Detect outliers here
-  async function fetch1 (){
-    const data = await fetch('/dataset/loadData/', {
-      method: 'get' 
+  async function fetchForOptimizingEdges (){
+    const response = await fetch('/dataset/optimizeEdges/', {
+      method: 'post',
+      body: JSON.stringify({
+        currNodes: _.sortBy(currCls, ['idx']).map(d => d.instances),
+        nextNodes: _.sortBy(nextCls, ['idx']).map(d => d.instances)
+      })
     })
-    console.log('test11: ', data);
-    renderClToClLines(instancesBtnCls, BRs, BRId);
-    
+    .then((response) => response.json())
+    .then((response) => {
+      sortedCurrNodesIdx = response.sortedCurrNodes;
+      sortedNextNodesIdx = response.sortedNextNodes;
+      edgesWithOutlierInfo = response.edgesWithOutlierInfo;
+
+      prepareClData(currCls, nextCls);
+      renderClToClLines(instancesBtnCls, BRs, BRId);
+    })
   }
 
-  fetch1();
-  
+  function prepareClData(currCls, nextCls) {
+    // Adding sorted index after eigendecomposition
+    console.log('currCls: ', currCls);
+    //currCls.forEach((cl, clIdx) => cl.sortedIdx = sortedCurrNodesIdx[clIdx]);
+    //nextCls.forEach((cl, clIdx) => cl.sortedIdx = sortedNextNodesIdx[clIdx]);
 
-  // fetch('/dataset/loadData/', {
-  //   method: 'get' 
-  // })
-  // .then(async (response) => {
-  //   const json = await response.json();
-  //   console.log('fetch test: ', json);
-  //   return response.json();
-  // });
-    
-  
+    // Prepare the btn-clustering instance data
+    currCls.forEach((clCurr, idxCurr) => {
+      nextCls.forEach((clNext, idxNext) => {
+        const filteredInstances = _.intersectionBy(clCurr.instances, clNext.instances, 'idx');
+        const edge = _.find(edgesWithOutlierInfo, {'source': clCurr.idx, 'target': clNext.idx})
+        let isEdgeOutlier = false;
+        if (typeof(edge) !== 'undefined')
+          isEdgeOutlier = edge.isOutlier == 1 ? true: false;
+        else
+          isEdgeOutlier = false;
+
+        instancesBtnCls.push({
+          clCurrIdx: clCurr.idx,
+          clNextIdx: clNext.idx,
+          sortedClCurrIdx: clCurr.idx,
+          sortedClNextIdx: clNext.idx,
+          numInstancesRatioInCurr: filteredInstances.length / clCurr.instances.length,
+          cumNumInstancesRatioInCurr: cumNumInstancesInCurr[clCurr.idx] / clCurr.instances.length,
+          cumNumInstancesRatioInNext: cumNumInstancesInNext[clNext.idx] / clNext.instances.length,
+          instancesInCurr: clCurr.instances,
+          instancesClToCl: filteredInstances,
+          isOutlier: isEdgeOutlier
+        });
+
+        cumNumInstancesInCurr[clCurr.idx] += filteredInstances.length;
+        cumNumInstancesInNext[clNext.idx] += filteredInstances.length;
+      });
+    });
+  }
   
   function renderClToClLines(instancesBtnCls, BRs, BRId) {
+    console.log('dd');
     // Prepare the data to draw lines
     dataForClToClLines = instancesBtnCls.map((d, i) => {
-      console.log('fetch test2: ', d);
       const widthForCurrCat = clScalesForCurr[d.clCurrIdx].range()[1] - clScalesForCurr[d.clCurrIdx].range()[0];
       const lineWidth = widthForCurrCat * d.numInstancesRatioInCurr;
       return {
-        clCurr: d.clCurr,
-        clNext: d.clNext,
+        clCurrIdx: d.clCurrIdx,
+        clNextIdx: d.clNextIdx,
+        sortedClCurrIdx: d.sortedClCurrIdx,
+        sortedClNextIdx: d.sortedClNextIdx,
         // groupRatio: d.groupRatio,
         // numInstancesRatio: d.numInstancesRatio,
         numInstancesRatioInCurr: d.numInstancesRatioInCurr,
@@ -365,7 +422,7 @@ gLayout.renderClToClLines = function(selection, BRs, instances, currBRData, next
         },
         target: {
           x: clScalesForNext[d.clNextIdx](d.cumNumInstancesRatioInNext) + lineWidth / 2,
-          y: gLayout.getGlobalElLayout(d3.select(BRs.nodes()[BRId+1])).y1 - gLayout.getGlobalElLayout(d3.select(BRs.nodes()[BRId])).y2
+          y: gLayout.getGlobalElLayout(d3.select(BRs.nodes()[BRId+1])).y1 - gLayout.getGlobalElLayout(d3.select(BRs.nodes()[BRId])).y2 +5
         },
         isOutlier: d.isOutlier
       };
@@ -381,13 +438,13 @@ gLayout.renderClToClLines = function(selection, BRs, instances, currBRData, next
       .data(dataForClToClLines)
       .enter()
       .append('path')
-      .attr('class', d => 'cl_line cl_line_' + d.clCurr + '_' + d.clNext)
+      .attr('class', d => 'cl_line cl_line_' + d.sortedClCurrIdx + '_' + d.sortedClNextIdx)
       .attr('d', drawTweetLine)
       .style('fill', 'none')
       .style('stroke', 'black')
       //.style('stroke-width', d => d.lineHeight)
       .style('stroke-width', d => d.lineWidth)
-      .style('opacity', 0.5)
+      .style('opacity', d => d.isOutlier ? 0 : 0.5);
   }
   
 }

@@ -142,16 +142,18 @@ scales.calculateYBlockScale = function(lvData) {
 
   return d3.scalePoint()
     .domain(d3.range(numFeatures))
-    .range([llv.m.t+llv.m.b, mainRegionHeightInLV - (llv.m.t+llv.m.b+lbl.s)]);
+    .range([llv.m.t+llv.m.b, mainRegionHeightInLV - (llv.p.b)]);
 }
 
-scales.calculateScalesForCats = function(rawData, feature, wholeWidth) { //feature
+scales.calculateScalesForCats = function(feature, wholeWidth) { //feature
   // Get scales for each category
   // - get the height of each category
   // - get the cumulative height for y position
   const catsInFeature = feature.domain;
+  const sortedCatsInFeature = feature.sortedIdx;
   const instancesGrpByFeature = _.groupBy(feature.instances);
   const catScales = {};
+  const numAllInstances = feature.featureValues.length;
 
   // Define the scales of categorical axis for heights
   const catWidthScale = d3
@@ -160,13 +162,12 @@ scales.calculateScalesForCats = function(rawData, feature, wholeWidth) { //featu
     .range([60, wholeWidth]);
 
   let cumulativeCatWidth = 0;
-  const widthDecayingRatio = 0.65;
+  const widthDecayingRatio = 0.6;
   const sumCatWidths = catWidthScale(1) * widthDecayingRatio; // ratio==1; all instances
   lbl.m.btn = (wholeWidth - sumCatWidths) / (catsInFeature.length-1) // btnInterval
-  catsInFeature.forEach((cat, i) => {
-    console.log('calculateScalesForCats: ', feature, instancesGrpByFeature, cat, instancesGrpByFeature[cat]);
-    const numInstancesInCat = instancesGrpByFeature[cat].length, 
-      numTweetRatioPerCat = numInstancesInCat / rawData.length,
+  sortedCatsInFeature.forEach((cat, i) => {
+    const numInstancesInCat = feature.instances[cat].length, 
+      numTweetRatioPerCat = numInstancesInCat / numAllInstances,
       catWidth = catWidthScale(numTweetRatioPerCat) * widthDecayingRatio,
       catEndY = cumulativeCatWidth + catWidth;
     let catStartY = 0;
@@ -179,13 +180,13 @@ scales.calculateScalesForCats = function(rawData, feature, wholeWidth) { //featu
       .domain([0, 1]) 
       .range([catStartY, catEndY]);
 
-    catScales[cat] = yWithinCatScale;
+    catScales[i] = yWithinCatScale;
   });
 
   return catScales;
 }
 
-scales.calculateScalesForCls = function(rawData, cls, wholeWidth) { //feature
+scales.calculateScalesForCls = function(rawData, sortedCls, wholeWidth) { //feature
   // Get scales for each category
   // - get the height of each category
   // - get the cumulative height for y position
@@ -198,15 +199,15 @@ scales.calculateScalesForCls = function(rawData, cls, wholeWidth) { //feature
     .range([50, wholeWidth]);
 
   let cumulativeClWidth = 0;
-  const widthDecayingRatio = 0.7;
+  const widthDecayingRatio = 0.6;
   const sumClWidths = barWidthScale(1) * widthDecayingRatio; // ratio==1; all instances
-  lbr.m.btn = (wholeWidth - sumClWidths) / (cls.length-1) // btnInterval
-  cls.forEach((cl, clIdx) => {
+  lbr.m.btn = (wholeWidth - sumClWidths) / (sortedCls.length-1) // btnInterval
+  sortedCls.forEach((cl, clIdx) => {
     const numTweetRatioPerCl = cl.instances.length / rawData.length,
       clWidth = barWidthScale(numTweetRatioPerCl) * widthDecayingRatio,
       clEndY = cumulativeClWidth + clWidth;
     let clStartY = 0;
-    if (clIdx==0) clStartY = lbl.m.btn + cumulativeClWidth;
+    if (cl.idx==0) clStartY = lbl.m.btn + cumulativeClWidth;
     else clStartY = cumulativeClWidth + lbr.m.btn;
     cumulativeClWidth += clWidth; // Reflect it for the next loop
 
@@ -215,19 +216,15 @@ scales.calculateScalesForCls = function(rawData, cls, wholeWidth) { //feature
       .domain([0, 1])
       .range([clStartY, clEndY]);
 
-    clScales[clIdx] = yWithinClScale;
+    clScales[cl.idx] = yWithinClScale;
   });
 
   return clScales;
 }
 
-scales.addScaleToFeatures = function(rawData, features, wholeWidth) {
-  features.forEach(function(feature) {
-    feature.scale = d3.scaleOrdinal()
-                    .domain([0, 1]);
-
-    feature.catScales = scales.calculateScalesForCats(rawData, feature, wholeWidth);
-  });
-  
-  return features;
+scales.addScaleToFeature = function(rawData, feature, wholeWidth) {  
+  return {
+    'scale': d3.scaleOrdinal().domain([0, 1]),
+    'catScales': scales.calculateScalesForCats(feature, wholeWidth)
+  }
 }

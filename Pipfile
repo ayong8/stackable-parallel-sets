@@ -46,6 +46,7 @@ scipy = "*"
 line-profiler = "*"
 sklearn = "*"
 pyclustering = "*"
+networkx = "*"
 
 [requires]
 python_version = "3.7"
