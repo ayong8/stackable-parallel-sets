@@ -176,9 +176,9 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
       ];
     case 'cancer':
       levels = [
-        { id: 1, name: 'environmental' },
-        { id: 2, name: 'symptom' },
-        { id: 2, name: 'diagnosis' },
+        { idx: 1, name: 'environmental' },
+        { idx: 2, name: 'symptom' },
+        { idx: 3, name: 'diagnosis' },
       ]
 
       // map features to levels
@@ -189,8 +189,9 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
           mode: 'unfold',
           order: 'first',
           features: [
-            _.find(features, ['name', 'Air Pollution']),
-            _.find(features, ['name', 'Occupational Hazards'])
+            _.find(features, ['name', 'Smoking']),
+            _.find(features, ['name', 'Occupational Hazards']),
+            
           ],
           cls: [],
           clScales: [],
@@ -200,11 +201,23 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
           idx: 1, 
           name: 'symptom',
           mode: 'unfold',
-          order: 'last',
+          order: 'middle',
           features: [
             _.find(features, ['name', 'Chest Pain']),
             _.find(features, ['name', 'Fatigue']),
             _.find(features, ['name', 'Dry Cough']),
+          ],
+          cls: [], // [ { idx: 0, sortedIdx: 0, instances: [ { idx: 0, Air Pollution: 1, ... } ], subcls: {} }, ... ]
+          clScales: [],
+          blScale: d3.scalePoint()
+        },
+        { 
+          idx: 2, 
+          name: 'diagnosis',
+          mode: 'unfold',
+          order: 'last',
+          features: [
+            _.find(features, ['name', 'Level'])
           ],
           cls: [], // [ { idx: 0, sortedIdx: 0, instances: [ { idx: 0, Air Pollution: 1, ... } ], subcls: {} }, ... ]
           clScales: [],

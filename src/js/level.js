@@ -65,79 +65,93 @@ function Level(selection) { // User-defined sementic category
 					return 'translate(' + l.wForLabel + ',' + 10 + ')'
 				}
 			});
-		
-
-		gLVs
-			.append('rect')
-			.attr('class', 'level_rect')
-			.attr('x', 0)
-			.attr('y', 0)
-			.attr('width', llv.w)
-			.attr('height', llv.h);
-
-		gLVs
-      .append('line')
-      .attr('class', 'level_bar level_bar_top')
-      .attr('x1', 0)
-      .attr('y1', -5)
-      .attr('x2', llv.w)
-      .attr('y2', -5);
-
-		gLVs
-      .append('line')
-      .attr('class', 'level_bar level_bar_bottom')
-      .attr('x1', 0)
-      .attr('y1', llv.h + 5)
-      .attr('x2', llv.w)
-			.attr('y2', llv.h + 5);
-			
-		gLVs
-			.append('text')
-			.attr('class', 'level_label')
-			.attr('x', 0)
-			.attr('y', llv.h)
-			.text((d, i) => d.name);
 
 		gLVs.each(function(lvData, lvIdx) {
-			const LV = d3.select(this);
-
-			// Set the layout for levels and blocks
+			const gLV = d3.select(this);
 			const numFeatures = lvData.features.length;
-			const LVWForFeatures = (llv.w * llv.minFeatureAreaRatio) + (llv.w * (llv.maxFeatureAreaRatio-llv.minFeatureAreaRatio)) * (numFeatures-2/llv.maxNumFeatures);
-			llv.setM(LVWForFeatures);
-			lbl.setS(LVWForFeatures, numFeatures);
-			lvData.blScale = scales.calculateYBlockScale(lvData);
 
-			const BL = Block();
+			if (numFeatures == 1) {
+					gLV
+						.append('line')
+						.attr('class', 'level_bar level_bar_top')
+						.attr('x1', 0)
+						.attr('y1', -5)
+						.attr('x2', llv.w)
+						.attr('y2', -5);
 
-			LV.call(
-				BL
-				.data(lvData.features)
-			);
+					gLV
+						.append('line')
+						.attr('class', 'level_bar level_bar_bottom')
+						.attr('x1', 0)
+						.attr('y1', 5)
+						.attr('x2', llv.w)
+						.attr('y2', 5);
+						
+					gLV
+						.append('text')
+						.attr('class', 'level_label')
+						.attr('x', 0)
+						.attr('y', 5)
+						.text((d, i) => d.name);
+			}
+			else if (numFeatures > 1) {
+					gLV
+						.append('line')
+						.attr('class', 'level_bar level_bar_top')
+						.attr('x1', 0)
+						.attr('y1', -5)
+						.attr('x2', llv.w)
+						.attr('y2', -5);
 
-			// // Render the blocks
-			// lvData.features.forEach(function(feature, featureId) {
-			// 	const block = Block();
+					gLV
+						.append('line')
+						.attr('class', 'level_bar level_bar_bottom')
+						.attr('x1', 0)
+						.attr('y1', llv.h + 5)
+						.attr('x2', llv.w)
+						.attr('y2', llv.h + 5);
 
-			// 	level.call(
-			// 		block
-			// 		.id(featureId)
-			// 		.data(feature)
-			// 	);
-			// });
+					gLV
+						.append('rect')
+						.attr('class', 'level_rect')
+						.attr('x', 0)
+						.attr('y', 0)
+						.attr('width', llv.w)
+						.attr('height', llv.h);
+						
+					gLV
+						.append('text')
+						.attr('class', 'level_label')
+						.attr('x', 0)
+						.attr('y', llv.h)
+						.text((d, i) => d.name);
 
-			// Render the edges between blocks
-			const BLs = LV.selectAll('.g_block');
-			BLs.each(function(blData, blId) {
-				const gBL = d3.select(this);
-				if (blId < BLs.nodes().length-1){
-					const gBtnBLs = LV.append('g')
-						.attr('class', 'g_btn_bls')
-						.attr('transform', 'translate(0,' + (lvData.blScale(blId)+lwbr.h) + ')');
-					console.log('gBtnBLs transform: ', gBtnBLs.attr('transform'))
-					gLayout.renderCatToCatLines(gBtnBLs, lvData, blData, BLs.data()[blId+1], blId+1, llv.w);
-				}	
-			});
+					// Set the layout for levels and blocks
+					const LVWForFeatures = (llv.w * llv.minFeatureAreaRatio) + (llv.w * (llv.maxFeatureAreaRatio-llv.minFeatureAreaRatio)) * (numFeatures-2/llv.maxNumFeatures);
+					llv.setM(LVWForFeatures);
+					lbl.setS(LVWForFeatures, numFeatures);
+					lvData.blScale = scales.calculateYBlockScale(lvData);
+
+					const BL = Block();
+
+					gLV.call(
+						BL
+						.data(lvData.features)
+					);
+
+					// Render the edges between blocks
+					const BLs = gLV.selectAll('.g_block');
+					BLs.each(function(blData, blId) {
+						const gBL = d3.select(this);
+						if (blId < BLs.nodes().length-1){
+							const gBtnBLs = gLV.append('g')
+								.attr('class', 'g_btn_bls')
+								.attr('transform', 'translate(0,' + (lvData.blScale(blId)+lwbr.h) + ')');
+							console.log('gBtnBLs transform: ', gBtnBLs.attr('transform'))
+							gLayout.renderCatToCatLines(gBtnBLs, lvData, blData, BLs.data()[blId+1], blId+1, llv.w);
+						}	
+					});
+			}
 		});
 	}
 

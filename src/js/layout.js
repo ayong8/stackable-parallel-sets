@@ -234,6 +234,7 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
       sortedNextNodesIdx = response.sortedNextNodes;
       edgesWithOutlierInfo = response.edgesWithOutlierInfo;
       
+      console.log('edgesWithOutlierInfo-CatToCat: ', edgesWithOutlierInfo.map(d => d.isOutlier));
       prepareCatData(sortedCatsInCurrFeature, sortedCatsInNextFeature);
       renderCatToCatLines(instancesBtnCats, lvData);
     });
@@ -281,8 +282,6 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
         catNext: d.catNext,
         sortedCatCurr: d.sortedCatCurr,
         sortedCatNext: d.sortedCatNext,
-        // groupRatio: d.groupRatio,
-        // numInstancesRatio: d.numInstancesRatio,
         numInstancesRatioInCurr: d.numInstancesRatioInCurr,
         lineWidth: lineWidth,
         heightForCat: widthForCurrCat,
@@ -314,17 +313,16 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
       .style('fill', 'none')
       //.style('stroke-width', d => d.lineHeight)
       .style('stroke-width', d => d.lineWidth)
-      .style('opacity', d => d.isOutlier ? 0 : 0.5);
+      .style('opacity', d => d.isOutlier === true ? 0 : 0.5);
   }
 }
 
-gLayout.renderClToClLines = function(selection, BRs, instances, currBRData, nextBRData, BRId, wholeWidth) {
-  console.log('currFeature: ', currBRData, currBRData);
-  const currCls = currBRData,
-    nextCls = nextBRData;
+gLayout.renderClToClLines = function(selection, instances, gCurrLowerBars, gNextUpperBars, wholeWidth) {
+  const currCls = gCurrLowerBars.datum(),
+    nextCls = gNextUpperBars.datum();
 
-  const clScalesForCurr = scales.calculateScalesForCls(instances, currBRData, wholeWidth);
-  const clScalesForNext = scales.calculateScalesForCls(instances, nextBRData, wholeWidth);
+  const clScalesForCurr = scales.calculateScalesForCls(instances, currCls, wholeWidth);
+  const clScalesForNext = scales.calculateScalesForCls(instances, nextCls, wholeWidth);
 
   // { catInCurr: 0, catInNext: 0, catIdxInCurr: 0, catIdxInNext: 0, numInstances: 50 }
   let instancesBtnCls = [];
@@ -357,8 +355,9 @@ gLayout.renderClToClLines = function(selection, BRs, instances, currBRData, next
       sortedNextNodesIdx = response.sortedNextNodes;
       edgesWithOutlierInfo = response.edgesWithOutlierInfo;
 
+      console.log('edgesWithOutlierInfo-ClToCl: ', edgesWithOutlierInfo.map(d => d.isOutlier));
       prepareClData(currCls, nextCls);
-      renderClToClLines(instancesBtnCls, BRs, BRId);
+      renderClToClLines(instancesBtnCls, gCurrLowerBars, gNextUpperBars);
     })
   }
 
@@ -398,8 +397,7 @@ gLayout.renderClToClLines = function(selection, BRs, instances, currBRData, next
     });
   }
   
-  function renderClToClLines(instancesBtnCls, BRs, BRId) {
-    console.log('dd');
+  function renderClToClLines(instancesBtnCls, gCurrLowerBars, gNextUpperBars) {
     // Prepare the data to draw lines
     dataForClToClLines = instancesBtnCls.map((d, i) => {
       const widthForCurrCat = clScalesForCurr[d.clCurrIdx].range()[1] - clScalesForCurr[d.clCurrIdx].range()[0];
@@ -422,7 +420,7 @@ gLayout.renderClToClLines = function(selection, BRs, instances, currBRData, next
         },
         target: {
           x: clScalesForNext[d.clNextIdx](d.cumNumInstancesRatioInNext) + lineWidth / 2,
-          y: gLayout.getGlobalElLayout(d3.select(BRs.nodes()[BRId+1])).y1 - gLayout.getGlobalElLayout(d3.select(BRs.nodes()[BRId])).y2 +5
+          y: gLayout.getGlobalElLayout(gNextUpperBars).y1 - gLayout.getGlobalElLayout(gCurrLowerBars).y2 + 5
         },
         isOutlier: d.isOutlier
       };

@@ -128,6 +128,10 @@ export const scales = {
   yLvsScale: d3.scalePoint()
 };
 
+scales.colorOnSelectScale = d3.scaleLinear()
+  .domain([0, 1])
+  .range(['gray', 'blue']);
+
 scales.calculateYLevelScale = function(LVData) {
   const numLevels = LVData.length;
 
@@ -154,6 +158,8 @@ scales.calculateScalesForCats = function(feature, wholeWidth) { //feature
   const instancesGrpByFeature = _.groupBy(feature.instances);
   const catScales = {};
   const numAllInstances = feature.featureValues.length;
+  console.log('sortedCatsInFeature: ', sortedCatsInFeature)
+  console.log('feature.instances: ', feature.instances)
 
   // Define the scales of categorical axis for heights
   const catWidthScale = d3
@@ -223,6 +229,7 @@ scales.calculateScalesForCls = function(rawData, sortedCls, wholeWidth) { //feat
 }
 
 scales.addScaleToFeature = function(rawData, feature, wholeWidth) {  
+  console.log('featurere: ', feature)
   return {
     'scale': d3.scaleOrdinal().domain([0, 1]),
     'catScales': scales.calculateScalesForCats(feature, wholeWidth)

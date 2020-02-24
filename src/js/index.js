@@ -1,5 +1,3 @@
-console.log('index in: ');
-
 import * as d3 from 'd3';
 import skmeans from 'skmeans';
 import { globalScales, scales } from './scale';
@@ -231,7 +229,6 @@ function clusterBy(tweets, feature) {
 
 
 // For new codes
-console.log('demoData: ', demoData);
 let LVData = [];
 
 fetch('/dataset/loadData/', {
@@ -241,15 +238,12 @@ fetch('/dataset/loadData/', {
   return response.json();
 })
 .then((response) => {
-  console.log('response in fetch index.js: ', response);
   const rawData = JSON.parse(response.dataset),
         features = response.features,
         instances = JSON.parse(response.instances);
 
-  console.log('features: ', features);
-  // Add the scale functions and organize the lv-wise data
-  
   LVData = dataMapping.mapLevelToFeatures('cancer', features);
+  l.h = LVData.length * 250;
   
   // Render the levels given clustering result
   return fetch('/dataset/hClusteringForAllLVs/', {
@@ -263,11 +257,13 @@ fetch('/dataset/loadData/', {
     const clResult = response.clResult,
       sortedCatsIdxForLvs = response.sortedCatsIdxForLvs;
 
+    console.log('sortedCatsIdxForLvs: ', sortedCatsIdxForLvs)
     console.log('clResults: ', clResult)
     LVData.forEach((lvData, lvIdx) => {
       const sortedCls = _.sortBy(clResult[lvIdx], ['sortedIdx']);
       lvData.cls = sortedCls;
       lvData.clScales = scales.calculateScalesForCls(rawData, sortedCls, llv.w);
+      console.log('lvData.clScales: ', lvData.clScales);
       lvData.features.forEach((feature, featureIdx) => {
         feature.sortedIdx = sortedCatsIdxForLvs[lvIdx][featureIdx];
         const { scale, catScales } = scales.addScaleToFeature(rawData, feature, llv.w);
@@ -292,10 +288,86 @@ fetch('/dataset/loadData/', {
           instances
         ])
     );
+
+    d3.selectAll('.cat_rect')
+      .on('click', function(d) {
+        console.log('dddd: ', d);
+      });
+
+    d3.selectAll('.bar_rect')
+      .on('click', function(cl) {
+        console.log('dddd: ', cl);
+        const instancesIdx = cl.instances.map(d => d.idx);
+        d3.selectAll('.cat_lines')
+          .each(function(cat) {
+            const catLine = d3.select(this);
+            // catIdx = rawData.map(instance => instance[] == cat);
+            
+            // const ratio = instancesIdx & catIdx .length / catIdx.length;
+            catLine
+              .style('stroke', scales.colorOnSelectScale(0.1));
+          })
+      });
   });
 
   
 });
+
+// Controller
+$(document).ready(function(){
+
+  calcWidth($('#title0'));
+  
+  window.onresize = function(event) {
+      console.log("window resized");
+  
+      //method to execute one time after a timer
+  
+      };
+  
+  //recursively calculate the Width all titles
+  function calcWidth(obj){
+  console.log('---- calcWidth -----');
+  
+  var titles = 
+  $(obj).siblings('.space').children('.route').children('.title');
+  
+  $(titles).each(function(index, element){
+  var pTitleWidth = parseInt($(obj).css('width'));
+  var leftOffset = parseInt($(obj).siblings('.space').css('margin-left'));
+  
+  var newWidth = pTitleWidth - leftOffset;
+  
+  if ($(obj).attr('id') == 'title0'){
+  console.log("called");
+  
+  newWidth = newWidth - 10;
+  }
+  
+  $(element).css({
+  'width': newWidth,
+  })
+  
+  calcWidth(element);
+  });
+  
+  }
+  
+  $('.space').sortable({
+  connectWith:'.space',
+  // handle:'.title',
+  // placeholder: ....,
+  tolerance:'intersect',
+  over:function(event,ui){
+  },
+  receive:function(event, ui){
+  calcWidth($(this).siblings('.title'));
+  },
+  });
+  
+  $('.space').disableSelection();
+  
+  });
 
 
 

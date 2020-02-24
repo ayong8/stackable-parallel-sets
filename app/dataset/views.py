@@ -70,6 +70,14 @@ dataset_features = {
             'instances': []
         },
         { 
+            'name': 'Smoking', 
+            'id': 'smoking',
+            'type': 'continuous',
+            'scale': '',
+            'domain': [],
+            'instances': []
+        },
+        { 
             'name': 'Chest Pain', 
             'id': 'chest_pain',
             'type': 'continuous',
@@ -93,6 +101,15 @@ dataset_features = {
             'domain': [],
             'instances': []
         },
+        { 
+            'name': 'Level', 
+            'id': 'level',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1, 2],
+            'labels': ['Low', 'Medium', 'High'],
+            'instances': []
+        },
     ]
 }
 
@@ -101,6 +118,28 @@ dataset_features = {
 # parameter - data (numpy array - (n_instances x n_features))
 
 n_cls = 4
+
+def convert_to_numbers(domain_in_str, feature_values_in_str):
+    str_num_dict = { string:num for string, num in list(zip(domain_in_str, range(len(domain_in_str)))) }
+    feature_values_in_num = []
+    for idx, string in enumerate(feature_values_in_str):
+        feature_values_in_num.append(str_num_dict[string])
+
+    return feature_values_in_num
+
+def convert_feature_values_to_instances(feature_values):
+    instances = []
+    for idx, feature_value in enumerate(feature_values):
+        instances.append({ 'idx': idx, 'value': feature_value })
+
+    return instances
+
+def convert_instances_to_instance_sets(category_domain, instances):
+    instance_sets = [[] for _ in category_domain]
+    for instance in instances:
+        instance_sets[category_domain.index(instance['value'])].append(instance)
+
+    return instance_sets
 
 def hClustering(X):
     # dist_mat = euclidean_distances(data)
@@ -139,10 +178,9 @@ def calculate_freq_mat(C1, C2):
 
 def calculate_G(freq_mat_np):
     num_cls1, num_cls2 = freq_mat_np.shape
-    print('cal_G: ', freq_mat_np, num_cls1, num_cls2)
     weighted_adj_mat = np.vstack([
-        np.hstack([ np.zeros([num_cls1, num_cls2]), np.transpose(freq_mat_np) ]),
-        np.hstack([ freq_mat_np, np.zeros([num_cls1, num_cls2])])
+        np.hstack([ np.zeros([num_cls1, num_cls1]), freq_mat_np ]),
+        np.hstack([ np.transpose(freq_mat_np), np.zeros([num_cls2, num_cls2])])
     ])
     G = nx.from_numpy_matrix(weighted_adj_mat)
 
@@ -168,26 +206,28 @@ def sort_nodes(G, num_cls1, num_cls2):
 # Input: networkx graph G given a weighted adjacency matrix
 # Output: filtered networkx graph filtered_G
 def detect_outlier_edges(G, n_cls1, n_cls2):
-    alpha = 0.5
+    alpha = 0.3
     # Return the significant score with full graph
     G = out.disparity_filter(G)
+    print('GG: ', G)
     # Draw the filtered graph with outlier edges removed
     edges = []
     for u, v, d in G.edges(data=True):
         isOutlier = 0 if d['alpha'] < alpha else 1
+        added_idx_offset = min(n_cls1, n_cls2)
+        # print('u,v,d: ', u, v)
+        # print('u,v,d: ', min(u, v), max(u, v)-n_cls1, isOutlier, d)
         edges.append({
-            'source': min(u, v),
-            'target': max(u, v) - n_cls1, # 4,5,6,7 to 0,1,2,3
+            'u': u,
+            'v': v,
+            'source': max(u, v) - added_idx_offset,
+            'target': min(u, v),
             'isOutlier': isOutlier,
-            'weight': d
+            'weight': d['weight'],
+            'alpha': d['alpha']
         })
 
-    #filtered_G = nx.Graph([[u, v] for u, v, d in G.edges(data=True) if d['alpha'] < alpha])
-    # print('alpha = %s' % alpha)
-    # print('original: nodes = %s, edges = %s' % (G.number_of_nodes(), G.number_of_edges()))
-    # print('backbone: nodes = %s, edges = %s' % (filtered_G.number_of_nodes(), filtered_G.number_of_edges()))
-    # print(filtered_G.edges(data=True))
-    
+    pd.DataFrame(edges).to_csv('edges_check.csv')
     return edges
 
 class LoadData(APIView):
@@ -202,26 +242,32 @@ class LoadData(APIView):
         for feature_obj in selected_dataset_features:
             feature_name = feature_obj['name']
             feature_type = feature_obj['type']
-            feature_instances = list(df_dataset[feature_name])
+            feature_values = list(df_dataset[feature_name])
+
             if feature_type == 'continuous':
                 # instances_np = np.array(list(zip(range(len(feature_instances)), instances_for_cont)))
-                feature_values, _ = hClustering(np.array(feature_instances).reshape(-1,1)) # Do clustering, and output the cluster labels
+                categorized_values, _ = hClustering(np.array(feature_values).reshape(-1,1)) # Do clustering, and output the cluster labels
 
                 # feature values to instances
                 # [0,2,3,1,0] => [ {'idx': 0, 'value': 0}, ...]
-                instances = []
-                for idx, feature_value in enumerate(feature_values):
-                    instances.append({ 'idx': idx, 'value': feature_value })
-                
-                instance_sets = [[] for _ in range(n_cls)]
-                for instance in instances:
-                    instance_sets[instance['value']].append(instance)
+                instances = convert_feature_values_to_instances(categorized_values)
+                categorized_domain = range(n_cls)
+                instance_sets = convert_instances_to_instance_sets(categorized_domain, instances)
+
+                feature_obj['featureValues'] = categorized_values
+                feature_obj['instances'] = instance_sets
+                feature_obj['domain'] = list(categorized_domain)
+            elif feature_type == 'categorical':
+                # feature values to instances
+                # [0,2,3,1,0] => [ {'idx': 0, 'value': 0}, ...]
+                feature_values = convert_to_numbers(feature_obj['labels'], feature_values)
+                instances = convert_feature_values_to_instances(feature_values)
+                instance_sets = convert_instances_to_instance_sets(feature_obj['domain'], instances)
 
                 feature_obj['featureValues'] = feature_values
                 feature_obj['instances'] = instance_sets
-                feature_obj['domain'] = list(range(n_cls))
 
-            df_instances[feature_name] = feature_instances
+            df_instances[feature_name] = feature_values
 
         return Response({ 
             'dataset': df_dataset.to_json(orient='records'),
@@ -255,43 +301,51 @@ class HClusteringForAllLVs(APIView):
         lv_data = json_request['data']
         num_lvs = len(lv_data)
 
-        print('lv_data: ', lv_data)
-
         # Clustering for levels
         lv_cl_list_dict = {}
         for idx, lv in enumerate(lv_data):
-            
             df_instances_for_lv = pd.DataFrame({ feature['name']:feature['featureValues'] for feature in lv['features'] })
-            print('df_instances_for_lv: ', df_instances_for_lv)
-            cl_labels_np, n_cls = hClustering(df_instances_for_lv.values)
-            
-            num_cls = 4
-            cls_idx_list, protos_idx_list = kmdeoidsClustering(df_instances_for_lv.values, num_cls)
-            # print('cl_labels: ', cl_labels_np)
-            # Organize the cluster information to export
-            cl_list = []
-            for cl_idx in range(n_cls):
-                df_instances_for_lv['idx'] = list(df_instances_for_lv.index) # Add index as explicit column
+            if len(lv['features']) > 1:
+                cl_labels_np, n_cls = hClustering(df_instances_for_lv.values)
+                
+                num_cls = 4
+                cls_idx_list, protos_idx_list = kmdeoidsClustering(df_instances_for_lv.values, num_cls)
+                # Organize the cluster information to export
+                cl_list = []
+                for cl_idx in range(n_cls):
+                    df_instances_for_lv['idx'] = list(df_instances_for_lv.index) # Add index as explicit column
 
-                instances_idx_for_cl = cls_idx_list[cl_idx]
-                prototypes_idx_for_cl = protos_idx_list[cl_idx]
-                instances_for_cl = df_instances_for_lv.loc[instances_idx_for_cl]
-                prototypes_for_cl = df_instances_for_lv.loc[prototypes_idx_for_cl]
-                prototype_feature_list = [ {'name': feature_name, 'value': feature_value } for feature_name, feature_value in prototypes_for_cl.to_dict().items() if feature_name != 'idx' ]
-                prototype = {
-                    'idx': df_instances_for_lv.loc[prototypes_idx_for_cl, 'idx'],
-                    'features': prototype_feature_list  # [ {'name': 'air pollution', 'value': 1}, ... ]
-                }
+                    instances_idx_for_cl = cls_idx_list[cl_idx]
+                    prototypes_idx_for_cl = protos_idx_list[cl_idx]
+                    instances_for_cl = df_instances_for_lv.loc[instances_idx_for_cl]
+                    prototypes_for_cl = df_instances_for_lv.loc[prototypes_idx_for_cl]
+                    prototype_feature_list = [ {'name': feature_name, 'value': feature_value } for feature_name, feature_value in prototypes_for_cl.to_dict().items() if feature_name != 'idx' ]
+                    prototype = {
+                        'idx': df_instances_for_lv.loc[prototypes_idx_for_cl, 'idx'],
+                        'features': prototype_feature_list  # [ {'name': 'air pollution', 'value': 1}, ... ]
+                    }
 
-                cl_list.append({
-                    'idx': cl_idx,
-                    'sortedIdx': cl_idx,
-                    'instances': instances_for_cl.to_dict('records'),
-                    'prototype': prototype
-                })
-            lv_cl_list_dict[idx] = cl_list
-
-        print('lv_cl_list_dict[0]:', lv_cl_list_dict[0])
+                    cl_list.append({
+                        'idx': cl_idx,
+                        'sortedIdx': cl_idx,
+                        'instances': instances_for_cl.to_dict('records'),
+                        'prototype': prototype
+                    })
+                lv_cl_list_dict[idx] = cl_list
+            else: # if number of features = 1
+                feature = lv['features'][0]
+                cat_instances_list = []
+                for cat in feature['domain']:
+                    df_instances_for_lv['idx'] = list(df_instances_for_lv.index) # Add index as explicit column
+                    instances_for_cl = df_instances_for_lv.loc[df_instances_for_lv[feature['name']] == cat]
+                    
+                    cat_instances_list.append({
+                        'idx': cat,
+                        'sortedIdx': cat,
+                        'instances': instances_for_cl.to_dict('records'),
+                        'prototype': {}
+                    })
+                lv_cl_list_dict[idx] = cat_instances_list
 
         # Between-level clusters sorting
         # go over clusters to sort the nodex
@@ -315,21 +369,23 @@ class HClusteringForAllLVs(APIView):
         for lv_idx, lv in enumerate(lv_data): # for each level
             feature_list = lv['features']
             num_features = len(feature_list)
-            for feature_idx, _ in enumerate(feature_list): # for each pair of adjacent cats
-                if feature_idx < num_features-1:
-                    C1_instance_sets = feature_list[feature_idx]['instances']
-                    C2_instance_sets = feature_list[feature_idx+1]['instances']
+            if num_features > 1:
+                for feature_idx, _ in enumerate(feature_list): # for each pair of adjacent cats
+                    if feature_idx < num_features-1:
+                        C1_instance_sets = feature_list[feature_idx]['instances']
+                        C2_instance_sets = feature_list[feature_idx+1]['instances']
 
-                    freq_mat_np = calculate_freq_mat(C1_instance_sets, C2_instance_sets)
-                    G = calculate_G(freq_mat_np)
-                    sorted_C1_idx, sorted_C2_idx = sort_nodes(G, len(C1_instance_sets), len(C2_instance_sets))
-                    sorted_cats_idx_for_lvs[lv_idx].append(list(sorted_C1_idx))
-                    sorted_cats_idx_for_lvs[lv_idx].append(list(sorted_C2_idx))
+                        freq_mat_np = calculate_freq_mat(C1_instance_sets, C2_instance_sets)
+                        G = calculate_G(freq_mat_np)
+                        sorted_C1_idx, sorted_C2_idx = sort_nodes(G, len(C1_instance_sets), len(C2_instance_sets))
+                        sorted_cats_idx_for_lvs[lv_idx].append(list(sorted_C1_idx))
+                        sorted_cats_idx_for_lvs[lv_idx].append(list(sorted_C2_idx))
 
-                    # Identifying outlier edges
-                    edges = detect_outlier_edges(G, len(C1_instance_sets), len(C2_instance_sets))
+                        # Identifying outlier edges
+                        edges = detect_outlier_edges(G, len(C1_instance_sets), len(C2_instance_sets))
+            else:
+                sorted_cats_idx_for_lvs[lv_idx] = [ feature_list[0]['domain'] ]
 
-        print('sorted_cats_idx_for_lvs: ', sorted_cats_idx_for_lvs)
         return Response({
             'LVData': lv_data,
             'clResult': lv_cl_list_dict,
@@ -349,6 +405,7 @@ class OptimizeEdges(APIView):
 
         freq_mat_np = calculate_freq_mat(C1_instance_sets, C2_instance_sets)
         G = calculate_G(freq_mat_np)
+        print(freq_mat_np)
 
         # Sorting clusters
         sorted_cl1_idx, sorted_cl2_idx = sort_nodes(G, len(C1_instance_sets), len(C2_instance_sets))

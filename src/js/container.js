@@ -44,12 +44,6 @@ function Container() {
 						instances);
 				})
 
-		// Set up the within-level y-features
-		// LVData.forEach((lvData) => {
-		// 	lvData.features 
-		// })
-		// scales.yFeatureScale = 
-
 		scales.calculateYLevelScale(LVData);  // calculate yLvsScale
 		renderLV(rawData, LVData, instances);
 
@@ -74,7 +68,8 @@ function Container() {
 
 		// Render the bars
 		const LVs = d3.selectAll('.g_level');
-		LVs.each(function(lvData, LVId) {
+		const numLVs = LVs.nodes().length;
+		LVs.each(function(lvData, lvId) {
 			const LV = d3.select(this);
 			// Render the cluster bars (one set for first and last, two sets for middle)
 			const BR = Bar();
@@ -84,59 +79,24 @@ function Container() {
 			);
 		});
 
-		// Render the edges between clusters
+		// Render the edges between clusters per level
 		const BRs = gContainer.selectAll('.g_bars'); 
-		BRs.each(function(brData, brId) {
-			const gBRSet = d3.select(this),
-						gBRSetClass = gBRSet.attr('class');
-			// Select lower cluster sets only, to connect them down to upper cluster set in the next level
-			if (gBRSetClass.indexOf('g_bars_lower') != -1) {
+		LVs.each(function(lvData, lvId) {
+			if (lvId < numLVs-1) {
+				const gCurrLowerBars = d3.select('.g_bars_lower_lv_' + lvId),
+					gNextUpperBars = d3.select('.g_bars_upper_lv_' + (lvId+1));
+
 				const gBtnLVs = gContainer.append('g')
-						.attr('class', 'g_btn_lvs')
-						.attr('transform', 'translate(' + 
-							l.wForLabel + 
-							',' + 
-							gLayout.getGlobalElLayout(gBRSet).y2 + 
-							')');
-				console.log('redundant: ', brData, BRs.data());
-				gLayout.renderClToClLines(gBtnLVs, BRs, instances, brData, BRs.data()[brId+1], brId, llv.w)
+					.attr('class', 'g_btn_lvs')
+					.attr('transform', 'translate(' + 
+						l.wForLabel + 
+						',' + 
+						gLayout.getGlobalElLayout(gCurrLowerBars).y2 + 
+						')');
+
+				gLayout.renderClToClLines(gBtnLVs, instances, gCurrLowerBars, gNextUpperBars, llv.w)
 			}
-		})
-
-		// // Render the levels given clustering result
-		// fetch('/dataset/hClusteringForAllLVs/', {
-		// 	method: 'post',
-		// 	body: JSON.stringify({
-		// 		data: LVData
-		// 	})
-		// })
-		// .then((response) => {
-		// 	return response.json();
-		// })
-		// .then((response) => {
-		// 	const clResults = response;
-		// 	const LV = Level();
-
-		// 	console.log('clResults: ', clResults)
-		// 	LVData.forEach((lvData, LVIdx) => {
-		// 		const cls = lvData.cls;
-		// 		clResults[LVIdx].forEach((cl, clIdx) => {
-		// 			cls[clIdx].instances = cl;
-		// 		})
-		// 		lvData.clScales = scales.calculateScalesForCls(rawData, cls, llv.w);
-		// 	})
-
-			
-		// });
-
-		// // Render the edges between levels
-		// const LVs = d3.selectAll('.g_level')
-		// LVs.each(function(LVData, LVId) {
-		// 	const LV = d3.select(this);
-		// 	LVData.cls.forEach(function(CLData, CLId) {
-		// 		// pairwise edges 
-		// 	});
-		// });
+		});
 	}
 	
 	_container.data = function(dataset) {
