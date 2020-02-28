@@ -13,7 +13,6 @@ function Bar() {
 			right: null,
 			left: null
 	}
-	console.log('this in Block: ', this);
 
 	function _bar(container) {
 		const cls = lvData.cls,
@@ -179,7 +178,7 @@ function Bar() {
 				.append('g')
 				.attr('class', 'g_bar')
 				.attr('transform', (cl, clIdx) => 'translate(' +
-					(clScales[clIdx].range()[0]) + // i*2 is cumulative margin
+					(clScales[cl.idx].range()[0]) + // i*2 is cumulative margin
 					',0)'
 				);
 
@@ -204,7 +203,7 @@ function Bar() {
 					.attr('class', 'cl_label')
 					.attr('x', 0)
 					.attr('y', 5)
-					.text(cl.sortedIdx);
+					.text(cl.idx);
 
 				if (lvData.features.length > 1) {
 					gProto = container

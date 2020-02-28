@@ -2,231 +2,19 @@ import * as d3 from 'd3';
 import skmeans from 'skmeans';
 import { globalScales, scales } from './scale';
 import { gLayout, l, ll, lCom } from './layout';
-import {dataMapping} from './dataMapping';
-import {
-  renderClBars,
-  renderClRectsBtnLv,
-  renderControlRect,
-  drawLinesFromClsToCls
-} from './render';
+import { dataMapping } from './dataMapping';
 
 import Container from './container';
+import { controller } from './controller';
 import Level from './level';
 import Block from './block';
-
-import Level1Plot from './Level1Plot';
-import Level2Plot from './Level2Plot';
-import Level3Plot from './Level3Plot';
 
 import "../css/index.css";
 
 const data = require('./dataMapping');
 
-const {
-  demoData,
-  featureLevelData,
-  tweets,
-  features, 
-  goals, 
-  words, 
-  groups, 
-  maxFreqCorr, 
-  maxFreqWrong,
-  pdpValues,
-  pdpValuesForGroups,
-  tweetsCorrPred,
-  tweetsWrongPred,
-  tweetsConWrongPred,
-  tweetsLibWrongPred,
-  dataBinCorrPredTweets,
-  dataBinWrongPredTweets,
-  dataBinWrongPredTweetsForGroups,
-  dataBinCorrPredTweetsForGroups,
-  cooc
-} = data.dataMapping;
 
-const {
-  xFeatureScale,
-  groupColorScale,
-  groupColorScales,
-  groupWrongColorScale,
-  groupRatioScale,
-  xGoalScale,
-  xClusterPerGoalScale,
-  xOutputProbHistScale,
-  yOutputProbScale,
-  yGroupScale,
-  yOutputProbHistScale,
-  xWordScale
-} = scales;
-
-// var view = [layout.width / 2, layout.height / 2, layout.height / 2];
-const container = d3.select('#container'),
-  svg = container
-    .append('svg')
-    .attr('width', l.w)
-    .attr('height', l.h)
-    .attr('class', 'svg');
-
-//* Containers
-const gHPlot = svg
-  .append('g')
-  .attr('class', 'g_h_plot')
-  .attr('transform', 'translate(' + lCom.hPlot.l + ',' + lCom.hPlot.t + ')');
-
-const gLevel1 = gHPlot
-    .append('g')
-    .attr('class', 'g_level1 level')
-    .attr('transform', 'translate(' + 0 + ',' + ll.l1.t + ')'),
-  gL1ToL2 = gHPlot
-    .append('g')
-    .attr('class', 'g_l1_to_l2 level')
-    .attr('transform', 'translate(' + 0 + ',' + ll.l1ToL2.t + ')'),
-  gLevel2 = gHPlot
-    .append('g')
-    .attr('class', 'g_level2 level')
-    .attr('transform', 'translate(' + 0 + ',' + ll.l2.t + ')'),
-  gL2ToL3 = gHPlot
-    .append('g')
-    .attr('class', 'g_l2_to_l3 level')
-    .attr('transform', 'translate(' + 0 + ',' + ll.l2ToL3.t + ')'),
-  gLevel3 = gHPlot
-      .append('g')
-      .attr('class', 'g_level3')
-      .attr('transform', 'translate(' + 0 + ',' + ll.l3.t + ')');
-
-const goalPlot = Level1Plot();
-const featurePlot = Level2Plot();
-const wordPlot = Level3Plot();
-
-let featuresForL1 = ['valence'];
-let featureForL2 = ['valence', 'arousal'];
-
-let dataClsForL1 = clusterBy(tweets, 'valence');
-let dataClsForL2 = clusterBy(tweets, 'dominance');
-let dataClsForL3 = clusterBy(tweets, 'valence');
-
-// Mockup data for now
-dataClsForL1 = [
-  { cl: 0, idx: [1,2,3], countRatio: 0.3, groupRatio: 0.2 },
-  { cl: 1, idx: [4,5], countRatio: 0.2, groupRatio: 0.4 },
-  { cl: 2, idx: [6], countRatio: 0.1, groupRatio: 0.8 },
-  { cl: 3, idx: [7,8,9,0], countRatio: 0.4, groupRatio: 0.1 }
-];
-
-dataClsForL2 = [
-  { cl: 0, idx: [1,2,3,4], countRatio: 0.4, groupRatio: 0.2 },
-  { cl: 1, idx: [5], countRatio: 0.1, groupRatio: 0.4 },
-  { cl: 2, idx: [6,7,8,9], countRatio: 0.4, groupRatio: 0.8 },
-  { cl: 3, idx: [0], countRatio: 0.1, groupRatio: 0.1 }
-];
-
-dataClsForL3 = [
-  { cl: 0, idx: [1], countRatio: 0.1, groupRatio: 0.2 },
-  { cl: 1, idx: [2,3], countRatio: 0.2, groupRatio: 0.4 },
-  { cl: 2, idx: [4,5,6,7,8,9], countRatio: 0.6, groupRatio: 0.8 },
-  { cl: 3, idx: [0], countRatio: 0.1, groupRatio: 0.1 }
-];
-
-const dataCl1ToCl2 = [
-  { idx: 0, cl1: 3, cl2: 3 },
-  { idx: 1, cl1: 0, cl2: 0 },
-  { idx: 2, cl1: 0, cl2: 0 },
-  { idx: 3, cl1: 0, cl2: 0 },
-  { idx: 4, cl1: 1, cl2: 0 },
-  { idx: 5, cl1: 1, cl2: 1 },
-  { idx: 6, cl1: 2, cl2: 2 },
-  { idx: 7, cl1: 3, cl2: 2 },
-  { idx: 8, cl1: 3, cl2: 2 },
-  { idx: 9, cl1: 3, cl2: 2 }
-];
-
-const dataCl2ToCl3   = [
-  { idx: 0, cl1: 3, cl2: 3 },
-  { idx: 1, cl1: 0, cl2: 0 },
-  { idx: 2, cl1: 0, cl2: 1 },
-  { idx: 3, cl1: 0, cl2: 1 },
-  { idx: 4, cl1: 0, cl2: 2 },
-  { idx: 5, cl1: 1, cl2: 2 },
-  { idx: 6, cl1: 2, cl2: 2 },
-  { idx: 7, cl1: 2, cl2: 2 },
-  { idx: 8, cl1: 2, cl2: 2 },
-  { idx: 9, cl1: 2, cl2: 2 }
-]
-
-//* Subcomponents
-gLevel3.call(
-        wordPlot
-          .dataForWords(words)
-          .dataForCooc(cooc)
-          .xWordScale(xWordScale)
-          .coocThreshold(0.2)
-      );
-      
-gLevel2.call(
-  featurePlot
-    .dataLoader([
-      groups,
-      tweets,
-      features,
-      pdpValues,
-      pdpValuesForGroups,
-      // dataBinCorrPredTweets,
-      // dataBinCorrPredTweetsForGroups,
-      // dataBinWrongPredTweetsForGroups,
-      tweetsCorrPred,
-      tweetsConWrongPred,
-      tweetsLibWrongPred
-    ])
-    .xFeatureScale(xFeatureScale)
-    .xOutputProbHistScale(xOutputProbHistScale)
-    .yOutputProbScale(yOutputProbScale)
-    .yGroupScale(yGroupScale)
-    .yOutputProbHistScale(yOutputProbHistScale)
-    .groupColorScale(groupColorScale)
-    .groupRatioScale(groupRatioScale)
-);
-
-gL1ToL2
-    .append('rect')
-    .attr('x', 0)
-    .attr('y', 0)
-    .attr('width', ll.l1ToL2.w)
-    .attr('height', ll.l1ToL2.h)
-    .style('fill', 'none');
-
-gLevel1.call(
-  goalPlot
-    .dataForGoals(goals)
-    //.dataForClusterForGoals(clustersForGoals)
-    .dataForFeatures(features)
-    .xGoalScale(xGoalScale)
-    .xClusterPerGoalScale(xClusterPerGoalScale)
-);
-
-console.log('ll.l1.w: ', ll.l1.w)
-renderClRectsBtnLv(dataClsForL1, gLevel1, 'bottom', ll.l1.w, ll.l1.h);
-renderClRectsBtnLv(dataClsForL2, gLevel2, 'top', ll.l2.w, ll.l2.h);
-renderClRectsBtnLv(dataClsForL2, gLevel2, 'bottom', ll.l2.w, ll.l2.h);
-renderClRectsBtnLv(dataClsForL3, gLevel3, 'top', ll.l3.w, ll.l3.h);
-
-renderControlRect(gLevel1, 'bottom', 1, 'emotion');
-renderControlRect(gLevel2, 'top', 2, 'valence');
-renderControlRect(gLevel2, 'bottom', 2, 'valence');
-renderControlRect(gLevel3, 'top', 3, 'gun');
-
-drawLinesFromClsToCls(gL1ToL2, dataClsForL1, dataClsForL2, dataCl1ToCl2);
-drawLinesFromClsToCls(gL2ToL3, dataClsForL2, dataClsForL3, dataCl2ToCl3);
-
-function clusterBy(tweets, feature) {
-  const tweetsByF = tweets.map(d => d[feature])
-  console.log('tweetsByF: ', tweetsByF);
-  let clusters = skmeans(tweetsByF, 5);
-  console.log('clusters: ', clusters);
-  
-  return clusters;
-}
-
+const container = d3.select('#container');
 
 // For new codes
 let LVData = [];
@@ -243,6 +31,7 @@ fetch('/dataset/loadData/', {
         instances = JSON.parse(response.instances);
 
   LVData = dataMapping.mapLevelToFeatures('cancer', features);
+  controller(LVData);
   l.h = LVData.length * 250;
   
   // Render the levels given clustering result
@@ -265,8 +54,23 @@ fetch('/dataset/loadData/', {
       lvData.clScales = scales.calculateScalesForCls(rawData, sortedCls, llv.w);
       console.log('lvData.clScales: ', lvData.clScales);
       lvData.features.forEach((feature, featureIdx) => {
+        const numCats = feature.domain.length;
+        feature.sortedInstances = [];
+        feature.cats = [];
+        
         feature.sortedIdx = sortedCatsIdxForLvs[lvIdx][featureIdx];
-        const { scale, catScales } = scales.addScaleToFeature(rawData, feature, llv.w);
+        feature.instances.forEach((instanceSet, i) => {
+          feature.sortedInstances[feature.sortedIdx[i]] = instanceSet;
+        });
+
+        for(let i=0; i<numCats; i++) {
+          feature.cats[i] = {
+            idx: feature.sortedIdx[i],
+            instances: feature.sortedInstances[i]
+          };
+        }
+
+        const { scale, catScales } = scales.setScaleToFeature(rawData, feature, llv.w);
         feature.scale = scale;
         feature.catScales = catScales;
       })
@@ -280,6 +84,8 @@ fetch('/dataset/loadData/', {
       .attr('class', 'svg2');
     const container1 = Container();
 
+    
+
     svg2.call(
       container1
         .data([
@@ -289,85 +95,123 @@ fetch('/dataset/loadData/', {
         ])
     );
 
+    // Events
     d3.selectAll('.cat_rect')
       .on('click', function(d) {
         console.log('dddd: ', d);
+      })
+      .on('mouseover', function(d) {
+        d3.select(this).classed('cat_rect_mouseovered', true);
+      })
+      .on('mouseout', function(d) {
+        d3.select(this).classed('cat_rect_mouseovered', false);
       });
 
     d3.selectAll('.bar_rect')
       .on('click', function(cl) {
+        const selectedBar = d3.select(this), 
+            selectedLV = cl.lvIdx,   
+            selectedClIdx = cl.idx;
+        const selectedInstancesIdx = cl.instances.map(d => d.idx);
         console.log('dddd: ', cl);
-        const instancesIdx = cl.instances.map(d => d.idx);
-        d3.selectAll('.cat_lines')
-          .each(function(cat) {
-            const catLine = d3.select(this);
-            // catIdx = rawData.map(instance => instance[] == cat);
-            
-            // const ratio = instancesIdx & catIdx .length / catIdx.length;
-            catLine
-              .style('stroke', scales.colorOnSelectScale(0.1));
-          })
+        
+        const isSelected = selectedBar.classed('bar_rect_selected');
+        if (isSelected == false) {
+          selectedBar.classed('bar_rect_selected', true);
+          d3.selectAll('.bar_rect_lv_2')  // other bars in the same level
+            .filter((cl) => cl.idx !== selectedClIdx)
+            .classed('not_selected', true);
+          // Color other bars 
+          d3.selectAll('.bar_rect')
+            .filter(function(cl) {
+              return cl.lvIdx !== selectedLV
+            })
+            .style('fill', function(cl){
+              const instancesIdx = cl.instances.map(d => d.idx),
+                overlappedIdx = _.intersection(instancesIdx, selectedInstancesIdx);
+
+              const inGroupRatio = overlappedIdx.length / selectedInstancesIdx.length;
+
+              return scales.colorOnSelectScale(inGroupRatio);
+            })
+            .style('fill-opacity', 0.9);
+          // Color btn-lines
+          d3.selectAll('.cl_line')
+            .style('stroke', function(clToCl) {
+              console.log('dd');
+              const instancesIdx = clToCl.instancesClToCl.map(d => d.idx);
+              const overlappedIdx = _.intersection(instancesIdx, selectedInstancesIdx);
+
+              const inGroupRatio = overlappedIdx.length / selectedInstancesIdx.length;
+              console.log('inGroupRatio: ', inGroupRatio)
+              return scales.colorOnSelectScale(inGroupRatio);
+            });
+          // Color cat bars
+          d3.selectAll('.cat_rect')
+            .style('fill', function(cat){
+              console.log('cat: ', cat);
+              const instancesIdx = cat.instances.map(d => d.idx);
+              const overlappedIdx = _.intersection(instancesIdx, selectedInstancesIdx);
+
+              const inGroupRatio = overlappedIdx.length / selectedInstancesIdx.length;
+              console.log('inGroupRatio: ', inGroupRatio)
+              return scales.colorCatOnSelectScale(inGroupRatio);
+            })
+            .style('fill-opacity', 0.9);
+        } else {
+          selectedBar.classed('bar_rect_selected', false);
+
+          d3.selectAll('.bar_rect')
+            .style('fill', '');
+          d3.selectAll('.cl_line')
+            .style('stroke', '');
+          d3.selectAll('.cat_rect')
+            .style('fill', '');
+        }
+      })
+      .on('mouseover', function(d) {
+        d3.select(this).classed('bar_rect_mouseovered', true);
+      })
+      .on('mouseout', function(d) {
+        d3.select(this).classed('bar_rect_mouseovered', false);
       });
+
+    d3.selectAll('.proto_circle')
+      .on('mouseover', function(d) {
+        const gProto = d3.select(this.parentNode);
+        gProto.selectAll('.proto_path')
+          .classed('proto_mouseovered', true);
+      })
+      .on('mouseout', function(d) {
+        const gProto = d3.select(this.parentNode);
+        gProto.selectAll('.proto_path')
+          .classed('proto_mouseovered', false);
+      })
+      .on('click', function(d) {
+        const gProto = d3.select(this.parentNode);
+        const selectedProto = d3.select(this);
+
+        if (selectedProto.classed('proto_selected')) {
+          selectedProto.classed('proto_selected', false);
+          gProto.selectAll('.proto_path')
+            .classed('proto_selected', false);
+        } else {
+          selectedProto.classed('proto_selected', true);
+          gProto.selectAll('.proto_path')
+            .classed('proto_selected', true);
+        }
+        
+      });
+
+
+
+    
   });
 
   
 });
 
-// Controller
-$(document).ready(function(){
 
-  calcWidth($('#title0'));
-  
-  window.onresize = function(event) {
-      console.log("window resized");
-  
-      //method to execute one time after a timer
-  
-      };
-  
-  //recursively calculate the Width all titles
-  function calcWidth(obj){
-  console.log('---- calcWidth -----');
-  
-  var titles = 
-  $(obj).siblings('.space').children('.route').children('.title');
-  
-  $(titles).each(function(index, element){
-  var pTitleWidth = parseInt($(obj).css('width'));
-  var leftOffset = parseInt($(obj).siblings('.space').css('margin-left'));
-  
-  var newWidth = pTitleWidth - leftOffset;
-  
-  if ($(obj).attr('id') == 'title0'){
-  console.log("called");
-  
-  newWidth = newWidth - 10;
-  }
-  
-  $(element).css({
-  'width': newWidth,
-  })
-  
-  calcWidth(element);
-  });
-  
-  }
-  
-  $('.space').sortable({
-  connectWith:'.space',
-  // handle:'.title',
-  // placeholder: ....,
-  tolerance:'intersect',
-  over:function(event,ui){
-  },
-  receive:function(event, ui){
-  calcWidth($(this).siblings('.title'));
-  },
-  });
-  
-  $('.space').disableSelection();
-  
-  });
 
 
 

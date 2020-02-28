@@ -114,6 +114,11 @@ lbl.getY = function(LVLayout, numFeatures, idx) {
   return y;
 }
 
+gLayout.getCssVar = function(cssVar) {
+  return getComputedStyle(document.documentElement)
+            .getPropertyValue(cssVar).trim();
+}
+
 gLayout.getElLayout = function(el) {
   const l = el.node().getBBox();
   const y2 = l.y + l.height;	
@@ -135,7 +140,7 @@ gLayout.getGlobalElLayout = function(el) {
         container = containerEl.getBoundingClientRect();
   
   return {
-    x1: l.x,
+    x1: l.left - container.left,
     x2: l.x + l.width,
     y1: l.top - container.top,
     y2: l.top - container.top + l.height,
@@ -198,8 +203,8 @@ gLayout.renderCatBars = function(instances, catFeature, catScales, direction) { 
 gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeature, nextFeatureIdx, wholeWidth) {
   const catsInCurrFeature = currFeature.domain,
       catsInNextFeature = nextFeature.domain;
-  const sortedCatsInCurrFeature = currFeature.sortedIdx,
-      sortedCatsInNextFeature = nextFeature.sortedIdx;
+  const sortedCatsInCurr = currFeature.cats,
+      sortedCatsInNext = nextFeature.cats;
 
   const catScalesForCurr = scales.calculateScalesForCats(currFeature, wholeWidth);
   const catScalesForNext = scales.calculateScalesForCats(nextFeature, wholeWidth);
@@ -224,8 +229,10 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
     const response = await fetch('/dataset/optimizeEdges/', {
       method: 'post',
       body: JSON.stringify({
-        currNodes: currFeature.instances,
-        nextNodes: nextFeature.instances
+        currNodesName: currFeature.name,
+        nextNodesName: nextFeature.name,
+        currNodes: sortedCatsInCurr.map(d => d.instances),
+        nextNodes: sortedCatsInNext.map(d => d.instances)
       })
     })
     .then((response) => response.json())
@@ -235,40 +242,43 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
       edgesWithOutlierInfo = response.edgesWithOutlierInfo;
       
       console.log('edgesWithOutlierInfo-CatToCat: ', edgesWithOutlierInfo.map(d => d.isOutlier));
-      prepareCatData(sortedCatsInCurrFeature, sortedCatsInNextFeature);
+      prepareCatData(sortedCatsInCurr, sortedCatsInNext);
       renderCatToCatLines(instancesBtnCats, lvData);
     });
-  }
+  } 
 
-  function prepareCatData(sortedCatsInCurrFeature, sortedCatsInNextFeature) {
-    sortedCatsInCurrFeature.forEach((sortedCatCurr, catCurr) => { // [2,0,3,1]
-      sortedCatsInNextFeature.forEach((sortedCatNext, catNext) => {
-        const instancesInCurr = currFeature.instances[sortedCatCurr],
-              instancesInNext = nextFeature.instances[sortedCatNext];
+  function prepareCatData(sortedCatsInCurr, sortedCatsInNext) {
+    sortedCatsInCurr.forEach((sortedCatCurr, catCurr) => { // [2,0,3,1]
+      sortedCatsInNext.forEach((sortedCatNext, catNext) => {
+        const instancesInCurr = sortedCatCurr.instances,
+              instancesInNext = sortedCatNext.instances;
         const filteredInstances = _.intersectionBy(instancesInCurr, instancesInNext, 'idx');
-        const edge = _.find(edgesWithOutlierInfo, {'source': sortedCatCurr, 'target': sortedCatNext})
+        const edge = _.find(edgesWithOutlierInfo, {'source': sortedCatCurr.idx, 'target': sortedCatNext.idx})
         let isEdgeOutlier = false;
         if (typeof(edge) !== 'undefined')
           isEdgeOutlier = edge.isOutlier == 1 ? true: false;
-        else
+        else {
+          console.log('no edges detected (source,target): ', sortedCatCurr.idx, sortedCatNext.idx)
           isEdgeOutlier = false;
+        }
+          
   
         instancesBtnCats.push({
           catCurr: catCurr,
           catNext: catNext,
-          sortedCatCurr: sortedCatCurr,
-          sortedCatNext: sortedCatNext,
+          sortedCatCurr: sortedCatCurr.idx,
+          sortedCatNext: sortedCatNext.idx,
           // groupRatio: libRatioFilteredInstances,
           numInstancesRatioInCurr: filteredInstances.length / instancesInCurr.length,
-          cumNumInstancesRatioInCurr: cumNumInstancesRatioInCurr[sortedCatCurr] / instancesInCurr.length,
-          cumNumInstancesRatioInNext: cumNumInstancesRatioInNext[sortedCatNext] / instancesInNext.length,
+          cumNumInstancesRatioInCurr: cumNumInstancesRatioInCurr[sortedCatCurr.idx] / instancesInCurr.length,
+          cumNumInstancesRatioInNext: cumNumInstancesRatioInNext[sortedCatNext.idx] / instancesInNext.length,
           instancesInCurr: instancesInCurr,
           instancesInCatToCat: filteredInstances,
           isOutlier: isEdgeOutlier
         });
   
-        cumNumInstancesRatioInCurr[sortedCatCurr] += filteredInstances.length;
-        cumNumInstancesRatioInNext[sortedCatNext] += filteredInstances.length;
+        cumNumInstancesRatioInCurr[sortedCatCurr.idx] += filteredInstances.length;
+        cumNumInstancesRatioInNext[sortedCatNext.idx] += filteredInstances.length;
       });
     });
   }
@@ -276,8 +286,10 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
   function renderCatToCatLines(instancesBtnCats, lvData) {
     dataForCatToCatLines = instancesBtnCats.map((d, i) => {
       const widthForCurrCat = catScalesForCurr[d.catCurr].range()[1] - catScalesForCurr[d.catCurr].range()[0];
-      const lineWidth = widthForCurrCat * d.numInstancesRatioInCurr;
+      const widthDecayingRatio = 0.25;
+      const lineWidth = widthForCurrCat * d.numInstancesRatioInCurr * widthDecayingRatio;
       return {
+        idx: i,
         catCurr: d.catCurr,
         catNext: d.catNext,
         sortedCatCurr: d.sortedCatCurr,
@@ -288,7 +300,7 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
         instancesInCurr: d.instancesInCurr,
         instancesInCatToCat: d.instancesInCatToCat,
         source: {
-          x: catScalesForCurr[d.catCurr](d.cumNumInstancesRatioInCurr) + lineWidth / 2,
+          x: catScalesForCurr[d.catCurr](d.cumNumInstancesRatioInCurr) + lineWidth / 2, // From the center (=widthForCurrCat/2), then go left a bit
           y: 0
         },
         target: {
@@ -302,18 +314,27 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
     const drawTweetLine = d3.linkVertical()
       .x(d => d.x)
       .y(d => d.y);
+    let catLinesData, catLines;
   
-    selection
-      .selectAll('.cat_lines')
-      .data(dataForCatToCatLines)
+    catLinesData = selection
+      .selectAll('.cat_line')
+      .data(dataForCatToCatLines, d => d.idx);
+
+    catLinesData
       .enter()
       .append('path')
-      .attr('class', d => 'cat_lines cat_line_' + d.sortedCatCurr + '_' + d.sortedCatNext)
+      .attr('class', d => 'cat_line cat_line_' + d.sortedCatCurr + '_' + d.sortedCatNext)
       .attr('d', drawTweetLine)
       .style('fill', 'none')
       //.style('stroke-width', d => d.lineHeight)
       .style('stroke-width', d => d.lineWidth)
       .style('opacity', d => d.isOutlier === true ? 0 : 0.5);
+
+    catLinesData
+      .attr('d', drawTweetLine)
+      .style('stroke-width', d => d.lineWidth);
+
+    catLinesData.exit().remove();
   }
 }
 
@@ -345,6 +366,8 @@ gLayout.renderClToClLines = function(selection, instances, gCurrLowerBars, gNext
     const response = await fetch('/dataset/optimizeEdges/', {
       method: 'post',
       body: JSON.stringify({
+        currNodesName: currCls.length,
+        nextNodesName: nextCls.length,
         currNodes: _.sortBy(currCls, ['idx']).map(d => d.instances),
         nextNodes: _.sortBy(nextCls, ['idx']).map(d => d.instances)
       })
@@ -401,7 +424,8 @@ gLayout.renderClToClLines = function(selection, instances, gCurrLowerBars, gNext
     // Prepare the data to draw lines
     dataForClToClLines = instancesBtnCls.map((d, i) => {
       const widthForCurrCat = clScalesForCurr[d.clCurrIdx].range()[1] - clScalesForCurr[d.clCurrIdx].range()[0];
-      const lineWidth = widthForCurrCat * d.numInstancesRatioInCurr;
+      const widthDecayingRatio = 0.25;
+      const lineWidth = widthForCurrCat * d.numInstancesRatioInCurr * widthDecayingRatio;
       return {
         clCurrIdx: d.clCurrIdx,
         clNextIdx: d.clNextIdx,
@@ -439,155 +463,9 @@ gLayout.renderClToClLines = function(selection, instances, gCurrLowerBars, gNext
       .attr('class', d => 'cl_line cl_line_' + d.sortedClCurrIdx + '_' + d.sortedClNextIdx)
       .attr('d', drawTweetLine)
       .style('fill', 'none')
-      .style('stroke', 'black')
       //.style('stroke-width', d => d.lineHeight)
       .style('stroke-width', d => d.lineWidth)
       .style('opacity', d => d.isOutlier ? 0 : 0.5);
   }
   
 }
-
-export const ll = {
-  l1: {
-    t: 5,
-    h: l.h * 0.1,
-    l: 5,
-    w: l.w * 0.5
-  },
-  l1ToL2: {
-    t: l.h * 0.165,
-    h: l.h * 0.17,
-    w: l.w * 0.5
-  },
-  l2: {
-    t: l.h * 0.35,
-    h: l.h * 0.2,
-    w: l.w * 0.5
-  },
-  l2ToL3: {
-    t: l.h * 0.605,
-    h: l.h * 0.1
-  },
-  l3: {
-    t: l.h * 0.79,
-    h: l.h * 0.175,
-    w: l.w * 0.5
-  }
-};
-
-export const lCom = {
-  hIndicator: {
-    // div
-    t: 0,
-    l: 5,
-    w: 70,
-    h: l.h * 0.9,
-    textHeight: 10
-  },
-  hPlot: {
-    // in the context of svg
-    t: 0,
-    l: 25,
-    w: l.w * 0.45,
-    h: l.h * 0.9,
-    cl: {
-      btn: {
-        m: 10,
-        rect: {
-          h: 5
-        }
-      },
-      wtn: {
-        m: 10,
-        rect: {
-          w: 10
-        }
-      }
-    },
-    goalPlot: {
-      w: l.w * 0.5,
-      t: ll.l1.t,
-      h: ll.l1.h,
-      m: 20,
-      featureRect: {
-        t: ll.l1.t + 10,
-        h: 5
-      },
-      goalTitle: {
-        t: ll.l1.t,
-        textHeight: 8
-      }
-    },
-    featurePlotTitles: {
-      t: ll.l2.t - 30,
-      h: ll.l2.h
-    },
-    featurePlot: {
-      w: l.w * 0.5,
-      t: ll.l2.t,
-      h: ll.l2.h,
-      titles: {
-        t: ll.l2.t - 15,
-        h: ll.l2.h - 15,
-        m: 15
-      },
-      featureRect: {
-        w: 55,
-        h: 55,
-        m: 3,
-        cat: {
-          // Additional axis for categories
-          m: 5
-        }
-      },
-      pdp: {
-        w: 20
-      }
-    },
-    wordPlot: {
-      w: l.w * 0.5,
-      t: ll.l3.t,
-      h: ll.l3.h,
-      word: {
-        w: 20,
-        maxH: 10
-      },
-      featureRect: {
-        w: 30,
-        h: 50,
-        maxH: 10,
-        m: 10,
-        cat: {
-          // Additional axis for categories
-          m: 20
-        }
-      }
-    }
-  },
-  fromFtoO: {
-    l: l.w * 0.48,
-    w: l.w * 0.05
-  },
-  outputProbPlot: {
-    t: ll.l2.t,
-    h: ll.l2.h,
-    l: l.w * 0.54,
-    w: 80
-  },
-  clusterPlot: {
-    t: l.h * 0.15,
-    //h: ll.l1.h + ll.l2.h,
-    h: ll.l2.h,
-    l: l.w * 0.625,
-    w: l.w * 0.325,
-    m: 10,
-    minR: 4,
-    maxR: 15
-  },
-  pdpPlot: {
-    t: ll.l2.t,
-    h: ll.l2.h,
-    l: l.w * 0.75,
-    w: l.w * 0.1
-  }
-};

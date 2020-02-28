@@ -9,10 +9,15 @@
 </head>
 
 <body>
-  <div id="container">
-  </div>
-  <div class="controller">
-    <h3 class="title" id="title0">jQuery Nested Sortable Plugin Demo</h3>
+  <div id="controller">
+    <h3 class="title" id="title0">Navigator</h3>
+    <div class='interface'>
+      <div class='add_button'>+</div>
+    </div>
+    <div class='levels section_title'>Levels</div>
+    <ul class="space first-space level_list" id="space0">
+    </ul>
+    <div class='features section_title'>Features</div>
     <ul class="space first-space" id="space0">
       <li class="route">
         <h3 class="title" id="title1">A</h3>
@@ -22,7 +27,7 @@
       </li>
       <li class="route">
         <h3 class="title" id="title2">B</h3>
-        <span class="ui-icon ui-icon-arrow-4-diag"></span>
+        <span class="ui-icon ui-icon-grip-solid-horizontal"></span>
         <ul class="space" id="space2">
           <li class="route">
             <h3 class="title" id="title3">C</h3>
@@ -32,7 +37,7 @@
           </li>
         </ul>
       </li>
-      <li class="route">
+      <!-- <li class="route">
         <h3 class="title" id="title4">D</h3>
         <span class="ui-icon ui-icon-arrow-4-diag"></span>
         <ul class="space" id="space4">
@@ -61,8 +66,11 @@
         <span class="ui-icon ui-icon-arrow-4-diag"></span>
         <ul class="space">
         </ul>
-      </li>
+      </li> -->
     </ul>
+  </div>
+  <div id="container">
+    <h3 class="vis_title" id="title0">Visualization</h3>
   </div>
   <script src="/bundle.js"></script>
 </body>

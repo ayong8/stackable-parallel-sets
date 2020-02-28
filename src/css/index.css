@@ -1,20 +1,27 @@
 :root {
   --stroke: lightslategray;
   --block-fill: springgreen;
-  --bar-fill: #2dffc0;
+  --bar-fill: #00ffe2;
+  --cl-line-stroke: black;
+  --proto: #af6ed4;
+
+  --bar-fill-selected: blue;
 }
 
 body {
   margin: 0;
+  margin-top: 20px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  display: flex;
 }
 
 svg {
-  border: 2px dashed black;
+  /* border: 2px dashed black; */
+  /* background: #f7f7f7; */
 }
 
 .level {
@@ -23,24 +30,18 @@ svg {
 }
 
 #container {
-  color: gray;
+  width: 700px;
 }
 
-.g_word_x_axis line {
-  stroke: none;
-}
-
-.g_word_x_axis path {
-  stroke: none;
-}
-
-.g_word_x_axis text {
-  fill: gray;
+.vis_title {
+  margin: 0;
+  margin-bottom: 30px;
+  padding-top: 5px;
 }
 
 /* Level */
 .level_rect {
-  fill: #ececec;
+  fill: #dcdcdc;
   /* stroke: black;
   stroke-width: 1px; */
 }
@@ -69,9 +70,13 @@ svg {
 /* Within-level bar/cat */
 .cat_rect {
   fill: var(--block-fill);
-  stroke: var(--block-fill);
-  fill-opacity: 0.5;
+  /* stroke: var(--block-fill); */
+  fill-opacity: 0.7;
   /* filter: url(#drop-shadow); */
+}
+
+.cat_rect_mouseovered {
+  fill: #00e271;
 }
 
 .cat_label {
@@ -83,8 +88,12 @@ svg {
 
 .bar_rect {
   fill: var(--bar-fill);
-  stroke: var(--bar-fill);
+  /* stroke: var(--bar-fill); */
   fill-opacity: 0.5;
+}
+
+.bar_rect_mouseovered {
+  fill: #00ceb6;
 }
 
 .cl_label {
@@ -94,7 +103,11 @@ svg {
   font-style: italic;
 }
 
-.cat_lines {
+.cl_line {
+  stroke: var(--cl-line-stroke);
+}
+
+.cat_line {
   fill: none;
   stroke: gray;
   stroke-width: 5;
@@ -102,47 +115,78 @@ svg {
 }
 
 .proto_circle {
-  fill: #c370db;
+  fill: var(--proto);
   filter: url(#drop-shadow);
 }
 
 .proto_path {
-  stroke: slategray;
+  stroke: var(--proto);
   stroke-width: 2;
   stroke-dasharray: 4, 1;
   fill: none;
   filter: url(#drop-shadow);
+  opacity: 0.2;
+}
+
+.proto_selected,
+.proto_mouseovered {
+  stroke-width: 4px;
+  opacity: 1;
+}
+
+/* For event */
+.bar_rect_selected {
+  fill: var(--bar-fill-selected);
 }
 
 /*** Controller ***/
-.controller {
+#controller {
   position: relative;
-  margin-top: 60px;
+  width: 200px;
   margin-left: 60px;
-  margin-right: 60px;
+  margin-right: 20px;
   padding-bottom: 10px;
   min-height: 500px;
   background: #eee;
-  box-shadow: 0px 0px 10px 2px #bbb;
 }
 
-.controller h3 {
-  position: absolute;
+#controller h3 {
+  /* position: absolute; */
   border: 0;
   margin: 0;
   padding: 0;
-  padding-top: 14px;
-  height: 44px;
+  padding-top: 5px;
+  height: 30px;
   width: 400px;
-  text-indent: 80px;
   background: #4af;
   border-radius: 2px;
-  box-shadow: 0px 0px 0px 2px #29f;
   pointer-events: none;
   margin-left: 0px;
   width: 100%;
   background: white;
-  box-shadow: 0px 2px 0px 1px #9bf;
+}
+
+.interface {
+  height: 30px;
+  background: white;
+}
+
+.section_title {
+  margin: 0 5px;
+  padding: 5px 0;
+  font-weight: bold;
+  border-bottom: 2px solid lightgray;
+}
+
+.add_button {
+  width: 18px;
+  height: 18px;
+  background: white;
+  font-weight: bolder;
+  margin: 0 2px 0 auto;
+  padding: 3px;
+  text-align: center;
+  box-shadow: 0 0 0px 1px black;
 }
 
 .route {
@@ -162,8 +206,8 @@ svg {
 
 .route span {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 10px;
+  left: 10px;
   -ms-transform: scale(2);
   /* IE 9 */
 
@@ -180,12 +224,11 @@ svg {
   margin: 0;
   padding: 0;
   padding-top: 14px;
-  height: 44px;
+  height: 20px;
   width: 400px;
-  text-indent: 80px;
+  text-indent: 50px;
   background: #4af;
   border-radius: 2px;
-  box-shadow: 0px 0px 0px 2px #29f;
   pointer-events: none;
 }
 
@@ -199,11 +242,11 @@ svg {
   border: 0;
   margin: 0;
   padding: 0;
-  margin-left: 70px;
-  width: 60px;
-  top: 68px;
-  padding-bottom: 68px;
-  height: 100%;
+  margin-left: 50px;
+  width: 40px;
+  top: 50px;
+  padding-bottom: 50px;
+  /* height: 100%; */
   z-index: 1;
 }
 

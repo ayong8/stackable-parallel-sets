@@ -23,22 +23,40 @@ function Block() {
 	// },
 
 	function _block(LV) {
-		let gBLs;
+		let gBLsData, gBLs;
 		const lvData = LV.data()[0];
 		const numFeatures = BLData.length;
 
-		gBLs = LV
+		gBLsData = LV
 			.selectAll('.g_block')
-			.data(BLData).enter()
+			.data(BLData, (d) => d.id);
+
+		console.log('gBLsData: ', BLData);
+			
+		gBLs = gBLsData
+			.enter()
 			.append('g')
-			.attr('class', 'g_block')
+			.attr('class', (blData) => 'g_block lv_' + lvData.idx + ' bl_' + blData.id)
 			.attr('transform', (blData, blIdx) => {
 				return 'translate(' + 
 					gLayout.getElLayout(LV).x1 + 
 					',' + 
 					lvData.blScale(blIdx) +
 					')';
-			});	// each block: x - (llv.m.wtn.l) and y - (llv.h / numFeatures) 
+			});	// each block: x - (llv.m.wtn.l) and y - (llv.h / numFeatures)
+			
+		console.log('gBLs before: ', gBLs);
+		
+		gBLsData
+			.attr('transform', (blData, blIdx) => {
+				return 'translate(' + 
+					gLayout.getElLayout(LV).x1 + 
+					',' + 
+					lvData.blScale(blIdx) +
+					')';
+			});
+		gBLsData.exit().remove();
+		console.log('gBLs after: ', gBLs);
 
 		// Render the lengthy bar that indicates the width of block
 		gBLs
@@ -103,35 +121,45 @@ function Block() {
 		// Render rectangles
 		gBLs.each(function(BLData, BLIdx) {
 			const gBL = d3.select(this);
-			const cats = BLData.domain,
+			const sortedCats = BLData.cats,
 						sortedCatsIdx = BLData.sortedIdx,
-						featureValues = BLData.instances,
+						sortedCatInstanceSets = BLData.instances,
 						catScales = BLData.catScales;
-			let catRects, catLabels;
+			let gCats, gCatsData, catRects, catLabels;
 
-			catRects = gBL
-				.selectAll('.cat_rect')
-				.data(sortedCatsIdx).enter()
+			gCatsData = gBL
+				.selectAll('.g_cat_' + BLData.id)
+				.data(sortedCats, d => d.idx);
+
+			gCats = gCatsData
+				.enter()
+				.append('g')
+				.attr('class', (cat, i) => 'g_cat g_cat_' + BLData.id + ' g_cat_' + cat.idx)
+				.attr('transform', (cat, i) => 'translate(' + 
+					catScales[i].range()[0] + ',' +
+					0 +
+					')'
+				);
+
+			catRects = gCats
 				.append('rect')
-				.attr('class', (cat, i) => 'cat_rect cat_rect_' + BLData.id + '_' + cat)
-				.attr('x', (cat, i) => catScales[i].range()[0]) 
+				.attr('class', (cat, i) => 'cat_rect cat_rect_' + BLData.id + '_' + cat.idx)
+				.attr('x', 0) 
 				.attr('y', 0)
 				.attr('width', (cat, i) => (catScales[i].range()[1] - catScales[i].range()[0])) // i*2 is cumulative margin
 				.attr('height', lwbr.h);
 
-			catLabels = gBL
-				.selectAll('.cat_label')
-				.data(sortedCatsIdx).enter()
+			catLabels = gCats
 				.append('text')
 				.attr('class', 'cat_label')
-				.attr('x', (cat, i) => catScales[i].range()[0])
+				.attr('x', 0)
 				.attr('y', (d, i) => {
 					const extraYForText = 5;
 					if (BLIdx==0) return lwbr.h
 					else if (BLIdx==numFeatures-1) return lwbr.h/2
 					else return lwbr.h * 2/3
 				})
-				.text((cat, i) => cat);
+				.text((cat, i) => cat.idx);
 		})
 		// const gBLl = gLayout.getElLayout(gBLs);
 
