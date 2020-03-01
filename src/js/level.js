@@ -28,135 +28,13 @@ function Level(selection) { // User-defined sementic category
 				}
 			});
 
-
-		// gLVData
-		// 	.transition()
-		// 	.attr('transform', function(lvData, lvIdx) {
-		// 		const gLV = d3.select(this);
-				
-		// 		if (lvData.mode == 'unfold')
-		// 			return 'translate(' + 0 + ',' + scales.yLvsScale(lvIdx) + ')'
-		// 		else if (lvData.mode == 'fold') {
-		// 			gLV.selectAll('*').remove();
-		// 			gLV
-		// 				.append('line')
-		// 				.attr('class', 'level_bar level_bar_top')
-		// 				.attr('x1', 0)
-		// 				.attr('y1', -5)
-		// 				.attr('x2', llv.w)
-		// 				.attr('y2', -5);
-
-		// 			gLV
-		// 				.append('line')
-		// 				.attr('class', 'level_bar level_bar_bottom')
-		// 				.attr('x1', 0)
-		// 				.attr('y1', 5)
-		// 				.attr('x2', llv.w)
-		// 				.attr('y2', 5);
-
-		// 			const heightForMovingUp = llv.h;
-		// 			const otherGLVs = d3.selectAll('.g_level')
-		// 						.filter((d) => {
-		// 							// only g_level elements below the selected level are moved up
-		// 							return d.idx > lvIdx 
-		// 						});
-		// 			return 'translate(' + 0 + ',' + 10 + ')'
-		// 		}
-
-		// 		//////
-		// 		const numFeatures = lvData.features.length;
-	
-		// 		if (numFeatures == 1) {
-		// 				gLV
-		// 					.append('line')
-		// 					.attr('class', 'level_bar level_bar_top')
-		// 					.attr('x1', 0)
-		// 					.attr('y1', -5)
-		// 					.attr('x2', llv.w)
-		// 					.attr('y2', -5);
-	
-		// 				gLV
-		// 					.append('line')
-		// 					.attr('class', 'level_bar level_bar_bottom')
-		// 					.attr('x1', 0)
-		// 					.attr('y1', 5)
-		// 					.attr('x2', llv.w)
-		// 					.attr('y2', 5);
-							
-		// 				gLV
-		// 					.append('text')
-		// 					.attr('class', 'level_label')
-		// 					.attr('x', 0)
-		// 					.attr('y', 5)
-		// 					.text((d, i) => d.name);
-		// 		}
-		// 		else if (numFeatures > 1) {
-		// 				gLV
-		// 					.append('line')
-		// 					.attr('class', 'level_bar level_bar_top')
-		// 					.attr('x1', 0)
-		// 					.attr('y1', -5)
-		// 					.attr('x2', llv.w)
-		// 					.attr('y2', -5);
-	
-		// 				gLV
-		// 					.append('line')
-		// 					.attr('class', 'level_bar level_bar_bottom')
-		// 					.attr('x1', 0)
-		// 					.attr('y1', llv.h + 5)
-		// 					.attr('x2', llv.w)
-		// 					.attr('y2', llv.h + 5);
-	
-		// 				gLV
-		// 					.append('rect')
-		// 					.attr('class', 'level_rect')
-		// 					.attr('x', 0)
-		// 					.attr('y', 0)
-		// 					.attr('width', llv.w)
-		// 					.attr('height', llv.h);
-							
-		// 				gLV
-		// 					.append('text')
-		// 					.attr('class', 'level_label')
-		// 					.attr('x', 0)
-		// 					.attr('y', llv.h)
-		// 					.text((d, i) => d.name);
-	
-		// 				// Set the layout for levels and blocks
-		// 				const LVWForFeatures = (llv.w * llv.minFeatureAreaRatio) + (llv.w * (llv.maxFeatureAreaRatio-llv.minFeatureAreaRatio)) * (numFeatures-2/llv.maxNumFeatures);
-		// 				llv.setM(LVWForFeatures);
-		// 				lbl.setS(LVWForFeatures, numFeatures);
-		// 				lvData.blScale = scales.calculateYBlockScale(lvData);
-	
-		// 				const BL = Block();
-	
-		// 				gLV.call(
-		// 					BL
-		// 					.data(lvData.features)
-		// 				);
-	
-		// 				// Render the edges between blocks
-		// 				const BLs = gLV.selectAll('.g_block');
-		// 				BLs.each(function(blData, blId) {
-		// 					const gBL = d3.select(this);
-		// 					if (blId < BLs.nodes().length-1){
-		// 						const gBtnBLs = gLV.append('g')
-		// 							.attr('class', 'g_btn_bls')
-		// 							.attr('transform', 'translate(0,' + (lvData.blScale(blId)+lwbr.h) + ')');
-	
-		// 						gLayout.renderCatToCatLines(gBtnBLs, lvData, blData, BLs.data()[blId+1], blId+1, llv.w);
-		// 					}	
-		// 				});
-		// 		}
-		// 	});
-		// gLVData.exit().remove();
-
 		renderLV();
 
 		function renderLV() {
 			gLVs.each(function(lvData, lvIdx) {
 				const gLV = d3.select(this);
 				const numFeatures = lvData.features.length;
+				console.log('numFeatures: ', numFeatures)
 	
 				if (numFeatures == 1) {
 						gLV
@@ -226,6 +104,34 @@ function Level(selection) { // User-defined sementic category
 							BL
 							.data(lvData.features)
 						);
+
+						// Render the block icons on the right
+						const gBLIcons = gLV
+								.append('g')
+								.attr('class', 'g_block_icons g_block_icons_' + lvData.idx)
+								.attr('transform', 'translate(' +
+									(llv.w - 40) + ',' +
+									5	+
+									')'
+								);
+						gBLIcons
+							.append('rect')
+							.attr('class', 'block_icon_group_rect')
+							.attr('x', 5)
+							.attr('y', 0)
+							.attr('width', 25)
+							.attr('height', llv.h-10);
+
+						gBLIcons
+							.selectAll('.block_icon')
+							.data(lvData.features).enter()
+							.append('rect')
+							.attr('class', (feature, i) => 'block_icon block_icon_' + feature.id)
+							.attr('x', 10)
+							.attr('y', (feature, i) => lvData.blScale(i))
+							.attr('width', 15)
+							.attr('height', 15);
+						
 	
 						// Render the edges between blocks
 						const BLs = gLV.selectAll('.g_block');

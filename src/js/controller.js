@@ -1,30 +1,37 @@
+import * as d3 from 'd3';
+
 // Controller
 export const controller = function(LVData) {
   $(document).ready(function(){
-  
-    $('.level_list').children('.lv')
-  
-    $('.add_button')
-      .on('click', function(d, i) {
-        const numLVs = $('.level_list').children('.lv').length + 1;
-        console.log('numLVs: ', numLVs)
-        var newdiv1 = $( 
-          `<li class="route">
-            <h3 class="title" id="title` + numLVs + `">` +
-          'Level ' + numLVs +
-          `</h3>
-            <span class="ui-icon ui-icon-arrow-4-diag"></span>
-            <ul class="space ui-sortable" id="space` + numLVs + `"></ul>
-          </li>`);
-  
-        $('#controller')
-          .children('.level_list')
-          .append(newdiv1)
-          .addClass('selected' + numLVs);
-  
-        calcWidth($('#title0'));
-        sorting();
+    // Adding divs based on the level data
+    const lvDivs = d3.select('.level_list')
+      .selectAll('.lv')
+      .data(LVData).enter()
+      .append('li')
+      .attr('class', 'lv route')
+    lvDivs
+      .html((lvData, i) => addNewLVDivUnderLi(lvData.idx+1));
+
+    lvDivs
+      .each(function(lvData) {
+        const lvDiv = d3.select(this);
+
+        lvDiv.select('.space') // inner ul
+          .selectAll('.feature')
+          .data(lvData.features).enter()
+          .append('li')
+          .attr('class', 'feature route')
+          .html((feature, i) => addNewFeatureDivUnderLi(feature));
       })
+
+    // Adding buttons to feature divs
+    d3.selectAll('.feature')
+      .append('div')
+      .attr('class', 'buttons')
+      .html('<div class="coloring_button">c</div>')
+      .on('click', function(d){
+
+      });
   
     calcWidth($('#title0'));
     
@@ -59,6 +66,52 @@ export const controller = function(LVData) {
       });
     
       sorting();
+    }
+
+    // Event on interface
+    $('.add_button')
+      .on('click', function(d, i) {
+        const numLVs = $('.level_list').children('.lv').length + 1;
+        console.log('numLVs: ', numLVs)
+        
+        $('#controller')
+          .children('.level_list')
+          .append(addNewLVDiv(numLVs))
+          .addClass('selected' + numLVs);
+  
+        calcWidth($('#title0'));
+        sorting();
+      });
+
+    $('.coloring_button')
+      .on('click', function(d, i) {
+        console.log('LVData on click coloring: ', LVData);
+      })
+
+    function addNewLVDiv(cumlativeNumLVs) {
+      return  `<li class="route">
+          <div class="title" id="title` + cumlativeNumLVs + `">` +
+        'Level ' + cumlativeNumLVs +
+        `</div>
+          <span class="ui-icon ui-icon-grip-solid-horizontal"></span>
+          <ul class="space ui-sortable" id="space` + cumlativeNumLVs + `"></ul>
+        </li>`;
+    }
+
+    function addNewLVDivUnderLi(cumlativeNumLVs) {
+      return  `<div class="title" id="title` + cumlativeNumLVs + `">` +
+        'Level ' + cumlativeNumLVs +
+        `</div>
+          <span class="ui-icon ui-icon-grip-solid-horizontal"></span>
+          <ul class="space ui-sortable" id="space` + cumlativeNumLVs + `"></ul>`;
+    }
+
+    function addNewFeatureDivUnderLi(feature) {
+      return  `<div class="title" id="title` + feature.idx + `">` +
+        feature.name +
+        `</div>
+          <span class="ui-icon ui-icon-grip-solid-horizontal"></span>
+          <ul class="space ui-sortable" id="space` + feature.idx + `"></ul>`;
     }
     
     function sorting() {

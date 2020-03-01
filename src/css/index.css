@@ -33,6 +33,11 @@ svg {
   width: 700px;
 }
 
+#sorting {
+  color: dimgray;
+  font-size: 0.9rem;
+}
+
 .vis_title {
   margin: 0;
   margin-bottom: 30px;
@@ -57,14 +62,27 @@ svg {
 
 /* Block */
 .block_rect {
-  fill: var(--block-fill);
-  stroke: var(--block-fill);
+  fill: #2ee087;
+  /* stroke: var(--block-fill); */
 }
 
 .block_label {
   font-size: 0.8rem;
   font-weight: bold;
   font-style: italic;
+}
+
+.block_icon_group_rect {
+  fill: whitesmoke;
+}
+
+.block_icon {
+  fill: #00e070;
+}
+
+.feature_selected {
+  stroke: black;
+  stroke-width: 2px;
 }
 
 /* Within-level bar/cat */
@@ -189,13 +207,24 @@ svg {
   box-shadow: 0 0 0px 1px black;
 }
 
+.coloring_button {
+  width: 10px;
+  height: 10px;
+  background-color: white;
+}
+
+.ui-icon {
+  width: 8px;
+  height: 10px;
+}
+
 .route {
   position: relative;
   list-style-type: none;
   border: 0;
   margin: 0;
   padding: 0;
-  top: 0px;
+  top: 5px;
   margin-top: 0px;
   max-height: 100% !important;
   width: 100%;
@@ -206,7 +235,7 @@ svg {
 
 .route span {
   position: absolute;
-  top: 10px;
+  /* top: 5px; */
   left: 10px;
   -ms-transform: scale(2);
   /* IE 9 */
@@ -223,13 +252,21 @@ svg {
   border: 0;
   margin: 0;
   padding: 0;
-  padding-top: 14px;
+  padding-top: 5px;
   height: 20px;
   width: 400px;
-  text-indent: 50px;
-  background: #4af;
+  text-indent: 35px;
+  color: black;
+  font-size: 0.8rem;
+  font-style: italic;
+  background: lightgray;
   border-radius: 2px;
   pointer-events: none;
+}
+
+.lv {
+  /* font-weight: 600; */
+  margin-bottom: 10px;
 }
 
 .first-title {
@@ -242,12 +279,16 @@ svg {
   border: 0;
   margin: 0;
   padding: 0;
-  margin-left: 50px;
-  width: 40px;
-  top: 50px;
-  padding-bottom: 50px;
+  margin-left: 25px;
+  width: 20px;
+  top: 25px;
+  padding-bottom: 20px;
   /* height: 100%; */
   z-index: 1;
+}
+
+.level_list {
+  top: 10px;
 }
 
 .first-space {

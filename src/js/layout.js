@@ -41,7 +41,7 @@ export const llv = {
     t: 5,
     b: 5,
     l: 10,
-    r: 10
+    r: 40
   },
   p: {
     b: 30
@@ -86,7 +86,7 @@ llv.setM = function(LVWForFeatures) {
   // this.m.l = (this.w - LVWForFeatures) / 2;
   // this.m.r = (this.w - LVWForFeatures) / 2;
   this.m.l = 15
-  this.m.r = 15
+  this.m.r = 40
 }
 
 llv.setH = function(numFeatures) {

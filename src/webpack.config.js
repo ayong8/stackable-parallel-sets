@@ -9,9 +9,16 @@ var dir_js = path.resolve(__dirname, 'js');
 var dir_html = path.resolve(__dirname, 'html');
 var dir_build = path.resolve(__dirname, 'build');
 var dir_css = path.resolve(__dirname, 'css');
+var dir_lib = path.resolve(__dirname, 'lib');
 
 module.exports = {
-  entry: [path.resolve(dir_js, 'dataMapping.js'), path.resolve(dir_js, 'index.js'), 'babel-polyfill'],
+  entry: [
+    path.resolve(dir_js, 'dataMapping.js'), 
+    path.resolve(dir_js, 'index.js'), 
+    path.resolve(dir_lib, 'bootstrap_submenu.js'),
+    // path.resolve(dir_lib, './bootstrap_submenu/css/bootstrap_submenu.css'),
+    'babel-polyfill'
+  ],
   output: {
     path: dir_build,
     filename: 'bundle.js'

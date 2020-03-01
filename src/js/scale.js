@@ -57,7 +57,7 @@ scales.calculateScalesForCats = function(feature, wholeWidth) { //feature
   const catWidthScale = d3
     .scaleLinear()
     .domain([0, 1])
-    .range([0, wholeWidth-20]);
+    .range([0, wholeWidth-llv.m.r]);
 
   let cumulativeCatWidth = 0;
   const widthDecayingRatio = 1;

@@ -153,13 +153,13 @@ function Block() {
 				.append('text')
 				.attr('class', 'cat_label')
 				.attr('x', 0)
-				.attr('y', (d, i) => {
+				.attr('y', (cat, i) => {
 					const extraYForText = 5;
 					if (BLIdx==0) return lwbr.h
 					else if (BLIdx==numFeatures-1) return lwbr.h/2
 					else return lwbr.h * 2/3
 				})
-				.text((cat, i) => cat.idx);
+				.text((cat, i) => cat.label);
 		})
 		// const gBLl = gLayout.getElLayout(gBLs);
 
