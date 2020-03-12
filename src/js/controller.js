@@ -44,7 +44,6 @@ export const controller = function(LVData) {
     
     //recursively calculate the Width all titles
     function calcWidth(obj){
-      console.log('---- calcWidth -----');
       
       var titles = $(obj).siblings('.space').children('.route').children('.title');
       

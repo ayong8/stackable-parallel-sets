@@ -1,11 +1,13 @@
 :root {
   --stroke: lightslategray;
-  --block-fill: springgreen;
-  --bar-fill: #00ffe2;
+  --block-fill: #7de6b1;
+  --block-fill-selected: limegreen;
+  --bar-fill: #00e0c7; /*#00ffe2;*/
   --cl-line-stroke: black;
-  --proto: #af6ed4;
+  --proto: #d5c0fb; /*#af6ed4;*/
+  --proto-selected: #af6ed4;
 
-  --bar-fill-selected: blue;
+  --bar-fill-selected: #0667c7;
 }
 
 body {
@@ -38,6 +40,30 @@ svg {
   font-size: 0.9rem;
 }
 
+.sorting_cluster,
+.sorting_cats {
+  display: flex;
+}
+
+.dropdown_sorting_clusters,
+.dropdown_sorting_cats {
+  height: 25px;
+  padding-top: 0;
+  margin-left: 5px;
+  margin-bottom: 3px;
+  color: gray;
+  font-size: 0.9rem;
+  border: none;
+}
+
+.dropdown_sorting_cats {
+  background-color: var(--block-fill);
+}
+
+.dropdown_sorting_clusters {
+  background-color: var(--bar-fill);
+}
+
 .vis_title {
   margin: 0;
   margin-bottom: 30px;
@@ -46,12 +72,12 @@ svg {
 
 /* Level */
 .level_rect {
-  fill: #dcdcdc;
+  fill: white; /*#dcdcdc;*/
   /* stroke: black;
   stroke-width: 1px; */
 }
 .level_bar {
-  stroke: var(--bar-fill);
+  stroke: #01b39f;
   stroke-width: 10;
 }
 
@@ -98,7 +124,7 @@ svg {
 }
 
 .cat_label {
-  fill: gray;
+  fill: #505050;
   font-size: 0.7rem;
   font-weight: bold;
   font-style: italic;
@@ -123,6 +149,11 @@ svg {
 
 .cl_line {
   stroke: var(--cl-line-stroke);
+  /* filter: url(#drop-shadow); */
+}
+
+.cl_line_filtered {
+  opacity: 0 !important;
 }
 
 .cat_line {
@@ -142,19 +173,48 @@ svg {
   stroke-width: 2;
   stroke-dasharray: 4, 1;
   fill: none;
-  filter: url(#drop-shadow);
+  /* filter: url(#drop-shadow); */
   opacity: 0.2;
 }
 
-.proto_selected,
-.proto_mouseovered {
+.proto_path_selected,
+.proto_path_mouseovered {
   stroke-width: 4px;
   opacity: 1;
+  stroke: #af6ed4;
+}
+
+.proto_path_for_bar_selected {
+  stroke-width: 4px;
+  opacity: 1;
+  stroke: var(--bar-fill-selected);
+}
+
+.proto_circle_selected {
+  fill: #af6ed4;
+  fill-opacity: 1 !important;
+}
+
+.proto_circle_mouseovered {
+  opacity: 1;
+  fill: #af6ed4;
+}
+
+.proto_circle_for_bar_selected {
+  fill: var(--bar-fill-selected);
+  fill-opacity: 1 !important;
+}
+
+.proto_circle_hidden {
+  opacity: 0;
 }
 
 /* For event */
 .bar_rect_selected {
   fill: var(--bar-fill-selected);
+  stroke: black;
+  stroke-width: 2px;
+  fill-opacity: 0.9;
 }
 
 /*** Controller ***/
@@ -197,12 +257,12 @@ svg {
 }
 
 .add_button {
-  width: 18px;
-  height: 18px;
+  width: 25px;
+  height: 25px;
   background: white;
   font-weight: bolder;
   margin: 0 2px 0 auto;
-  padding: 3px;
+  /* padding: 3px; */
   text-align: center;
   box-shadow: 0 0 0px 1px black;
 }
@@ -253,7 +313,7 @@ svg {
   margin: 0;
   padding: 0;
   padding-top: 5px;
-  height: 20px;
+  height: 25px;
   width: 400px;
   text-indent: 35px;
   color: black;

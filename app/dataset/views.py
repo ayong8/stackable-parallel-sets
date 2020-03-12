@@ -10,6 +10,7 @@ import json, itertools, random
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics import silhouette_score
 from sklearn.cluster import AgglomerativeClustering
+from scipy import stats
 
 from pyclustering.cluster.kmedoids import kmedoids
 from pyclustering.utils import calculate_distance_matrix
@@ -123,6 +124,22 @@ dataset_features = {
             'instances': []
         },
         { 
+            'name': 'Weight Loss', 
+            'id': 'weight_loss',
+            'type': 'continuous',
+            'scale': '',
+            'domain': [],
+            'instances': []
+        },
+        { 
+            'name': 'Swallowing Difficulty', 
+            'id': 'swallowing_difficulty',
+            'type': 'continuous',
+            'scale': '',
+            'domain': [],
+            'instances': []
+        },
+        { 
             'name': 'Dry Cough', 
             'id': 'dry_cough',
             'type': 'continuous',
@@ -171,6 +188,7 @@ dataset_features = {
 # For per-level clustering (to generate clusters onto multiple features within a level)
 # parameter - data (numpy array - (n_instances x n_features))
 
+random.seed(42)
 n_cls = 4
 
 def convert_to_numbers(domain_in_str, feature_values_in_str):
@@ -237,16 +255,39 @@ def kmdeoidsClustering(X, k):
 
     return cls_idx_list, protos_idx_list
 
+def calculate_pairwise_correlation(feature1, feature2):
+    print('feature1: ', feature1)
+    print('feature2: ', feature2)
+
+    # Analyze the statistical coefficience
+    # cont-cont => Pearson
+    if feature1['type'] == 'continuous' and feature2['type'] == 'continuous':
+        coef, p_value = stats.pearsonr(feature1['featureValues'], feature2['featureValues'])
+    # cat-ord, or cat-cat => Chi
+    elif (feature1['type'] == 'categorical' and feature2['type'] == 'categorical') or \
+    (feature1['type'] == 'categorical' and feature2['type'] == 'categorical') or \
+    (feature1['type'] == 'categorical' and feature2['type'] == 'categorical'):
+        coef, p_value = stats.chisquare(feature1['featureValues'], feature2['featureValues'])
+    # ord-ord => Spearman
+    elif feature1['type'] == 'ordinal' and feature2['type'] == 'ordinal':
+        coef, p_value = stats.spearmanr(feature1['featureValues'], feature2['featureValues'])
+    # cont-(ord or cat) => ANOVA
+    else:
+        pass
+    
+    corr_coef, p_value = stats.pearsonr(feature1['featureValues'], feature2['featureValues'])
+    return corr_coef, p_value
+
 def calculate_freq_mat(C1, C2):
     num_cls1 = len(C1)
     num_cls2 = len(C2)
-    freq_mat_np = np.array([[0]*num_cls1]*num_cls2)
+    freq_mat_np = np.array([[0]*num_cls2]*num_cls1)
     for cl1_idx, c1 in enumerate(C1):
         for cl2_idx, c2 in enumerate(C2):
             c1_idx_list = [ cl_instance['idx'] for cl_instance in c1 ]
             c2_idx_list = [ cl_instance['idx'] for cl_instance in c2 ]
             overlapped_instances = list(set(c1_idx_list) & set(c2_idx_list))
-            freq_mat_np[cl2_idx, cl1_idx] = len(overlapped_instances)
+            freq_mat_np[cl1_idx, cl2_idx] = len(overlapped_instances)
             
     return freq_mat_np
 
@@ -256,6 +297,7 @@ def calculate_G(freq_mat_np):
         np.hstack([ np.zeros([num_cls1, num_cls1]), freq_mat_np ]),
         np.hstack([ np.transpose(freq_mat_np), np.zeros([num_cls2, num_cls2])])
     ])
+
     G = nx.from_numpy_matrix(weighted_adj_mat)
 
     return G
@@ -283,19 +325,20 @@ def detect_outlier_edges(G, standardized_cut, n_cls1, n_cls2):
     cut = 0.3
     # Return the significant score with full graph
     G = out.disparity_filter(G)
+
     # Draw the filtered graph with outlier edges removed
     edges = []
     standardized_alphas = scipy.stats.zscore([ d['alpha'] for u, v, d in G.edges(data=True) ])
 
     for idx, (u, v, d) in enumerate(G.edges(data=True)):
         isOutlier = 1 if standardized_alphas[idx] > standardized_cut else 0
-        added_idx_offset = n_cls2
+        added_idx_offset = n_cls1
 
         edges.append({
             'u': u,
             'v': v,
-            'source': max(u, v) - added_idx_offset,
-            'target': min(u, v),
+            'source': min(u, v),
+            'target': max(u, v) - added_idx_offset,
             'isOutlier': isOutlier,
             'weight': d['weight'],
             'alpha': standardized_alphas[idx]
@@ -304,13 +347,14 @@ def detect_outlier_edges(G, standardized_cut, n_cls1, n_cls2):
     num_total_edges = n_cls1 * n_cls2
     non_outlier_edges = [ e for e in edges if e['isOutlier'] == 0 ]
     non_outlier_ratio = len(non_outlier_edges) / num_total_edges
-    pd.DataFrame(edges).to_csv('edges_check.csv')
+    pd.DataFrame(edges).to_csv('./app/static/data/edges_check.csv')
+
     return edges, non_outlier_ratio
 
 class LoadData(APIView):
     def get(self, request, format=None):
         dataset_abbr = 'cancer'
-        file_name = './app/static/data/' + dataset_abbr + '_simple.csv'
+        file_name = './app/static/data/' + dataset_abbr + '_simple_high.csv'
         df_dataset = pd.read_csv(file_name)
         selected_dataset_features = dataset_features[dataset_abbr]
 
@@ -382,18 +426,16 @@ class HClusteringForAllLVs(APIView):
     def post(self, request, format=None):
         json_request = json.loads(request.body.decode(encoding='UTF-8'))
         lv_data = json_request['data']
+        sort_cls_by = json_request['sortClsBy'] # 'layout_optimization' or any given feature name
         df_instances = pd.DataFrame(json_request['instances'])
         df_instances = df_instances.set_index('idx')
         num_lvs = len(lv_data)
 
-        print('df_instances: ')
-        print(json_request['instances'])
         # Clustering for levels
         lv_cl_list_dict = {}
         for lv_idx, lv in enumerate(lv_data):
             df_instances_for_lv = pd.DataFrame({ feature['name']:feature['featureValues'] for feature in lv['features'] })
-            print('lv_features:')
-            print(lv['btnMode'])
+
             if (len(lv['features']) > 1) and (lv['btnMode']['mode'] == 'clustering'):
                 cl_labels_np, n_cls = hClustering(lv['btnMode']['numCls'], df_instances_for_lv.values)
                 
@@ -407,6 +449,9 @@ class HClusteringForAllLVs(APIView):
                     instances_idx_for_cl = cls_idx_list[cl_idx]
                     prototypes_idx_for_cl = protos_idx_list[cl_idx]
                     instances_for_cl = df_instances_for_lv.loc[instances_idx_for_cl]
+
+                    # centroid
+
                     prototypes_for_cl = df_instances_for_lv.loc[prototypes_idx_for_cl]
                     prototype_feature_list = [ {'name': feature_name, 'value': feature_value } for feature_name, feature_value in prototypes_for_cl.to_dict().items() if feature_name != 'idx' ]
                     prototype = {
@@ -448,6 +493,7 @@ class HClusteringForAllLVs(APIView):
                         'idx': df_instances_for_lv.loc[prototypes_idx_for_cl, 'idx'],
                         'features': prototype_feature_list  # [ {'name': 'air pollution', 'value': 1}, ... ]
                     }
+
                     cl_list.append({
                         'idx': cl_idx,
                         'lvIdx': lv_idx,
@@ -474,15 +520,11 @@ class HClusteringForAllLVs(APIView):
 
         # Between-level clusters sorting
         # go over clusters to sort the nodex
-        btn_sorting_mode = 'by_feature'
-        sort_by_feature = 'QOL'
         for lv_idx, cls_for_lv in lv_cl_list_dict.items():
-            if btn_sorting_mode == 'layout_optimization':
+            if sort_cls_by == 'layout_optimization':
                 if lv_idx < num_lvs-1:
                     C1_instances = [ cl['instances'] for cl in lv_cl_list_dict[lv_idx]]
                     C2_instances = [ cl['instances'] for cl in lv_cl_list_dict[lv_idx+1]]
-                    print('C1_instances: ')
-                    print(C1_instances)
 
                     freq_mat_np = calculate_freq_mat(C1_instances, C2_instances)
                     G = calculate_G(freq_mat_np)
@@ -493,28 +535,30 @@ class HClusteringForAllLVs(APIView):
                         cl['sortedIdx'] = sorted_C1_idx[cl_idx]
                     for cl_idx, cl in enumerate(lv_cl_list_dict[lv_idx+1]):
                         cl['sortedIdx'] = sorted_C2_idx[cl_idx]
-            elif btn_sorting_mode == 'by_feature':
+            else: # then sort by selected feature
                 cls_instances = [ cl['instances'] for cl in lv_cl_list_dict[lv_idx]]
-                df_instances_for_sorting_feature = df_instances[sort_by_feature]
+                df_instances_for_sorting_feature = df_instances[sort_cls_by]
 
                 mean_values_by_feature = []
                 for instance_set in cls_instances:
                     instances_idx = [ instance['idx'] for instance in instance_set ]
-                    mean_value = df_instances.loc[instances_idx, 'QOL'].mean()
+                    mean_value = df_instances.loc[instances_idx, sort_cls_by].mean()
                     mean_values_by_feature.append(mean_value)
 
-                sorted_cls_idx = np.argsort(mean_values_by_feature)
+                sorted_cls_idx = np.argsort(mean_values_by_feature) # in an ascending order
 
                 for cl_idx, cl in enumerate(lv_cl_list_dict[lv_idx]):
                     cl['sortedIdx'] = sorted_cls_idx[cl_idx]
 
-        # Within-level cats sorting
+        # Within-level cats sorting and pairwise correlation
         sorted_cats_idx_for_lvs = [{} for _ in range(num_lvs)]
+        pairwise_corrs = [{} for _ in range(num_lvs)]
         for lv_idx, lv in enumerate(lv_data): # for each level
             feature_list = lv['features']
             num_features = len(feature_list)
             if num_features > 1:
-                for feature_idx, _ in enumerate(feature_list): # for each pair of adjacent cats
+                pairwise_corrs[lv_idx] = []
+                for feature_idx, feature in enumerate(feature_list): # for each pair of adjacent cats
                     if feature_idx < num_features-1:
                         C1_instance_sets = feature_list[feature_idx]['instances']
                         C2_instance_sets = feature_list[feature_idx+1]['instances']
@@ -527,7 +571,16 @@ class HClusteringForAllLVs(APIView):
 
                         # Identifying outlier edges
                         outlier_cut_threshold = -0.3
-                        edges = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_sets), len(C2_instance_sets))
+                        edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_sets), len(C2_instance_sets))
+
+                        # Calculating correlation
+                        for feature_idx2 in range(feature_idx+1, num_features):
+                            coef, p_value = calculate_pairwise_correlation(feature_list[feature_idx], feature_list[feature_idx2])
+                            print('p_value: ', p_value)
+                            pairwise_corrs[lv_idx].append({ 
+                                'featurePair': [feature_idx, feature_idx2], 
+                                'corr': p_value 
+                            })
             else:
                 sorted_cats_idx_for_lvs[lv_idx] = [ feature_list[0]['domain'] ]
 
@@ -535,7 +588,8 @@ class HClusteringForAllLVs(APIView):
             'LVData': lv_data,
             'clResult': lv_cl_list_dict,
             'sortedCatsIdxForLvs': sorted_cats_idx_for_lvs,
-            'edgesWithOutlierInfo': edges
+            'edgesWithOutlierInfo': edges,
+            'pairwiseCorrs': pairwise_corrs
         })
 
 class SortNodes(APIView):
@@ -555,12 +609,14 @@ class OptimizeEdges(APIView):
         # Sorting clusters
         sorted_cl1_idx, sorted_cl2_idx = sort_nodes(G, len(C1_instance_sets), len(C2_instance_sets))
         # Identifying outlier edges
-        outlier_cut_threshold = -0.3
+        outlier_cut_threshold = -0.35
         edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_sets), len(C2_instance_sets))
-        while non_outlier_ratio > 0.25:
-            print('non_outlier_ratio: ', non_outlier_ratio)
-            edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_sets), len(C2_instance_sets))
-            outlier_cut_threshold -= 0.1
+        # while non_outlier_ratio > 0.25:
+        #     edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_sets), len(C2_instance_sets))
+        #     outlier_cut_threshold -= 0.1
+
+        # for e in edges:
+        #     print('weight and score: ', e['u'], e['v'], e['source'], e['target'], e['weight'], e['alpha'], e['isOutlier'])
 
         return Response({
             'sortedCurrNodes': sorted_cl1_idx,

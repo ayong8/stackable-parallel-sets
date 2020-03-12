@@ -9,8 +9,20 @@ const catWidthScale = d3
     .domain([0, 2000]) // size of whole instances
     .range([llv.m.l, llv.w]); // from llv.x1 to llv.x2
 
+const protoCircleRScale = d3
+    .scaleLinear()
+    .domain([0, 1])
+    .range([4, 8]);
+
+const protoPathScale = d3
+    .scaleLinear()
+    .domain([0, 1])
+    .range([4, 7]);
+
 export const scales = {
   catWidthScale: catWidthScale,
+  protoCircleRScale: protoCircleRScale,
+  protoPathScale: protoPathScale,
   yLvsScale: d3.scalePoint(),
   colorOnSelectScale: d3.scaleLinear(),
   colorOnCatOnSelectScale: d3.scaleLinear()
@@ -19,12 +31,12 @@ export const scales = {
 scales.calculateColorOnSelectScale = function(cssVar) {
   this.colorOnSelectScale = d3.scaleLinear()
     .domain([0, 1])
-    .range(['lightgray', gLayout.getCssVar(cssVar)]);
+    .range(['lightblue', gLayout.getCssVar(cssVar)]);
 }
 
 scales.calculateColorCatOnSelectScale = function(cssVar) {
   this.colorCatOnSelectScale = d3.scaleLinear()
-    .domain([0, 1])
+    .domain([0, 1]) 
     .range(['whitesmoke', gLayout.getCssVar(cssVar)]);
 }
 

@@ -34,7 +34,7 @@ function Container() {
 		renderInterface();
 				
 		scales.calculateYLevelScale(LVData);  // calculate yLvsScale
-		scales.calculateColorCatOnSelectScale('--block-fill');
+		scales.calculateColorCatOnSelectScale('--block-fill-selected');
 		scales.calculateColorOnSelectScale('--bar-fill-selected');
 		renderLV(rawData, LVData, instances);
 
@@ -74,11 +74,11 @@ function Container() {
 		const BRs = gContainer.selectAll('.g_bars'); 
 		LVs.each(function(lvData, lvId) {
 			if (lvId < numLVs-1) {
-				const gCurrLowerBars = d3.select('.g_bars_lower_lv_' + lvId),
-					gNextUpperBars = d3.select('.g_bars_upper_lv_' + (lvId+1));
-
+				const gCurrLowerBars = d3.select('.g_bars.lower.lv_' + lvId),
+					gNextUpperBars = d3.select('.g_bars.upper.lv_' + (lvId+1));
+				
 				const gBtnLVs = gContainer.append('g')
-					.attr('class', 'g_btn_lvs')
+					.attr('class', 'g_btn_lvs' + ' lv_' + lvId)
 					.attr('transform', 'translate(' + 
 						gLayout.getGlobalElLayout(gCurrLowerBars).x1 + 
 						',' + 
@@ -86,9 +86,10 @@ function Container() {
 						')');
 
 				gLayout.renderClToClLines(gBtnLVs, instances, gCurrLowerBars, gNextUpperBars, llv.w)
+				console.log('ddd: ', d3.selectAll('.cl_line').nodes());
 			}
 		});
-
+		console.log('dddd: ', d3.selectAll('.cl_line').nodes());
 
 		function renderInterface() {
 			const rectButton1 = gContainer.append('rect')
@@ -141,7 +142,7 @@ function Container() {
 
 					
 
-					const gCatsUpdated = d3.select('.g_block,.lv_0,.bl_smoking')
+					const gCatsUpdated = d3.select('.g_block.lv_0.bl_smoking')
 						.selectAll('.g_cat')
 						.data(catsUpdated, (d) => d.idx);
 
@@ -152,14 +153,14 @@ function Container() {
 							')'
 						);
 
-					const catLabelsUpdated = d3.select('.g_block,.lv_0,.bl_smoking')
+					const catLabelsUpdated = d3.select('.g_block.lv_0.bl_smoking')
 						.selectAll('.cat_label')
 						.data(catsUpdated, (d) => d.idx);
 					catLabelsUpdated.exit().remove();
 					catLabelsUpdated
 						.text((cat, i) => cat.idx);
 					
-					const gBtnBL = d3.select('.g_btn_bls_' + 'smoking' + '_' + 'gender')
+					const gBtnBL = d3.select('.g_btn_bls ' + '.bl_smoking')
 					gLayout.renderCatToCatLines(gBtnBL, LVData[0], LVData[0].features[0], LVData[0].features[1], 1, llv.w);
 				});
 		}

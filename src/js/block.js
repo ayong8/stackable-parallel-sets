@@ -114,6 +114,29 @@ function Block() {
 				.attr("in", "offsetBlur")
 		feMerge.append("feMergeNode")
 				.attr("in", "SourceGraphic");
+
+		var defs2 = LV
+				.append("defs");
+
+		var filter2 = defs2.append('filter')
+				.attr('id', 'drop-shadow-path')
+				.attr('x', -2)
+				.attr('y', -2)
+				.attr('width', 100)
+				.attr('height', 100);
+
+		filter2.append('feGaussianBlur')
+			.attr('stdDeviation', 5);
+		var feMerge2 = filter2.append('feMerge');
+
+		feMerge2.append("feMergeNode")
+				.attr("in", "offsetBlur")
+		feMerge2.append("feMergeNode")
+				.attr("in", "SourceGraphic");
+
+		// 		<filter id="dropshadow" x="-2" y="-2" width="200" height="200">
+    //   <feGaussianBlur  stdDeviation="1"/>
+    // </filter>
 		/*  
 		end -- For shadow
 		*/ 

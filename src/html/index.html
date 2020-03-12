@@ -58,20 +58,35 @@
   <div id="container">
     <h3 class="vis_title" id="title0">Visualization</h3>
     <div id="sorting">
-      <div>Sorting clusters by: </div>
-      <!-- dropdown menu -->
-      <div class="dropdown">
-        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown"
-          aria-haspopup="true" aria-expanded="false">
-          Dropdown button
-        </button>
-        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-          <a class="dropdown-item" href="#">Action</a>
-          <a class="dropdown-item" href="#">Another action</a>
-          <a class="dropdown-item" href="#">Something else here</a>
+      <div class="sorting_cluster">
+        <div>Sorting clusters by: </div>
+        <!-- dropdown menu -->
+        <div class="dropdown">
+          <button class="dropdown_sorting_clusters btn btn-secondary dropdown-toggle" type="button"
+            id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Layout optimized
+          </button>
+          <div class="dropdown-menu cluster" aria-labelledby="dropdownMenuButton">
+            <a class="dropdown-item cluster" href="#">Layout optimized</a>
+            <a class="dropdown-item cluster" href="#">Variable - QOL</a>
+          </div>
         </div>
       </div>
-      <div>Sorting categories by: </div>
+      <div class="sorting_cats">
+        <div>Sorting categories by: </div>
+        <!-- dropdown menu -->
+        <div class="dropdown">
+          <button class="dropdown_sorting_cats btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton"
+            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Layout optimized
+          </button>
+          <div class="dropdown-menu cat" aria-labelledby="dropdownMenuButton">
+            <a class="dropdown-item cat" href="#">Layout optimized</a>
+            <a class="dropdown-item cat" href="#">Order by index</a>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
   <script src="/bundle.js"></script>
