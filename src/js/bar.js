@@ -230,6 +230,7 @@ function Bar() {
 									nextFeatureKey = proto.features[i+1]['name'];
 							const currFeatureValue = proto.features[i]['value'],
 									nextFeatureValue = proto.features[i+1]['value'];
+							console.log('check cats: ', currFeatureKey, currFeatureValue, d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(currFeatureKey) + '_' + currFeatureValue).nodes())
 							const currCatEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(currFeatureKey) + '_' + currFeatureValue)),
 									nextCatEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(nextFeatureKey) + '_' + nextFeatureValue));
 							if (i > 0) {

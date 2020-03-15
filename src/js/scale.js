@@ -17,7 +17,7 @@ const protoCircleRScale = d3
 const protoPathScale = d3
     .scaleLinear()
     .domain([0, 1])
-    .range([4, 7]);
+    .range([1, 4]);
 
 export const scales = {
   catWidthScale: catWidthScale,

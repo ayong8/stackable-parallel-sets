@@ -7,40 +7,69 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
   let levels = [];
   switch(dataAbbr) {
     case 'demoemo':
-      levels = [
-        { id: 1, name: 'demographic' },
-        { id: 2, name: 'social_status' },
-      ]
-
-      // map features to levels
       return [
         { 
-          id: 1, 
+          idx: 0, 
           name: 'demographic',
+          mode: 'unfold',
+          btnMode: {
+            mode: 'binning',  
+            numBins: 4,
+            featureForBinning: ['gender', 'age']
+          },
+          order: 'first',
           features: [
             _.find(features, ['name', 'gender']),
             _.find(features, ['name', 'age'])
+            
           ],
-          cls: [
-            {
-              id: 1,
-              size: 100
-            },
-            {
-              id: 1,
-              size: 200
-            }
-          ]
-        }
+          cls: [],
+          clScales: [],
+          blScale: d3.scalePoint()
+        },
+        { 
+          idx: 1, 
+          name: 'social_status',
+          mode: 'unfold',
+          btnMode: {
+            mode: 'clustering',
+            numCls: 4,  
+            candidateKs: [4,5,6,7],
+            featuresForClustering: []
+          },
+          order: 'middle',
+          features: [
+            _.find(features, ['name', 'education']),
+            _.find(features, ['name', 'life_satisfaction']),
+            
+          ],
+          cls: [],
+          clScales: [],
+          blScale: d3.scalePoint()
+        },
+        { 
+          idx: 2, 
+          name: 'hashtags',
+          mode: 'unfold',
+          btnMode: {
+            mode: 'clustering',
+            numCls: 4,  
+            candidateKs: [4,5,6,7],
+            featuresForClustering: []
+          },
+          order: 'last',
+          features: [
+            _.find(features, ['name', 'anger']),
+            _.find(features, ['name', 'sad']),
+            _.find(features, ['name', 'joy']),
+            
+          ],
+          cls: [],
+          clScales: [],
+          blScale: d3.scalePoint()
+        },
       ];
     case 'cancer':
-      levels = [
-        { idx: 1, name: 'environmental' },
-        { idx: 2, name: 'symptom' },
-        { idx: 3, name: 'diagnosis' },
-      ]
-
-      // map features to levels
       return [
         { 
           idx: 0, 

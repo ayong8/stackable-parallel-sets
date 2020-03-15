@@ -135,6 +135,7 @@ function Level(selection) { // User-defined sementic category
 						gBLIcons
 							.selectAll('.block_corr_path')
 							.data(lvData.pairwiseCorrs).enter()
+							.filter(d => d.isSignificant === 'true')
 							.append('path')
 							.attr('class', 'block_corr_path')
 							.attr('d', d => {

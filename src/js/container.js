@@ -86,10 +86,8 @@ function Container() {
 						')');
 
 				gLayout.renderClToClLines(gBtnLVs, instances, gCurrLowerBars, gNextUpperBars, llv.w)
-				console.log('ddd: ', d3.selectAll('.cl_line').nodes());
 			}
 		});
-		console.log('dddd: ', d3.selectAll('.cl_line').nodes());
 
 		function renderInterface() {
 			const rectButton1 = gContainer.append('rect')
@@ -101,7 +99,6 @@ function Container() {
 				.on('click', function(d){
 					LVData[0].mode = 'fold';
 					LVData.splice(1, 1);
-					console.log('LVData after: ', LVData);
 					
 					const gLVsUpdated = d3.selectAll('.g_level')
 						.data(LVData, (d) => d.idx);
@@ -125,7 +122,6 @@ function Container() {
 						LVData[0].features[0].cats[2],
 						LVData[0].features[0].cats[0]
 					];
-					console.log('catScales before: ', featureToUpdate.catScales);
 					featureToUpdate.cats = catsUpdated;
 
 					// Update the catScale
@@ -133,14 +129,6 @@ function Container() {
 					const updatedScales = scales.setScaleToFeature(rawData, featureToUpdate, llv.w);
 					const catScalesUpdated = updatedScales['catScales'];
 					featureToUpdate.catScales = catScalesUpdated;
-					console.log('catScales after: ', featureToUpdate.catScales);
-
-					// let temp = []
-					// temp = LVData[0].features[0].cats[0];
-					// LVData[0].features[0].cats[0] = LVData[0].features[0].cats[2];
-					// LVData[0].features[0].cats[2] = temp;
-
-					
 
 					const gCatsUpdated = d3.select('.g_block.lv_0.bl_smoking')
 						.selectAll('.g_cat')

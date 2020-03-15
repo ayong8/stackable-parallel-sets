@@ -27,11 +27,14 @@ function fetchForInitialLoad(sortClsBy) {
     return response.json();
   })
   .then((response) => {
-    const rawData = JSON.parse(response.dataset),
+    const datasetAbbr = response.datasetAbbr,
+          rawData = JSON.parse(response.dataset),
+          rawDataForBp = JSON.parse(response.datasetForBp),
           features = response.features,
           instances = JSON.parse(response.instances);
+    console.log('rawDataForBp: ', features, rawData, rawDataForBp)
   
-    LVData = dataMapping.mapLevelToFeatures('cancer', features);
+    LVData = dataMapping.mapLevelToFeatures(datasetAbbr, features);
     controller(LVData);
     l.h = LVData.length * 250;
     
@@ -178,22 +181,22 @@ function fetchForInitialLoad(sortClsBy) {
                     .classed('cl_line_filtered', true);
                 }
 
-                // // Go over 
-                // lvData.features.forEach(function(feature, featureIdx) {
-                //   if (featureIdx < lvData.features.length) {
-                //     d3.select('.g_btn_bls' + '.bl_' + feature.id)
-                //       .selectAll('.cat_line')
-                //       .style('stroke', function(catToCat) {
-                //         return scales.colorOnSelectScale(calculateInGroupRatio(catToCat.instancesInCatToCat, selectedCl.instances));
-                //       })
-                //       .filter(catToCat => {
-                //         const inGroupRatio = calculateInGroupRatio(catToCat.instancesInCatToCat, selectedCl.instances)
-                //         console.log('inGroupRatio: ', inGroupRatio);
-                //         return inGroupRatio < inGroupRatioThreshold;
-                //       })
-                //       .style('opacity', 0);
-                //   }
-                // })
+                // Go over 
+                lvData.features.forEach(function(feature, featureIdx) {
+                  if (featureIdx < lvData.features.length) {
+                    d3.select('.g_btn_bls' + '.bl_' + feature.id)
+                      .selectAll('.cat_line')
+                      .style('stroke', function(catToCat) {
+                        return scales.colorCatOnSelectScale(calculateInGroupRatio(catToCat.instancesInCatToCat, selectedCl.instances));
+                      })
+                      .filter(catToCat => {
+                        const inGroupRatio = calculateInGroupRatio(catToCat.instancesInCatToCat, selectedCl.instances)
+                        console.log('inGroupRatio: ', inGroupRatio);
+                        return inGroupRatio < inGroupRatioThreshold;
+                      })
+                      .style('opacity', 0);
+                  }
+                })
               });
 
               dominantClsForSubgroup.forEach(function(d) {
@@ -258,18 +261,20 @@ function fetchForInitialLoad(sortClsBy) {
                 .classed('proto_path_for_bar_selected', false);
               d3.selectAll('.proto_circle')
                 .classed('proto_circle_selected', false)
-                .classed('proto_circle_for_bar_selected', false);
-              d3.selectAll('.proto_circle')
-                .classed('proto_circle_hidden', false);
+                .classed('proto_circle_for_bar_selected', false)
+                .classed('proto_circle_hidden', false)
+                .attr('r', 4);
               d3.selectAll('.cl_line')
                 .classed('cl_line_filtered', false);
 
               d3.selectAll('.bar_rect')
                 .style('fill', '');
-              d3.selectAll('.cl_line')
-                .style('stroke', '');
               d3.selectAll('.cat_rect')
                 .style('fill', '');
+              d3.selectAll('.cl_line')
+                .style('stroke', '');
+              d3.selectAll('.cat_line')
+                .style('stroke', '');
               d3.selectAll('.g_block_icons')
                 .style('opacity', '');
             }
@@ -284,12 +289,15 @@ function fetchForInitialLoad(sortClsBy) {
           })
           .on('mouseout', function(d) {
             d3.select(this).classed('bar_rect_mouseovered', false);
+
             d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
               .classed('proto_circle_hidden', false);
             d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
               .classed('proto_circle_hidden', true);
+
             d3.selectAll('.proto_path.lv_' + d.lvIdx + '.cl_' + d.idx)
-              .classed('proto_path_mouseovered', false);
+              .classed('proto_path_mouseovered', false)
+              .classed('proto_path_selected', false);
           });
 
       d3.selectAll('.proto_circle')
@@ -308,12 +316,18 @@ function fetchForInitialLoad(sortClsBy) {
           })
           .on('mouseout', function(d) {
             const gProto = d3.select(this.parentNode);
-            gProto.selectAll('.proto_path')
+            const lvIdx = d3.select(this.parentNode).attr('class').split(' ')[1].split('_')[1],
+              clIdx = d3.select(this.parentNode).attr('class').split(' ')[2].split('_')[1];
+
+            d3.selectAll('.proto_path.lv_' + lvIdx + '.cl_' + clIdx)
               .classed('proto_path_mouseovered', false);
-            gProto.selectAll('.proto_circle')
+            d3.selectAll('.proto_path.lv_' + lvIdx + '.cl_' + clIdx)
+              .style('stroke-width', '');
+            d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
               .classed('proto_circle_selected', false);
             d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
               .classed('proto_circle_hidden', true);
+            
           })
           .on('click', function(d) {
             const gProto = d3.select(this.parentNode);

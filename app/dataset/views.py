@@ -14,7 +14,6 @@ from scipy import stats
 
 from pyclustering.cluster.kmedoids import kmedoids
 from pyclustering.utils import calculate_distance_matrix
-
 import static.lib.edge_filtering as out
 
 # import ..static.lib.clustering.divisive_clustering as cl
@@ -28,7 +27,8 @@ dataset_features = {
             'id': 'gender',
             'type': 'categorical',
             'scale': '',
-            'domain': [],
+            'domain': [0, 1],
+            'labels': ['Male', 'Female'],
             'instances': []
         },
         { 
@@ -44,7 +44,8 @@ dataset_features = {
             'id': 'education',
             'type': 'categorical',
             'scale': '',
-            'domain': [],
+            'domain': [0, 1, 2],
+            'labels': ['High School', "Bachelor's Degree", 'Graduate Degree'],
             'instances': []
         },
         { 
@@ -52,7 +53,35 @@ dataset_features = {
             'id': 'life_satisfaction',
             'type': 'categorical',
             'scale': '',
-            'domain': [],
+            'domain': [0, 1, 2, 3, 4],
+            'labels': ['Very dissatisfied', 'Dissatisfied', 'Neither dissatisfied nor satisfied', 'Satisfied', 'Very satisfied'],
+            'instances': []
+        },
+        { 
+            'name': 'anger', 
+            'id': 'anger',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1],
+            'labels': [0, 1],
+            'instances': []
+        },
+        { 
+            'name': 'sad', 
+            'id': 'sad',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1],
+            'labels': [0, 1],
+            'instances': []
+        },
+        { 
+            'name': 'joy', 
+            'id': 'joy',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1],
+            'labels': [0, 1],
             'instances': []
         }
     ],
@@ -256,27 +285,42 @@ def kmdeoidsClustering(X, k):
     return cls_idx_list, protos_idx_list
 
 def calculate_pairwise_correlation(feature1, feature2):
-    print('feature1: ', feature1)
-    print('feature2: ', feature2)
+    print('feature1: ', feature1['name'], feature1['type'])
+    print('feature2: ', feature2['name'], feature2['type'])
 
     # Analyze the statistical coefficience
     # cont-cont => Pearson
+    is_significant = 'false'
     if feature1['type'] == 'continuous' and feature2['type'] == 'continuous':
         coef, p_value = stats.pearsonr(feature1['featureValues'], feature2['featureValues'])
+        is_significant = 'true' if p_value < 0.05 else 'false'
+        print('cont-cont, pearson: ', coef, p_value, p_value < 0.05)
     # cat-ord, or cat-cat => Chi
     elif (feature1['type'] == 'categorical' and feature2['type'] == 'categorical') or \
     (feature1['type'] == 'categorical' and feature2['type'] == 'categorical') or \
     (feature1['type'] == 'categorical' and feature2['type'] == 'categorical'):
-        coef, p_value = stats.chisquare(feature1['featureValues'], feature2['featureValues'])
+        print('check chi-square: ', feature1['featureValues'])
+        print('check chi-square: ', feature2['featureValues'])
+        df_feature_values = pd.DataFrame({'feature1': feature1['featureValues'], 'feature2':feature2['featureValues']})
+        contingency_table = pd.crosstab(df_feature_values['feature1'], df_feature_values['feature2'])
+        coef, p_value, _, _ = stats.chi2_contingency(contingency_table)
+        is_significant = 'true' if p_value < 0.05 else 'false'
+        print('cont-cat, chi: ', coef, p_value, p_value < 0.05)
     # ord-ord => Spearman
     elif feature1['type'] == 'ordinal' and feature2['type'] == 'ordinal':
         coef, p_value = stats.spearmanr(feature1['featureValues'], feature2['featureValues'])
+        is_significant = 'true' if p_value < 0.05 else 'false'
+        print('ord-ord, spearman: ', coef, p_value, p_value < 0.05)
     # cont-(ord or cat) => ANOVA
+    elif (feature1['type'] == 'categorical' and feature2['type'] == 'continuous') or \
+    (feature1['type'] == 'continuous' and feature2['type'] == 'categorical'):
+        coef, p_value = stats.f_oneway(feature1['featureValues'], feature2['featureValues'])
+        is_significant = 'true' if p_value < 0.05 else 'false'
     else:
-        pass
+        print('feature type is not set up correctly')
     
-    corr_coef, p_value = stats.pearsonr(feature1['featureValues'], feature2['featureValues'])
-    return corr_coef, p_value
+    #corr_coef, p_value = stats.pearsonr(feature1['featureValues'], feature2['featureValues'])
+    return coef, p_value, is_significant
 
 def calculate_freq_mat(C1, C2):
     num_cls1 = len(C1)
@@ -353,9 +397,16 @@ def detect_outlier_edges(G, standardized_cut, n_cls1, n_cls2):
 
 class LoadData(APIView):
     def get(self, request, format=None):
-        dataset_abbr = 'cancer'
-        file_name = './app/static/data/' + dataset_abbr + '_simple_high.csv'
+        dataset_abbr = 'demoemo'
+        if dataset_abbr == 'cancer':
+            file_name = './app/static/data/' + dataset_abbr + '_simple_high.csv'
+            file_name_for_bipartite = './app/static/data/' + dataset_abbr + '_users_hashtags_simple.csv'
+        elif dataset_abbr == 'demoemo':
+            file_name = './app/static/data/' + dataset_abbr + '_users_simple.csv'
+            file_name_for_bipartite = './app/static/data/' + dataset_abbr + '_users_hashtags_simple.csv'
+
         df_dataset = pd.read_csv(file_name)
+        df_dataset_bipartite = pd.read_csv(file_name_for_bipartite)
         selected_dataset_features = dataset_features[dataset_abbr]
 
         df_instances = pd.DataFrame()
@@ -397,7 +448,9 @@ class LoadData(APIView):
             df_categorized_instances.to_csv('clustered_instances.csv')
 
         return Response({ 
+            'datasetAbbr': dataset_abbr,
             'dataset': df_dataset.to_json(orient='records'),
+            'datasetForBp': df_dataset_bipartite.to_json(orient='records'),
             'features': selected_dataset_features,
             'instances': df_instances.to_json(orient='records')
         })
@@ -415,8 +468,8 @@ lv_data = [
         features: [],
         cls: [
             {
-              id: 1,
-              instances:
+            id: 1,
+            instances:
             }
         ] // to fill it in
     },
@@ -430,6 +483,7 @@ class HClusteringForAllLVs(APIView):
         df_instances = pd.DataFrame(json_request['instances'])
         df_instances = df_instances.set_index('idx')
         num_lvs = len(lv_data)
+        print('lv_data: ', lv_data)
 
         # Clustering for levels
         lv_cl_list_dict = {}
@@ -575,11 +629,13 @@ class HClusteringForAllLVs(APIView):
 
                         # Calculating correlation
                         for feature_idx2 in range(feature_idx+1, num_features):
-                            coef, p_value = calculate_pairwise_correlation(feature_list[feature_idx], feature_list[feature_idx2])
-                            print('p_value: ', p_value)
+                            coef, p_value, is_significant = calculate_pairwise_correlation(feature_list[feature_idx], feature_list[feature_idx2])
+                            print('p_value: ', coef, p_value, is_significant)
                             pairwise_corrs[lv_idx].append({ 
                                 'featurePair': [feature_idx, feature_idx2], 
-                                'corr': p_value 
+                                'coef': coef,
+                                'pValue': p_value,
+                                'isSignificant': is_significant
                             })
             else:
                 sorted_cats_idx_for_lvs[lv_idx] = [ feature_list[0]['domain'] ]
