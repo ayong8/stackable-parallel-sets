@@ -1,7 +1,8 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 
-import {gColors, gLayout, l, llv, lbl, lwbr} from './layout';
+import {gColors, gLayout, l, llv, lbl, lwbr, lBtn} from './layout';
+import {globalScales, scales} from './scale';
 import Block from './block';
 
 function Level(selection) { // User-defined sementic category
@@ -21,9 +22,9 @@ function Level(selection) { // User-defined sementic category
 			.append('g')
 			.attr('class', (d, i) => 'g_level g_level_' + i)
 			.attr('transform', function(lvData, lvIdx) {
-				if (lvData.mode == 'unfold')
+				if (lvData.mode.folded == false)
 					return 'translate(' + 0 + ',' + scales.yLvsScale(lvIdx) + ')'
-				else if (lvData.mode == 'fold') {
+				else if (lvData.mode.folded == true) {
 					return 'translate(' + 0 + ',' + 10 + ')'
 				}
 			});
@@ -34,8 +35,8 @@ function Level(selection) { // User-defined sementic category
 			gLVs.each(function(lvData, lvIdx) {
 				const gLV = d3.select(this);
 				const numFeatures = lvData.features.length;
-				console.log('numFeatures: ', numFeatures)
-	
+				const heightForLv = scales.yLvsScale(lvData.idx+1) - scales.yLvsScale(lvData.idx) - lBtn.h;
+
 				if (numFeatures == 1) {
 						gLV
 							.append('line')
@@ -73,9 +74,9 @@ function Level(selection) { // User-defined sementic category
 							.append('line')
 							.attr('class', 'level_bar level_bar_bottom')
 							.attr('x1', 0)
-							.attr('y1', llv.h + 5)
+							.attr('y1', heightForLv + 5)
 							.attr('x2', llv.w+10)
-							.attr('y2', llv.h + 5);
+							.attr('y2', heightForLv + 5);
 	
 						gLV
 							.append('rect')
@@ -83,14 +84,22 @@ function Level(selection) { // User-defined sementic category
 							.attr('x', 0)
 							.attr('y', 0)
 							.attr('width', llv.w)
-							.attr('height', llv.h);
+							.attr('height', heightForLv);
 							
 						gLV
 							.append('text')
 							.attr('class', 'level_label')
 							.attr('x', 0)
-							.attr('y', llv.h)
+							.attr('y', heightForLv)
 							.text((d, i) => d.name);
+
+						gLV
+							.append('rect')
+							.attr('class', 'level_fold_button')
+							.attr('x', llv.w + 20)
+							.attr('y', heightForLv)
+							.attr('width', 15)
+							.attr('height', 15);
 	
 						// Set the layout for levels and blocks
 						const LVWForFeatures = (llv.w * llv.minFeatureAreaRatio) + (llv.w * (llv.maxFeatureAreaRatio-llv.minFeatureAreaRatio)) * (numFeatures-2/llv.maxNumFeatures);
@@ -120,7 +129,7 @@ function Level(selection) { // User-defined sementic category
 							.attr('x', 5)
 							.attr('y', 0)
 							.attr('width', 25)
-							.attr('height', llv.h-10);
+							.attr('height', heightForLv-10);
 
 						gBLIcons
 							.selectAll('.block_icon')
@@ -139,7 +148,6 @@ function Level(selection) { // User-defined sementic category
 							.append('path')
 							.attr('class', 'block_corr_path')
 							.attr('d', d => {
-									console.log('feature in corr path: ', d);
 								let upperFeature;
 								let lowerFeature;
 				

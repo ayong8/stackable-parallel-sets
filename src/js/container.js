@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 
-import {gColors, gLayout, l, llv, lbl, lwbr, lbr} from './layout';
+import {gColors, gLayout, l, llv, lbl, lBtn, lwbr, lbr} from './layout';
 import {globalScales, scales} from './scale';
 import {dataMapping} from './dataMapping';
 
@@ -15,6 +15,7 @@ window.getElLayout = gLayout.getElLayout;
 window.l = l;
 window.llv = llv
 window.lbl = lbl;
+window.lBtn = lBtn;
 window.lwbr = lwbr;
 window.scales = scales;
 window.dataMapping = dataMapping;
@@ -34,8 +35,15 @@ function Container() {
 		renderInterface();
 				
 		scales.calculateYLevelScale(LVData);  // calculate yLvsScale
+		LVData.forEach(function(lvData){	// after calculate the yLvsScale, store the level height information
+			lvData.mode.height = scales.yLvsScale(lvData.idx+1) - scales.yLvsScale(lvData.idx) - lBtn.h;
+		});
+		
+		scales.calculatecolorClOnSelectScale('--bar-fill-selected');
 		scales.calculateColorCatOnSelectScale('--block-fill-selected');
-		scales.calculateColorOnSelectScale('--bar-fill-selected');
+		scales.calculateColorClOnSelectTwoGroupsScale('--bar-fill-selected', '--bar-fill-second-selected');
+		scales.calculateColorCatOnSelectTwoGroupsScale('--block-fill-selected', '--block-fill-second-selected');
+		
 		renderLV(rawData, LVData, instances);
 
 		function renderLV(rawData, LVData, instances) {
@@ -96,14 +104,39 @@ function Container() {
 				.attr('width', 20)
 				.attr('height', 20)
 				.attr('fill', 'red')
-				.on('click', function(d){
-					LVData[0].mode = 'fold';
+				.on('mouseover', function(d){
+					LVData[0].mode.folded = true;
 					LVData.splice(1, 1);
+
+					const elsWithinLvRegion = d3.selectAll('.g_level_0 > *')
+						.filter(function(d) {
+							return (d3.select(this).attr('class') != 'level_bar') ||
+							(d3.select(this).attr('class') != 'level_bar')
+						}).remove();
+
+					console.log('elsWithinLvRegion: ', elsWithinLvRegion);
+
+					// Recalculate the scale
+					scales.calculateYLevelScale(LVData);
 					
 					const gLVsUpdated = d3.selectAll('.g_level')
 						.data(LVData, (d) => d.idx);
 
-					gLVsUpdated.exit().remove();
+					// delete all elements within the level rect
+					// gLVsUpdated
+					// 	.attr('transform', 'translate(0, 20)');
+
+					gLVsUpdated
+						.attr('transform', function(lvData, lvIdx) {
+							if (lvData.mode.folded == false)
+								return 'translate(' + 0 + ',' + scales.yLvsScale(lvIdx) + ')';
+							else if (lvData.mode.folded == true) {
+								return 'translate(' + 0 + ',' + 10 + ')';
+							}
+						});
+					
+					console.log('gLVsUpdated: ', gLVsUpdated);
+					// gLVsUpdated.exit().remove();
 				});
 
 			const rectButton2 = gContainer.append('rect')

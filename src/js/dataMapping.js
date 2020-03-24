@@ -11,16 +11,19 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
         { 
           idx: 0, 
           name: 'demographic',
-          mode: 'unfold',
+          mode: {
+            folded: false,
+            height: 0
+          },
           btnMode: {
             mode: 'binning',  
             numBins: 4,
-            featureForBinning: ['gender', 'age']
+            featureForBinning: ['gender', 'race']
           },
           order: 'first',
           features: [
             _.find(features, ['name', 'gender']),
-            _.find(features, ['name', 'age'])
+            _.find(features, ['name', 'race'])
             
           ],
           cls: [],
@@ -30,17 +33,26 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
         { 
           idx: 1, 
           name: 'social_status',
-          mode: 'unfold',
+          mode: {
+            folded: false,
+            height: 0
+          },
           btnMode: {
             mode: 'clustering',
             numCls: 4,  
             candidateKs: [4,5,6,7],
             featuresForClustering: []
           },
+          // btnMode: {
+          //   mode: 'binning',  
+          //   numBins: 4,
+          //   featureForBinning: ['education']
+          // },
           order: 'middle',
           features: [
             _.find(features, ['name', 'education']),
-            _.find(features, ['name', 'life_satisfaction']),
+            _.find(features, ['name', 'income']),
+            _.find(features, ['name', 'religion']),
             
           ],
           cls: [],
@@ -50,7 +62,55 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
         { 
           idx: 2, 
           name: 'hashtags',
-          mode: 'unfold',
+          mode: {
+            folded: false,
+            height: 0
+          },
+          btnMode: {
+            mode: 'clustering',
+            numCls: 4,  
+            candidateKs: [4,5,6,7],
+            featuresForClustering: []
+          },
+          order: 'middle',
+          features: [
+            _.find(features, ['name', 'emotion'])
+            
+          ],
+          cls: [],
+          clScales: [],
+          blScale: d3.scalePoint()
+        },
+        { 
+          idx: 3, 
+          name: 'psychological',
+          mode: {
+            folded: false,
+            height: 0
+          },
+          btnMode: {
+            mode: 'clustering',
+            numCls: 4,  
+            candidateKs: [4,5,6,7],
+            featuresForClustering: []
+          },
+          order: 'middle',
+          features: [
+            _.find(features, ['name', 'life_satisfaction']),
+            _.find(features, ['name', 'optimism'])
+            
+          ],
+          cls: [],
+          clScales: [],
+          blScale: d3.scalePoint()
+        },
+        { 
+          idx: 4, 
+          name: 'hashtags',
+          mode: {
+            folded: false,
+            height: 0
+          },
           btnMode: {
             mode: 'clustering',
             numCls: 4,  
@@ -73,8 +133,11 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
       return [
         { 
           idx: 0, 
-          name: 'environmental',
-          mode: 'unfold',
+          name: 'diagnosis',
+          mode: {
+            folded: false,
+            height: 0
+          },
           btnMode: {
             mode: 'clustering',
             numCls: 6,
@@ -82,6 +145,27 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             featuresForClustering: []
           },
           order: 'first',
+          features: [
+            _.find(features, ['name', 'Level'])
+          ],
+          cls: [], // [ { idx: 0, sortedIdx: 0, instances: [ { idx: 0, Air Pollution: 1, ... } ], subcls: {} }, ... ]
+          clScales: [],
+          blScale: d3.scalePoint()
+        },
+        { 
+          idx: 1, 
+          name: 'environmental',
+          mode: {
+            folded: false,
+            height: 0
+          },
+          btnMode: {
+            mode: 'clustering',
+            numCls: 6,
+            candidateKs: [4,5,6,7],
+            featuresForClustering: []
+          },
+          order: 'middle',
           features: [
             _.find(features, ['name', 'Passive Smoker']),
             _.find(features, ['name', 'Air Pollution']),
@@ -93,9 +177,12 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
           blScale: d3.scalePoint()
         },
         { 
-          idx: 1, 
+          idx: 2, 
           name: 'demographic',
-          mode: 'unfold',
+          mode: {
+            folded: false,
+            height: 0
+          },
           btnMode: {
             mode: 'binning',
             numBins: 4,
@@ -112,9 +199,12 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
           blScale: d3.scalePoint()
         },
         { 
-          idx: 2, 
+          idx: 3, 
           name: 'symptom',
-          mode: 'unfold',
+          mode: {
+            folded: false,
+            height: 0
+          },
           btnMode: {
             mode: 'clustering',
             numCls: 6,
@@ -132,29 +222,12 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
           blScale: d3.scalePoint()
         },
         { 
-          idx: 3, 
-          name: 'symptom2',
-          mode: 'unfold',
-          btnMode: {
-            mode: 'clustering',
-            numCls: 6,
-            candidateKs: [4,5,6,7],
-            featuresForClustering: []
-          },
-          order: 'middle',
-          features: [
-            _.find(features, ['name', 'Swallowing Difficulty']),
-            _.find(features, ['name', 'Coughing of Blood']),
-            _.find(features, ['name', 'Dry Cough']),
-          ],
-          cls: [], // [ { idx: 0, sortedIdx: 0, instances: [ { idx: 0, Air Pollution: 1, ... } ], subcls: {} }, ... ]
-          clScales: [],
-          blScale: d3.scalePoint()
-        },
-        { 
           idx: 4, 
-          name: 'diagnosis',
-          mode: 'unfold',
+          name: 'symptom2',
+          mode: {
+            folded: false,
+            height: 0
+          },
           btnMode: {
             mode: 'clustering',
             numCls: 6,
@@ -163,7 +236,9 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
           },
           order: 'last',
           features: [
-            _.find(features, ['name', 'Level'])
+            _.find(features, ['name', 'Swallowing Difficulty']),
+            _.find(features, ['name', 'Coughing of Blood']),
+            _.find(features, ['name', 'Dry Cough']),
           ],
           cls: [], // [ { idx: 0, sortedIdx: 0, instances: [ { idx: 0, Air Pollution: 1, ... } ], subcls: {} }, ... ]
           clScales: [],

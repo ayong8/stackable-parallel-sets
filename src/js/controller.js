@@ -1,14 +1,27 @@
 import * as d3 from 'd3';
+import _ from 'lodash';
 
 // Controller
-export const controller = function(LVData) {
+export const controller = function(LVData, features) {
   $(document).ready(function(){
     // Adding divs based on the level data
     const lvDivs = d3.select('.level_list')
       .selectAll('.lv')
       .data(LVData).enter()
       .append('li')
-      .attr('class', 'lv route')
+      .attr('class', 'lv route');
+      
+    const selectedFeatures = _.flatten(LVData.map(d => d.features));
+    const notSelectedFeatures = features.filter(b => selectedFeatures.every(a => a.name !== b.name));
+    console.log('notSelectedFeatures: ', notSelectedFeatures)
+
+    const featureDivs = d3.select('.feature_list')
+      .selectAll('.feature')
+      .data(notSelectedFeatures).enter()
+      .append('li')
+      .attr('class', 'feature route')
+      .html((feature, i) => addNewFeatureDivUnderLi(feature));
+
     lvDivs
       .html((lvData, i) => addNewLVDivUnderLi(lvData.idx+1));
 
@@ -35,13 +48,6 @@ export const controller = function(LVData) {
   
     calcWidth($('#title0'));
     
-    window.onresize = function(event) {
-      console.log("window resized");
-  
-      //method to execute one time after a timer
-  
-    };
-    
     //recursively calculate the Width all titles
     function calcWidth(obj){
       
@@ -67,11 +73,17 @@ export const controller = function(LVData) {
       sorting();
     }
 
+    // Add the feature list
+    // features.forEach(function(feature){
+    //   $('.feature_list')
+    //     .append(addNewFeatureDiv(feature))
+    // });
+
+
     // Event on interface
     $('.add_button')
       .on('click', function(d, i) {
         const numLVs = $('.level_list').children('.lv').length + 1;
-        console.log('numLVs: ', numLVs)
         
         $('#controller')
           .children('.level_list')
@@ -84,8 +96,7 @@ export const controller = function(LVData) {
 
     $('.coloring_button')
       .on('click', function(d, i) {
-        console.log('LVData on click coloring: ', LVData);
-      })
+      });
 
     function addNewLVDiv(cumlativeNumLVs) {
       return  `<li class="route">
@@ -94,6 +105,16 @@ export const controller = function(LVData) {
         `</div>
           <span class="ui-icon ui-icon-grip-solid-horizontal"></span>
           <ul class="space ui-sortable" id="space` + cumlativeNumLVs + `"></ul>
+        </li>`;
+    }
+
+    function addNewFeatureDiv(feature) {
+      return  `<li class="route">
+          <div class="title" id="title` + feature.idx + `">` +
+        feature.name +
+        `</div>
+          <span class="ui-icon ui-icon-grip-solid-horizontal"></span>
+          <ul class="space ui-sortable" id="space"></ul>
         </li>`;
     }
 
@@ -122,8 +143,6 @@ export const controller = function(LVData) {
         over: function(event,ui){
         },
         receive: function(event, ui){
-          console.log('dddd')
-          console.log($(this).siblings('.title'))
           calcWidth($(this).siblings('.title'));
         },
       });

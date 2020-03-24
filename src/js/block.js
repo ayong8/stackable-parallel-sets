@@ -30,8 +30,6 @@ function Block() {
 		gBLsData = LV
 			.selectAll('.g_block')
 			.data(BLData, (d) => d.id);
-
-		console.log('gBLsData: ', BLData);
 			
 		gBLs = gBLsData
 			.enter()
@@ -44,8 +42,6 @@ function Block() {
 					lvData.blScale(blIdx) +
 					')';
 			});	// each block: x - (llv.m.wtn.l) and y - (llv.h / numFeatures)
-			
-		console.log('gBLs before: ', gBLs);
 		
 		gBLsData
 			.attr('transform', (blData, blIdx) => {
@@ -56,7 +52,6 @@ function Block() {
 					')';
 			});
 		gBLsData.exit().remove();
-		console.log('gBLs after: ', gBLs);
 
 		// Render the lengthy bar that indicates the width of block
 		gBLs

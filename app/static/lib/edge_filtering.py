@@ -105,10 +105,10 @@ def disparity_filter_alpha_cut(G,weight='weight',alpha_t=0.4, cut_mode='or'):
             except KeyError: #there is no alpha_out, so we assign 1. It will never pass the cut
                 alpha_out = 1  
             
-            if cut_mode == 'or':
+            if cut_mode.folded == 'or':
                 if alpha_in<alpha_t or alpha_out<alpha_t:
                     B.add_edge(u,v, weight=w[weight])
-            elif cut_mode == 'and':
+            elif cut_mode.folded == 'and':
                 if alpha_in<alpha_t and alpha_out<alpha_t:
                     B.add_edge(u,v, weight=w[weight])
         return B

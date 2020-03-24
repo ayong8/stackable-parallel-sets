@@ -32,11 +32,21 @@ dataset_features = {
             'instances': []
         },
         { 
-            'name': 'age', 
-            'id': 'age',
-            'type': 'continuous',
+            'name': 'race', 
+            'id': 'race',
+            'type': 'categorical',
             'scale': '',
-            'domain': [],
+            'domain': [0, 1, 2],
+            'labels': ['Black', 'Asian', 'White'],
+            'instances': []
+        },
+        { 
+            'name': 'income', 
+            'id': 'income',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1],
+            'labels': ['Under $35', 'Between $35'],
             'instances': []
         },
         { 
@@ -49,12 +59,48 @@ dataset_features = {
             'instances': []
         },
         { 
+            'name': 'religion', 
+            'id': 'religion',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1, 2],
+            'labels': ['Unaffiliated', "Christian", 'Other'],
+            'instances': []
+        },
+        { 
+            'name': 'political', 
+            'id': 'religion',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1, 2, 3],
+            'labels': ['Unaffiliated', "Independent", 'Democrat', 'Republican'],
+            'instances': []
+        },
+        { 
             'name': 'life_satisfaction', 
             'id': 'life_satisfaction',
             'type': 'categorical',
             'scale': '',
             'domain': [0, 1, 2, 3, 4],
             'labels': ['Very dissatisfied', 'Dissatisfied', 'Neither dissatisfied nor satisfied', 'Satisfied', 'Very satisfied'],
+            'instances': []
+        },
+        { 
+            'name': 'optimism', 
+            'id': 'optimism',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1, 2],
+            'labels': ['Pessimist', 'Neither pessimist nor optimist', 'Optimist'],
+            'instances': []
+        },
+        { 
+            'name': 'emotion', 
+            'id': 'emotion',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1, 2],
+            'labels': ['anger', 'sad', 'joy'],
             'instances': []
         },
         { 
@@ -397,10 +443,10 @@ def detect_outlier_edges(G, standardized_cut, n_cls1, n_cls2):
 
 class LoadData(APIView):
     def get(self, request, format=None):
-        dataset_abbr = 'demoemo'
+        dataset_abbr = 'demoemo' # 'cancer' or 'demoemo'
         if dataset_abbr == 'cancer':
             file_name = './app/static/data/' + dataset_abbr + '_simple_high.csv'
-            file_name_for_bipartite = './app/static/data/' + dataset_abbr + '_users_hashtags_simple.csv'
+            file_name_for_bipartite = './app/static/data/' + 'demoemo' + '_users_hashtags_simple.csv'
         elif dataset_abbr == 'demoemo':
             file_name = './app/static/data/' + dataset_abbr + '_users_simple.csv'
             file_name_for_bipartite = './app/static/data/' + dataset_abbr + '_users_hashtags_simple.csv'
@@ -530,9 +576,14 @@ class HClusteringForAllLVs(APIView):
                 protos_idx_list = []
                 for cat_combi in cat_permutations:
                     df_instances_for_bin = df_instances_for_lv[ df_instances_for_lv[feature_names] == list(cat_combi) ].dropna()
+                    print('df_instances_for_bin:')
+                    print(df_instances_for_bin)
                     cl_idx_list = list(df_instances_for_bin.index)
                     
-                    protos_idx_list.append(cl_idx_list[0]) # Prototype is just the first instance
+                    if len(cl_idx_list) == 0:
+                        protos_idx_list.append(0)
+                    else:
+                        protos_idx_list.append(cl_idx_list[0]) # Prototype is just the first instance
                     cls_idx_list.append(cl_idx_list)
                     
                 cl_list = []

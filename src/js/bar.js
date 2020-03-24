@@ -50,7 +50,7 @@ function Bar() {
 				.selectAll('.g_bar.lv_' + lvData.idx)
 				.data(cls).enter()
 				.append('g')
-				.attr('class', 'g_bar')
+				.attr('class', 'g_bar lower lv_' + lvData.idx)
 				.attr('transform', (cl, clIdx) => 'translate(' +
 					(clScales[cl.idx].range()[0]) + // i*2 is cumulative margin
 					',0)'
@@ -67,8 +67,8 @@ function Bar() {
 					.append('rect')	
 					.attr('class', 'bar_rect lv_' + lvData.idx)
 					.attr('x', 0) 
-					.attr('y', 0)
-					.attr('width', clWidth)
+					.attr('y', -5)
+					.attr('width', clWidth < 0 ? 1 : clWidth) // When there is no items in the cluster, set it as 1
 					.attr('height', lbr.h);
 					
 				gBR
@@ -82,7 +82,7 @@ function Bar() {
 					.selectAll('.g_prototype.lv_' + lvData.idx + '.cl_' + cl.idx)
 					.data([proto]).enter()
 					.append('g')
-					.attr('class', '.g_prototype lv_' + lvData.idx + ' cl_' + cl.idx)
+					.attr('class', 'g_prototype lv_' + lvData.idx + ' cl_' + cl.idx)
 					.attr('transform', 'translate(0,0)');
 
 				gProto
@@ -94,70 +94,71 @@ function Bar() {
 				
 				// If the cluster is lower, start from the first feature, ..., then lastly the cluster
 				// If the cluster is upper, start from the cluster, then features
-				proto.features.forEach((featureObj, i) => {  // e.g., { Air Pollution: 0, Occupational Hazards: 0, idx: 0 }
-					if (i < proto.features.length-1) {
-						const currFeatureKey = proto.features[i]['name'],
-								nextFeatureKey = proto.features[i+1]['name'];
-						const currFeatureValue = proto.features[i]['value'],
-								nextFeatureValue = proto.features[i+1]['value'];
-						const currCatEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(currFeatureKey) + '_' + currFeatureValue)),
-								nextCatEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(nextFeatureKey) + '_' + nextFeatureValue));
+				if (typeof(proto.features) !== 'undefined' && Object.keys(proto.features).length !== 0) {
+					proto.features.forEach((featureObj, i) => {  // e.g., { Air Pollution: 0, Occupational Hazards: 0, idx: 0 }
+						if (i < proto.features.length-1) {
+							const currFeatureKey = proto.features[i]['name'],
+									nextFeatureKey = proto.features[i+1]['name'];
+							const currFeatureValue = proto.features[i]['value'],
+									nextFeatureValue = proto.features[i+1]['value'];
+							const currCatEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(currFeatureKey) + '_' + currFeatureValue)),
+									nextCatEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(nextFeatureKey) + '_' + nextFeatureValue));
 
-						protoPathData.push({
-							source: { 
-								x: currCatEl.x1 + currCatEl.width/2, 
-								y: currCatEl.y1 + lwbr.h
-							},
-							target: { 
-								x: nextCatEl.x1 + nextCatEl.width/2, 
-								y: nextCatEl.y1 + lwbr.h
-							}
-						});
-					} else if (i === proto.features.length-1) {
-						const currFeatureKey = proto.features[i]['name'];
-						const currFeatureValue = proto.features[i]['value'];
-						const currCat = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(currFeatureKey) + '_' + currFeatureValue));
+							protoPathData.push({
+								source: { 
+									x: currCatEl.x1 + currCatEl.width/2, 
+									y: currCatEl.y1 + lwbr.h
+								},
+								target: { 
+									x: nextCatEl.x1 + nextCatEl.width/2, 
+									y: nextCatEl.y1 + lwbr.h
+								}
+							});
+						} else if (i === proto.features.length-1) {
+							const currFeatureKey = proto.features[i]['name'];
+							const currFeatureValue = proto.features[i]['value'];
+							const currCat = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(currFeatureKey) + '_' + currFeatureValue));
 
-						protoPathData.push({
-							source: { 
-								x: currCat.x1 + currCat.width/2, 
-								y: currCat.y1 + lwbr.h
-							},
-							target: { 
-								x: gLayout.getGlobalElLayout(gBR).x1 + clWidth/2, 
-								y: gLayout.getGlobalElLayout(gBR).y1 + lwbr.h
-							}
-						});
-					}
-					
-				});
+							protoPathData.push({
+								source: { 
+									x: currCat.x1 + currCat.width/2, 
+									y: currCat.y1 + lwbr.h
+								},
+								target: { 
+									x: gLayout.getGlobalElLayout(gBR).x1 + clWidth/2, 
+									y: gLayout.getGlobalElLayout(gBR).y1 + lwbr.h
+								}
+							});
+						}
+						
+					});
 
-				const drawProtoLine = d3.linkVertical()
-					.x((d) => d.x)
-					.y((d) => d.y);
+					const drawProtoLine = d3.linkVertical()
+						.x((d) => d.x)
+						.y((d) => d.y);
 
-				gProto
-					.selectAll('.proto_path')
-					.data(protoPathData).enter()
-					.append('path')
-					.attr('class', 'proto_path lower lv_' + lvData.idx + ' cl_' + cl.idx)
-					.attr('d', drawProtoLine);
+					gProto
+						.selectAll('.proto_path')
+						.data(protoPathData).enter()
+						.append('path')
+						.attr('class', 'proto_path lower lv_' + lvData.idx + ' cl_' + cl.idx)
+						.attr('d', drawProtoLine);
 
-				gProto
-					.selectAll('.proto_circle')
-					.data(proto.features).enter()
-					.append('circle')
-					.attr('class', 'proto_circle lower lv_' + lvData.idx + ' cl_' + cl.idx)
-					.attr('cx', (d, i) => {
-						const catEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(d.name) + '_' + d.value));
-						return catEl.x1 + catEl.width/2;
-					})
-					.attr('cy', (d, i) => {
-						const catEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(d.name) + '_' + d.value));
-						return catEl.y1 + lbr.h;
-					})
-					.attr('r', 5);
-
+					gProto
+						.selectAll('.proto_circle')
+						.data(proto.features).enter()
+						.append('circle')
+						.attr('class', 'proto_circle lower lv_' + lvData.idx + ' cl_' + cl.idx)
+						.attr('cx', (d, i) => {
+							const catEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(d.name) + '_' + d.value));
+							return catEl.x1 + catEl.width/2;
+						})
+						.attr('cy', (d, i) => {
+							const catEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(d.name) + '_' + d.value));
+							return catEl.y1 + lbr.h;
+						})
+						.attr('r', 5);
+				}
 			});
 		}
 
@@ -176,7 +177,7 @@ function Bar() {
 				.selectAll('.g_bar')
 				.data(cls).enter()
 				.append('g')
-				.attr('class', 'g_bar lv_' + lvData.idx)
+				.attr('class', 'g_bar upper lv_' + lvData.idx)
 				.attr('transform', (cl, clIdx) => 'translate(' +
 					(clScales[cl.idx].range()[0]) + // i*2 is cumulative margin
 					',0)'
@@ -188,8 +189,9 @@ function Bar() {
 				const proto = cl.prototype;
 				let gProto;
 				let protoPathData = [], protoCircleData = [];
-				console.log('cl_idx: ', cl.idx, clIdx);
-				console.log('proto: ', proto);
+
+				console.log('checkkk: ', cl.lvIdx, clWidth);
+
 				gBR
 					.append('rect')	
 					.attr('class', 'bar_rect lv_' + lvData.idx)
@@ -213,8 +215,6 @@ function Bar() {
 						.attr('class', 'g_prototype lv_' + lvData.idx + ' cl_' + cl.idx)
 						.attr('transform', 'translate(0,0)');
 
-					console.log('proto: ', proto);
-
 					gProto
 						.append('circle')
 						.attr('class', 'proto_circle upper lv_' + lvData.idx + ' cl_' + cl.idx)
@@ -230,7 +230,7 @@ function Bar() {
 									nextFeatureKey = proto.features[i+1]['name'];
 							const currFeatureValue = proto.features[i]['value'],
 									nextFeatureValue = proto.features[i+1]['value'];
-							console.log('check cats: ', currFeatureKey, currFeatureValue, d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(currFeatureKey) + '_' + currFeatureValue).nodes())
+
 							const currCatEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(currFeatureKey) + '_' + currFeatureValue)),
 									nextCatEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + dataMapping.convertStrToUnderbar(nextFeatureKey) + '_' + nextFeatureValue));
 							if (i > 0) {

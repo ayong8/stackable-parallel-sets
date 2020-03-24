@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { gLayout, gColors, l, ll, lbl, llv, lbr, lCom} from './layout';
+import { gLayout, gColors, l, ll, lbl, llv, lbr, lCom, lBtn} from './layout';
 
 const data = require('./dataMapping');
 
@@ -24,12 +24,13 @@ export const scales = {
   protoCircleRScale: protoCircleRScale,
   protoPathScale: protoPathScale,
   yLvsScale: d3.scalePoint(),
-  colorOnSelectScale: d3.scaleLinear(),
+  colorClOnSelectScale: d3.scaleLinear(),
+  colorClOnSelectTwoGroupsScale: d3.scaleLinear(),
   colorOnCatOnSelectScale: d3.scaleLinear()
 };
 
-scales.calculateColorOnSelectScale = function(cssVar) {
-  this.colorOnSelectScale = d3.scaleLinear()
+scales.calculatecolorClOnSelectScale = function(cssVar) {
+  this.colorClOnSelectScale = d3.scaleLinear()
     .domain([0, 1])
     .range(['lightblue', gLayout.getCssVar(cssVar)]);
 }
@@ -40,21 +41,48 @@ scales.calculateColorCatOnSelectScale = function(cssVar) {
     .range(['whitesmoke', gLayout.getCssVar(cssVar)]);
 }
 
+scales.calculateColorClOnSelectTwoGroupsScale = function(cssVarForFirstGroup, cssVarForSecondGroup) {
+  this.colorClOnSelectTwoGroupsScale = d3.scaleLinear()
+    .domain([-1, 0, 1])
+    .range([gLayout.getCssVar(cssVarForSecondGroup), 'lightgray', gLayout.getCssVar(cssVarForFirstGroup)]);
+}
+
+scales.calculateColorCatOnSelectTwoGroupsScale = function(cssVarForFirstGroup, cssVarForSecondGroup) {
+  this.colorCatOnSelectTwoGroupsScale = d3.scaleLinear()
+    .domain([-1, 0, 1])
+    .range([gLayout.getCssVar(cssVarForSecondGroup), 'lightgray', gLayout.getCssVar(cssVarForFirstGroup)]);
+}
+
 scales.calculateYLevelScale = function(LVData) {
   const numLevels = LVData.length;
+  const wholeHeight = l.h - (l.sm+l.sm);
 
-  this.yLvsScale = d3.scaleBand()
-    .domain(d3.range(numLevels))
-    .range([l.sm+l.sm, l.h - (l.sm+l.sm)]);
+  const heightPerFeature = lbl.h;
+  let rangeForLvs = [];
+  let cumulativeLvHeight = l.sm+l.sm;
+  rangeForLvs.push(cumulativeLvHeight);
+  LVData.forEach(function(lvData){
+    if (lvData.mode.folded == true) {
+      cumulativeLvHeight += 20 + lBtn.h;
+    } else if (lvData.mode.folded == false) {
+      cumulativeLvHeight += lvData.features.length * heightPerFeature + lBtn.h;
+    }
+    rangeForLvs.push(cumulativeLvHeight);
+  });
+  
+
+  this.yLvsScale = d3.scaleOrdinal()
+    .domain(d3.range(numLevels+1))
+    .range(rangeForLvs);
 }
 
 scales.calculateYBlockScale = function(lvData) {
-  const mainRegionHeightInLV = (llv.h),
+  const mainRegionHeightInLV = this.yLvsScale(lvData.idx+1) - this.yLvsScale(lvData.idx),
       numFeatures = lvData.features.length;
 
   return d3.scalePoint()
     .domain(d3.range(numFeatures))
-    .range([llv.m.t+llv.m.b, mainRegionHeightInLV - (llv.p.b)]);
+    .range([llv.m.t+llv.m.b, mainRegionHeightInLV - (llv.p.b + lBtn.h)]);
 }
 
 scales.calculateScalesForCats = function(feature, wholeWidth) { //feature
@@ -112,10 +140,12 @@ scales.calculateScalesForCls = function(rawData, sortedCls, wholeWidth) { //feat
   const widthDecayingRatio = 1;
   const sumClWidths = barWidthScale(1) * widthDecayingRatio; // ratio==1; all instances
   // lbr.m.btn = (wholeWidth - sumClWidths) / (sortedCls.length-1) // btnInterval
+  
   sortedCls.forEach((cl, clIdx) => {
     const numTweetRatioPerCl = cl.instances.length / rawData.length,
       clWidth = barWidthScale(numTweetRatioPerCl) * widthDecayingRatio,
       clEndY = cumulativeClWidth + clWidth;
+
     let clStartY = 0;
     if (cl.idx==0) clStartY = lbl.m.btn + cumulativeClWidth;
     else clStartY = cumulativeClWidth + lbr.m.btn;
@@ -133,7 +163,6 @@ scales.calculateScalesForCls = function(rawData, sortedCls, wholeWidth) { //feat
 }
 
 scales.setScaleToFeature = function(rawData, feature, wholeWidth) {  
-  console.log('featurere: ', feature)
   return {
     'scale': d3.scaleOrdinal().domain([0, 1]),
     'catScales': scales.calculateScalesForCats(feature, wholeWidth)

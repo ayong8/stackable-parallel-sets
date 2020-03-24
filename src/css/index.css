@@ -1,13 +1,16 @@
 :root {
   --stroke: lightslategray;
+  --level-bar: #01b39f;
   --block-fill: #7de6b1;
-  --block-fill-selected: limegreen;
   --bar-fill: #00e0c7; /*#00ffe2;*/
   --cl-line-stroke: black;
   --proto: #d5c0fb; /*#af6ed4;*/
   --proto-selected: #af6ed4;
 
   --bar-fill-selected: #0667c7;
+  --bar-fill-second-selected: red;
+  --block-fill-selected: limegreen;
+  --block-fill-second-selected: orange;
 }
 
 body {
@@ -72,18 +75,26 @@ svg {
 
 /* Level */
 .level_rect {
-  fill: white; /*#dcdcdc;*/
+  fill: none; /*#dcdcdc;*/
   /* stroke: black;
   stroke-width: 1px; */
 }
+.level_fold_button {
+  fill: var(--level-bar);
+}
+
 .level_bar {
-  stroke: #01b39f;
+  stroke: var(--level-bar);
   stroke-width: 10;
 }
 
 .level_label {
   font-weight: bold;
   font-style: italic;
+}
+
+.level_folded {
+  opacity: 0;
 }
 
 /* Block */
@@ -166,6 +177,7 @@ svg {
 .proto_circle {
   fill: var(--proto);
   filter: url(#drop-shadow);
+  opacity: 0;
 }
 
 .proto_path {
@@ -192,7 +204,7 @@ svg {
 
 .proto_circle_selected {
   fill: #af6ed4;
-  fill-opacity: 1 !important;
+  fill-opacity: 1;
 }
 
 .proto_circle_mouseovered {
@@ -206,12 +218,19 @@ svg {
 }
 
 .proto_circle_hidden {
-  opacity: 0;
+  fill-opacity: 0;
 }
 
 /* For event */
 .bar_rect_selected {
   fill: var(--bar-fill-selected);
+  stroke: black;
+  stroke-width: 2px;
+  fill-opacity: 0.9;
+}
+
+.bar_rect_selected2 {
+  fill: var(--bar-fill-second-selected);
   stroke: black;
   stroke-width: 2px;
   fill-opacity: 0.9;

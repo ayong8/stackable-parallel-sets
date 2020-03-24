@@ -33,6 +33,7 @@ export const l = {
 export const llv = {
   w: l.w * 0.4,
   h: 150,
+  hPerLv: [],
   maxH: 200,
   maxNumFeatures: 10,
   minFeatureAreaRatio: 0.7,
@@ -49,11 +50,12 @@ export const llv = {
 }
 
 export const lBtn = {
-  h: llv.h
+  h: 100
 }
 
 export const lbl = {
   s: llv.w * 0.1,
+  h: 50,
   maxS: llv.h * 0.3,
   t: (llv.h - llv.h * 0.1) / 2,
   m: {
@@ -82,7 +84,6 @@ llv.getT = function(idx) {
 }
 
 llv.setM = function(LVWForFeatures) {
-  console.log('this in llv: ', this);
   // this.m.l = (this.w - LVWForFeatures) / 2;
   // this.m.r = (this.w - LVWForFeatures) / 2;
   this.m.l = 15
@@ -94,7 +95,6 @@ llv.setH = function(numFeatures) {
 }
 
 lbl.setS = function(LVWForFeatures, numFeatures) {
-  console.log(this);
   this.s = Math.min(this.maxS, (LVWForFeatures * 0.7) / numFeatures);
   // this.m.btn = (LVWForFeatures * 0.3) / numFeatures;
 },
@@ -117,6 +117,13 @@ lbl.getY = function(LVLayout, numFeatures, idx) {
 gLayout.getCssVar = function(cssVar) {
   return getComputedStyle(document.documentElement)
             .getPropertyValue(cssVar).trim();
+}
+
+gLayout.getTranslation = function(selection) {
+  return {
+    x: selection.node().transform.baseVal[0].matrix.e,
+    y: selection.node().transform.baseVal[0].matrix.f
+  }
 }
 
 gLayout.getElLayout = function(el) {
@@ -240,9 +247,6 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
       // sortedCurrNodesIdx = response.sortedCurrNodes;
       // sortedNextNodesIdx = response.sortedNextNodes;
       edgesWithOutlierInfo = response.edgesWithOutlierInfo;
-      
-      console.log('catsInCurrFeature: ', currFeature.name)
-      console.log('edgesWithOutlierInfo-CatToCat: ', edgesWithOutlierInfo.map(d => [d.source, d.target, d.weight, d.alpha, d.isOutlier]));
       prepareCatData(sortedCatsInCurr, sortedCatsInNext);
       renderCatToCatLines(instancesBtnCats, lvData);
     });
@@ -256,7 +260,7 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
         const filteredInstances = _.intersectionBy(instancesInCurr, instancesInNext, 'idx');
         
         const edge = _.find(edgesWithOutlierInfo, {'source': sortedCatCurr.sortedIdx, 'target': sortedCatNext.sortedIdx})
-        console.log('edges: ', edge)
+
         let isEdgeOutlier = false;
         if (typeof(edge) !== 'undefined')
           isEdgeOutlier = edge.isOutlier == 1 ? true: false;
@@ -389,14 +393,13 @@ gLayout.renderClToClLines = function(selection, instances, gCurrLowerBars, gNext
 
   function prepareClData(currCls, nextCls) {
     // Adding sorted index after eigendecomposition
-    console.log('currCls: ', currCls);
+
     //currCls.forEach((cl, clIdx) => cl.sortedIdx = sortedCurrNodesIdx[clIdx]);
     //nextCls.forEach((cl, clIdx) => cl.sortedIdx = sortedNextNodesIdx[clIdx]);
 
     // Prepare the btn-clustering instance data
     currCls.forEach((clCurr, idxCurr) => {
       nextCls.forEach((clNext, idxNext) => {
-        console.log('clCurrr: ', clCurr.sortedIdx);
         const filteredInstances = _.intersectionBy(clCurr.instances, clNext.instances, 'idx');
         const edge = _.find(edgesWithOutlierInfo, {'source': clCurr.idx, 'target': clNext.idx})
         let isEdgeOutlier = false;
@@ -473,8 +476,6 @@ gLayout.renderClToClLines = function(selection, instances, gCurrLowerBars, gNext
       .on('mouseover', function(d){
 
       });
-
-    console.log('ddddd: ', d3.selectAll('.cl_line').nodes());
   }
   
 }

@@ -16,6 +16,7 @@ const data = require('./dataMapping');
 const container = d3.select('#container');
 
 let LVData = [];
+let selectedGroups = [null, null];
 
 fetchForInitialLoad('layout_optimization');
 
@@ -29,13 +30,14 @@ function fetchForInitialLoad(sortClsBy) {
   .then((response) => {
     const datasetAbbr = response.datasetAbbr,
           rawData = JSON.parse(response.dataset),
-          rawDataForBp = JSON.parse(response.datasetForBp),
+          rawDataForBp = JSON.parse(response.datasetForBp), // bp = bipartite
           features = response.features,
           instances = JSON.parse(response.instances);
     console.log('rawDataForBp: ', features, rawData, rawDataForBp)
+    console.log('check selection: ', d3.select('.whatever'), !d3.select('.whatever').empty())
   
     LVData = dataMapping.mapLevelToFeatures(datasetAbbr, features);
-    controller(LVData);
+    controller(LVData, features);
     l.h = LVData.length * 250;
     
     // Render the levels given clustering result
@@ -52,18 +54,13 @@ function fetchForInitialLoad(sortClsBy) {
       const clResult = response.clResult,
         sortedCatsIdxForLvs = response.sortedCatsIdxForLvs,
         pairwiseCorrs = response.pairwiseCorrs;
-  
-      console.log('sortedCatsIdxForLvs: ', sortedCatsIdxForLvs);
-      console.log('clResults: ', clResult);
-      console.log('LVData: ', LVData);
-      console.log('pairwiseCorrs: ', pairwiseCorrs);
+
       LVData.forEach((lvData, lvIdx) => {
         // Assign data to sort clusters
         const sortedCls = _.sortBy(clResult[lvIdx], ['sortedIdx']);
         lvData.cls = sortedCls;
         lvData.clScales = scales.calculateScalesForCls(rawData, sortedCls, llv.w);
         lvData.pairwiseCorrs = pairwiseCorrs[lvIdx];
-        console.log('lvData.clScales: ', lvData.clScales);
   
         // Assign data to sort categories
         lvData.features.forEach((feature, featureIdx) => {
@@ -130,15 +127,57 @@ function fetchForInitialLoad(sortClsBy) {
                 selectedClIdx = selectedCl.idx;
             const selectedInstancesIdx = selectedCl.instances.map(d => d.idx);
             const dominantClsForSubgroup = [
-              { lv: 0, cl: 1 },
-              { lv: 1, cl: 1 },
-              { lv: 2, cl: 1 },
-              { lv: 3, cl: 1 }
+              { lv: 0, cl: 2 },
+              { lv: 1, cl: 5 },
+              { lv: 2, cl: 3 },
+              // { lv: 3, cl: 0 }
             ]
-            
+
             const isSelected = selectedBar.classed('bar_rect_selected');
+            const isFirstSelected = d3.select('.bar_rect_selected'),
+              isSecondSelected = d3.select('.bar_rect_selected2');
+            // Select the color scale to color other levels (not selected),
+            let selectedClColorScale = null;
+            let selectedCatColorScale = null;
+
+            // Register the selections
             if (isSelected == false) {
-              selectedBar.classed('bar_rect_selected', true);
+              if (isFirstSelected.empty() && isSecondSelected.empty()) { // Both wasn't selected
+                console.log('XX: ');
+                selectedBar.classed('bar_rect_selected', true); // Put in the first one
+                selectedClColorScale = scales.colorClOnSelectScale;
+                selectedCatColorScale = scales.colorCatOnSelectScale;
+              } else if (!isFirstSelected.empty() && isSecondSelected.empty()) { // First one was
+                console.log('OX: ');
+                selectedBar.classed('bar_rect_selected2', true); // Put in the second one
+                selectedClColorScale = scales.colorClOnSelectTwoGroupsScale;
+                selectedCatColorScale = scales.colorCatOnSelectTwoGroupsScale;
+              } else if (isFirstSelected.empty() && !isSecondSelected.empty()) { // One of them
+                console.log('XO: ');
+                selectedBar.classed('bar_rect_selected2', true); // Put in the second one
+              } else { // Both are selected
+                isSecondSelected.classed('bar_rect_selected2', false); // cancel the current second one
+                selectedBar.classed('bar_rect_selected2', true); // Put in the second one
+              }
+              // cancelSelection(selectedClColorScale);
+              colorByTwoGroups(selectedClColorScale, selectedCatColorScale);
+            }
+            else {  // if the bar was already selected
+              if (!isFirstSelected.empty() && isSecondSelected.empty()) {
+                selectedBar.classed('bar_rect_selected', false);
+                colorByTwoGroups(selectedClColorScale, selectedCatColorScale);
+              } else if (isFirstSelected.empty() && !isSecondSelected.empty()) {
+                selectedBar.classed('bar_rect_selected2', false);
+                colorByTwoGroups(selectedClColorScale, selectedCatColorScale);
+              } else if (isFirstSelected.empty() && isSecondSelected.empty()) {
+                selectedBar.classed('bar_rect_selected2', false);
+                cancelSelection(selectedClColorScale);
+                colorByTwoGroups(selectedClColorScale, selectedCatColorScale);
+              }
+            }
+            
+            function colorByTwoGroups(selectedClColorScale, selectedCatColorScale) {
+              // selectedBar.classed('bar_rect_selected', true);
               // other bars in the same level
               d3.selectAll('.bar_rect_lv_2')  
                 .filter((cl) => cl.idx !== selectedClIdx)
@@ -166,22 +205,21 @@ function fetchForInitialLoad(sortClsBy) {
                       
                     })
                 }
-                // go over calculated ratios and pick the best one -- to 'dominantClsForSubgroup'                
+                // Go over calculated ratios and pick the best one -- to 'dominantClsForSubgroup'                
                 if (selectedLV < LVData.length) {
                   d3.select('.g_btn_lvs' + '.lv_' + lvIdx)
                     .selectAll('.cl_line')
                     .style('stroke', function(clToCl) {
-                      return scales.colorOnSelectScale(calculateInGroupRatio(clToCl.instancesClToCl, selectedCl.instances));
+                      return selectedClColorScale(calculateInGroupRatio(clToCl.instancesClToCl, selectedCl.instances));
                     })
                     .filter(clToCl => {
                       const inGroupRatio = calculateInGroupRatio(clToCl.instancesClToCl, selectedCl.instances)
-                      console.log('inGroupRatio: ', inGroupRatio, inGroupRatioThreshold);
                       return inGroupRatio < inGroupRatioThreshold;
                     })
                     .classed('cl_line_filtered', true);
                 }
 
-                // Go over 
+                // Color all within-edges
                 lvData.features.forEach(function(feature, featureIdx) {
                   if (featureIdx < lvData.features.length) {
                     d3.select('.g_btn_bls' + '.bl_' + feature.id)
@@ -191,7 +229,6 @@ function fetchForInitialLoad(sortClsBy) {
                       })
                       .filter(catToCat => {
                         const inGroupRatio = calculateInGroupRatio(catToCat.instancesInCatToCat, selectedCl.instances)
-                        console.log('inGroupRatio: ', inGroupRatio);
                         return inGroupRatio < inGroupRatioThreshold;
                       })
                       .style('opacity', 0);
@@ -199,6 +236,7 @@ function fetchForInitialLoad(sortClsBy) {
                 })
               });
 
+              // Highlight dominant clusters
               dominantClsForSubgroup.forEach(function(d) {
                 d3.selectAll('.proto_path' + '.lv_' + d.lv + '.cl_' + d.cl)
                   .classed('proto_path_for_bar_selected', true)
@@ -208,32 +246,24 @@ function fetchForInitialLoad(sortClsBy) {
                   })
                 d3.selectAll('.proto_circle' + '.lv_' + d.lv + '.cl_' + d.cl)
                   .classed('proto_circle_for_bar_selected', true);
-                console.log('class check - before: ', d3.selectAll('.proto_circle' + '.lv_' + d.lv + '.cl_' + d.cl).attr('class'));
+
                 d3.selectAll('.proto_circle' + '.lv_' + d.lv + '.cl_' + d.cl)
                   .classed('proto_circle_hidden', false)
                   .attr('r', function(d){
+                    
                     const instancesInSelectedCat = selectedCl.instances.filter(instance => instance[d.name] === d.value)
+                    // console.log('r check: ', d, calculateInGroupRatio(instancesInSelectedCat, selectedCl.instances));
                     return scales.protoCircleRScale(calculateInGroupRatio(instancesInSelectedCat, selectedCl.instances));
                   });
-                console.log('class check - after: ', d3.selectAll('.proto_circle' + '.lv_' + d.lv + '.cl_' + d.cl).attr('class'));
               });
 
-              // Highlight a path between cls from one level to another level
-              d3.selectAll('.bar_rect')
-                .each(function(d) {
-
-                });
+              // Color cluster bars
               d3.selectAll('.bar_rect')  // 
                 .filter(function(cl) {
                   return cl.lvIdx !== selectedLV
                 })
                 .style('fill', function(cl){
-                  const instancesIdx = cl.instances.map(d => d.idx),
-                    overlappedIdx = _.intersection(instancesIdx, selectedInstancesIdx);
-
-                  const inGroupRatio = overlappedIdx.length / selectedInstancesIdx.length;
-
-                  return scales.colorOnSelectScale(inGroupRatio);
+                  return selectedClColorScale(calculateInGroupRatioForTwoGroups(cl.instances, selectedCl.instances));
                 })
                 .style('fill-opacity', 0.9);
               // Highlight the protos
@@ -245,7 +275,6 @@ function fetchForInitialLoad(sortClsBy) {
               // Color cat bars
               d3.selectAll('.cat_rect')
                 .style('fill', function(cat){
-                  console.log('color check: ', calculateInGroupRatio(cat.instances, selectedCl.instances))
                   return scales.colorCatOnSelectScale(calculateInGroupRatio(cat.instances, selectedCl.instances));
                 })
                 .style('fill-opacity', 0.9);
@@ -253,7 +282,9 @@ function fetchForInitialLoad(sortClsBy) {
               // Hide the block icons
               d3.selectAll('.g_block_icons')
                 .style('opacity', 0);
-            } else {
+            }
+
+            function cancelSelection() {
               selectedBar.classed('bar_rect_selected', false);
               // Highlight the protos
               d3.selectAll('.proto_path')
@@ -291,8 +322,7 @@ function fetchForInitialLoad(sortClsBy) {
             d3.select(this).classed('bar_rect_mouseovered', false);
 
             d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
-              .classed('proto_circle_hidden', false);
-            d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
+              .classed('proto_circle_mouseovered', false)
               .classed('proto_circle_hidden', true);
 
             d3.selectAll('.proto_path.lv_' + d.lvIdx + '.cl_' + d.idx)
@@ -384,6 +414,130 @@ function fetchForInitialLoad(sortClsBy) {
             
           });
 
+      d3.selectAll('.level_fold_button')
+          .on('click', function(lvData){
+            // Calculate the y-coord difference between two level bars
+            const gSelectedLv = d3.select('.g_level_' + lvData.idx);
+            const yDiff = lvData.mode.height;
+
+            if (lvData.mode.folded === false) {
+              LVData[lvData.idx].mode.folded = true;
+              foldOnClickButton(true, yDiff);
+            } else if (lvData.mode.folded === true) {
+              LVData[lvData.idx].mode.folded = false;
+              foldOnClickButton(false, yDiff);
+            }
+
+            function foldOnClickButton(folded, yDiff) {
+              let add5 = 5;
+              let minus5 = -5;
+              let minus10 = -10;
+              if (folded === false){
+                yDiff = -yDiff;
+                add5 = -add5;
+                minus5 = -minus5;
+                minus10 = -minus10;
+              }
+              
+              // make within-level transparent or back to it
+              d3.selectAll('.g_level_' + lvData.idx + ' > *')
+              .filter(function(d) {
+                console.log('ddL ', d3.select(this).attr('class'))
+                return (d3.select(this).attr('class') != null) && 
+                  ((d3.select(this).attr('class').split(' ')[0] != 'level_bar') &&
+                  (d3.select(this).attr('class').split(' ')[0] != 'level_label') &&
+                  (d3.select(this).attr('class').split(' ')[0] != 'level_fold_button'))
+              })
+              .classed('level_folded', folded); // 'true' == make it transparent because it was folded
+              d3.selectAll('.g_prototype' + '.lv_' + lvData.idx)
+                .classed('level_folded', folded);
+              d3.selectAll('.g_prototype' + '.lv_' + lvData.idx)
+                .classed('level_folded', folded);
+
+              // Adjust the layout for the selected level
+              repositionEl(d3.select('.g_level_' + lvData.idx + ' > .level_bar_bottom'), yDiff);
+              repositionEl(d3.select('.g_level_' + lvData.idx + ' > .level_fold_button'), yDiff);
+              repositionEl(d3.select('.g_level_' + lvData.idx + ' > .level_label'), yDiff + minus10);
+              if (folded == true){
+                repositionG(d3.selectAll('.g_bars.lower' + '.lv_' + lvData.idx), yDiff - 5);
+                repositionG(d3.selectAll('.g_btn_lvs' + '.lv_' + lvData.idx), yDiff - 5);
+              } else if (folded == false) {
+                repositionG(d3.selectAll('.g_bars.lower' + '.lv_' + lvData.idx), yDiff - 10);
+                repositionG(d3.selectAll('.g_btn_lvs' + '.lv_' + lvData.idx), yDiff - 10);
+              }
+              
+              
+
+              // Adjust all components below the selected level
+              LVData.slice(lvData.idx+1).forEach(function(d){
+                console.log('level below: ', d)
+                repositionG(d3.select('.g_level_' + d.idx), yDiff);
+                repositionG(d3.selectAll('.g_btn_lvs' + '.lv_' + d.idx), yDiff + add5);
+                repositionG(d3.selectAll('.g_bars' + '.lv_' + d.idx), yDiff);
+                if (d.features.length > 1) { // A level with only one feature doesn't have proto components
+                  repositionEl(d3.selectAll('.proto_circle' + '.lv_' + d.idx), yDiff + add5);
+                  repositionEl(d3.selectAll('.proto_path' + '.lv_' + d.idx), yDiff + add5);
+                }
+              });
+            }
+
+            // const elsWithinLvRegion = d3.selectAll('.g_level_' + lvData.idx + ' > *')
+            //   .filter(function(d) {
+            //     console.log('ddL ', d3.select(this).attr('class'))
+            //     return (d3.select(this).attr('class') != null) && 
+            //       ((d3.select(this).attr('class').split(' ')[0] != 'level_bar') &&
+            //       (d3.select(this).attr('class').split(' ')[0] != 'level_label') &&
+            //       (d3.select(this).attr('class').split(' ')[0] != 'level_fold_button'))
+            //   })
+            //   .classed('level_folded', true);
+
+            // d3.selectAll('.g_prototype' + '.lv_' + lvData.idx)
+            //   .classed('level_folded', true);
+            // d3.selectAll('.g_prototype' + '.lv_' + lvData.idx)
+            //   .classed('level_folded', true);
+            
+            // repositionEl(d3.select('.g_level_' + lvData.idx + ' > .level_bar_bottom'), yDiff);
+            // repositionEl(d3.select('.g_level_' + lvData.idx + ' > .level_fold_button'), yDiff-10);
+            // repositionEl(d3.select('.g_level_' + lvData.idx + ' > .level_label'), yDiff-10);
+            // repositionG(d3.selectAll('.g_bars.lower' + '.lv_' + lvData.idx), yDiff);
+            // repositionG(d3.selectAll('.g_btn_lvs' + '.lv_' + lvData.idx), yDiff+5);
+
+            // // Pull all components below the selected level
+            // LVData.slice(lvData.idx+1).forEach(function(d){
+            //   console.log('level below: ', d)
+            //   repositionG(d3.select('.g_level_' + d.idx), yDiff);
+            //   repositionG(d3.selectAll('.g_btn_lvs' + '.lv_' + d.idx), yDiff+5);
+            //   repositionG(d3.selectAll('.g_bars' + '.lv_' + d.idx), yDiff);
+            //   if (d.features.length > 1) { // A level with only one feature doesn't have proto components
+            //     repositionEl(d3.selectAll('.proto_circle' + '.lv_' + d.idx), yDiff+5);
+            //     repositionEl(d3.selectAll('.proto_path' + '.lv_' + d.idx), yDiff+5);
+            //   }
+            // });
+            
+          });
+      // Compute repositioning
+      function repositionG(selection, yDiff) {
+        return selection
+                .attr('transform', function(e) {
+                  return 'translate(' + 0 + ',' + (gLayout.getGlobalElLayout(d3.select(this)).y1-yDiff) + ')'
+                });
+      }
+
+      function repositionEl(selection, yDiff) {
+        console.log(selection.attr('class'));
+        console.log(selection.attr('transform'))
+        if (selection.attr('transform') === null)
+          return selection
+                  .attr('transform', function(e) {
+                    return 'translate(' + 0 + ',' + (-yDiff) + ')'
+                  });
+        else
+          return selection
+                  .attr('transform', function(e) {
+                    return 'translate(' + 0 + ',' + (gLayout.getTranslation(d3.select(this)).y-yDiff) + ')'
+                  });
+      }
+
       // Compute event-related measures
       function calculateInGroupRatio(instancesInOther, instancesInSelection) {
         const instancesIdx = instancesInOther.map(d => d.idx),
@@ -391,6 +545,44 @@ function fetchForInitialLoad(sortClsBy) {
         overlappedIdx = _.intersection(instancesIdx, selectedInstancesIdx);
 
         return overlappedIdx.length / selectedInstancesIdx.length;
+      }
+
+      function calculateInGroupRatioForTwoGroups(instancesInOther, instancesInSelection) {
+        const instancesIdx = instancesInOther.map(d => d.idx);
+        const firstCl = d3.select('.bar_rect_selected'),
+              secondCl = d3.select('.bar_rect_selected2');
+        let instancesIdxInSelection1 = [],
+          instancesIdxInSelection2 = [];
+        let overlappedIdx1 = [],
+          overlappedIdx2 = [];
+        let inGroupRatio1 = 0,
+          inGroupRatio2 = 0;
+        if (!firstCl.empty() && secondCl.empty()) {
+          instancesIdxInSelection1 = firstCl.data()[0].instances.map(d => d.idx);
+          overlappedIdx1 = _.intersection(instancesIdx, instancesIdxInSelection1);
+
+          console.log('OX: ', overlappedIdx1.length / instancesIdxInSelection1.length);
+          return overlappedIdx1.length / instancesIdxInSelection1.length;
+        } else if (firstCl.empty() && !secondCl.empty()) {
+          instancesIdxInSelection2 = secondCl.data()[0].instances.map(d => d.idx);
+          overlappedIdx2 = _.intersection(instancesIdx, instancesIdxInSelection1);
+
+          console.log('XO: ', overlappedIdx2.length / instancesIdxInSelection2.length);
+          return overlappedIdx2.length / instancesIdxInSelection2.length;
+        } else if (!firstCl.empty() && !secondCl.empty()) {
+          instancesIdxInSelection1 = firstCl.data()[0].instances.map(d => d.idx);
+          instancesIdxInSelection2 = secondCl.data()[0].instances.map(d => d.idx);
+
+          overlappedIdx1 = _.intersection(instancesIdx, instancesIdxInSelection1),
+          overlappedIdx2 = _.intersection(instancesIdx, instancesIdxInSelection2);
+          
+          inGroupRatio1 = overlappedIdx1.length / instancesIdxInSelection1.length,
+          inGroupRatio2 = overlappedIdx2.length / instancesIdxInSelection2.length;
+
+          console.log('OO: ', inGroupRatio1 - inGroupRatio2);
+          return inGroupRatio1 - inGroupRatio2;
+        }
+        
       }
 
       function calculateGroupRatio(instancesInOther, instancesInSelection) {
