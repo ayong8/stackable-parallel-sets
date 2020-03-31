@@ -1,8 +1,8 @@
 :root {
   --stroke: lightslategray;
-  --level-bar: #01b39f;
+  --level-bar: #9e9e9e; /*#01b39f;*/
   --block-fill: #7de6b1;
-  --bar-fill: #00e0c7; /*#00ffe2;*/
+  --bar-fill: #9e9e9e; /*#00e0c7;*/ /*#00ffe2;*/
   --cl-line-stroke: black;
   --proto: #d5c0fb; /*#af6ed4;*/
   --proto-selected: #af6ed4;
@@ -11,6 +11,12 @@
   --bar-fill-second-selected: red;
   --block-fill-selected: limegreen;
   --block-fill-second-selected: orange;
+
+  --treemap-fill-cl-0: #93c47dff;
+  --treemap-fill-cl-1: #c27ba0ff;
+  --treemap-fill-cl-2: #f1c232ff;
+  --treemap-fill-cl-3: #fb8072;
+  --treemap-fill-cl-4: #80b1d3;
 }
 
 body {
@@ -110,7 +116,7 @@ svg {
 }
 
 .block_icon_group_rect {
-  fill: whitesmoke;
+  fill: transparent;
 }
 
 .block_icon {
@@ -372,4 +378,32 @@ svg {
 
 .first-space {
   margin-left: 10px;
+}
+
+/* cluster treemap */
+/* .treemap_rect {
+  fill: darkblue;
+  opacity: 0.3;
+  stroke: white;
+} */
+
+.label rect {
+  rx: 2;
+  fill: none;
+  stroke: gray;
+  stroke-width: 2px;
+}
+
+.label circle {
+  opacity: 0 !important;
+}
+
+.treemap_label {
+  fill: black;
+  font-size: 12px;
+}
+
+.treemap_line_label_to_cat {
+  stroke: gray;
+  stroke-dasharray: 3, 3;
 }

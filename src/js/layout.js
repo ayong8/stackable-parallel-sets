@@ -27,7 +27,18 @@ export const l = {
   lm: 15,
   textHeight: 10,
   textHeight2: 15,
-  wForLabel:80
+  wForLabel:80,
+  container: {
+    global: {
+      t: null,
+      l: null
+    },
+    local: {
+      p: {
+        l: 100
+      }
+    }
+  }
 };
 
 export const llv = {
@@ -46,6 +57,9 @@ export const llv = {
   },
   p: {
     b: 30
+  },
+  bar: {
+    h: 10
   }
 }
 
@@ -64,7 +78,7 @@ export const lbl = {
 }
 
 export const lbr = {
-  h: 15,
+  h: 20,
   m: {
     btn: 10
   }
@@ -114,6 +128,13 @@ lbl.getY = function(LVLayout, numFeatures, idx) {
   return y;
 }
 
+l.setContainerBoundingClientRect = function(gContainer) {
+  const svgL = d3.select('svg').node().getBoundingClientRect();
+  console.log('svgL: ', svgL);
+  this.container.global.l = svgL.left + l.container.local.p.l;
+  this.container.global.t = svgL.top;
+}
+
 gLayout.getCssVar = function(cssVar) {
   return getComputedStyle(document.documentElement)
             .getPropertyValue(cssVar).trim();
@@ -141,18 +162,64 @@ gLayout.getElLayout = function(el) {
   }
 }
 
-gLayout.getGlobalElLayout = function(el) {
-  const containerEl = d3.select('.container').node();
-  const l = el.node().getBoundingClientRect(),
-        container = containerEl.getBoundingClientRect();
+gLayout.getGlobalElLayout = function(el, parentEl) {
+  const thisL = el.node().getBoundingClientRect();
+
+  if (typeof(parentEl) !== 'undefined') {
+    console.log('parentEl: ', parentEl);
+    const parentL = parentEl.node().getBoundingClientRect();
+    return {
+      x1: thisL.left - l.container.global.l,
+      x2: thisL.left - l.container.global.l + thisL.width,
+      y1: thisL.top - l.container.global.t + parentL.top,
+      y2: thisL.top - l.container.global.t + thisL.height,
+      width: thisL.width,
+      height: thisL.height
+    }
+  } else {
+    return {
+      x1: thisL.left - l.container.global.l,
+      x2: thisL.left - l.container.global.l + thisL.width,
+      y1: thisL.top - l.container.global.t,
+      y2: thisL.top - l.container.global.t + thisL.height,
+      width: thisL.width,
+      height: thisL.height
+    }
+  }
+    
+
+  // if (isLogging) {
+  //   console.log('thisL: ', thisL);
+  //   console.log('l.container.global: ', l.container.global);
+  // }
+
   
+}
+
+gLayout.getGlobalElLayoutTest = function(el, parentEl) {
+  const thisL = el.node().getBoundingClientRect();
+
   return {
-    x1: l.left - container.left,
-    x2: l.x + l.width,
-    y1: l.top - container.top,
-    y2: l.top - container.top + l.height,
-    width: l.width,
-    height: l.height
+    x1: thisL.left - l.container.global.l,
+    x2: thisL.left - l.container.global.l + thisL.width,
+    y1: thisL.top - l.container.global.t,
+    y2: thisL.top - l.container.global.t + thisL.height,
+    width: thisL.width,
+    height: thisL.height
+  }
+}
+
+gLayout.getGlobalElLayoutTest2 = function(el, parentEl) {
+  const thisL = el.node().getBoundingClientRect();
+  const parentL = parentEl.node().getBoundingClientRect();
+
+  return {
+    x1: thisL.left - parentL.left,
+    x2: thisL.left - parentL.left + thisL.width,
+    y1: thisL.top - parentL.top,
+    y2: thisL.top - parentL.top + thisL.height,
+    width: thisL.width,
+    height: thisL.height
   }
 }
 
@@ -265,7 +332,6 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
         if (typeof(edge) !== 'undefined')
           isEdgeOutlier = edge.isOutlier == 1 ? true: false;
         else {
-          console.log('no edges detected (source,target): ', sortedCatCurr.sortedIdx, sortedCatNext.sortedIdx)
           isEdgeOutlier = false;
         }
           
@@ -345,10 +411,7 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
   }
 }
 
-gLayout.renderClToClLines = function(selection, instances, gCurrLowerBars, gNextUpperBars, wholeWidth) {
-  const currCls = gCurrLowerBars.datum(),
-    nextCls = gNextUpperBars.datum();
-
+gLayout.renderClToClLines = function(selection, instances, currCls, nextCls, currLowerBar, nextUpperBar, wholeWidth) {
   const clScalesForCurr = scales.calculateScalesForCls(instances, currCls, wholeWidth);
   const clScalesForNext = scales.calculateScalesForCls(instances, nextCls, wholeWidth);
 
@@ -387,7 +450,7 @@ gLayout.renderClToClLines = function(selection, instances, gCurrLowerBars, gNext
 
       console.log('edgesWithOutlierInfo-ClToCl: ', edgesWithOutlierInfo.map(d => [d.source, d.target, d.weight, d.alpha, d.isOutlier]));
       prepareClData(currCls, nextCls);
-      renderClToClLines(instancesBtnCls, gCurrLowerBars, gNextUpperBars);
+      renderClToClLines(instancesBtnCls, currLowerBar, nextUpperBar);
     })
   }
 
@@ -427,7 +490,7 @@ gLayout.renderClToClLines = function(selection, instances, gCurrLowerBars, gNext
     });
   }
   
-  function renderClToClLines(instancesBtnCls, gCurrLowerBars, gNextUpperBars) {
+  function renderClToClLines(instancesBtnCls, currLowerBar, nextUpperBar) {
     // Prepare the data to draw lines
     dataForClToClLines = instancesBtnCls.map((d, i) => {
       const widthForCurrCat = clScalesForCurr[d.clCurrIdx].range()[1] - clScalesForCurr[d.clCurrIdx].range()[0];
@@ -449,7 +512,7 @@ gLayout.renderClToClLines = function(selection, instances, gCurrLowerBars, gNext
         },
         target: {
           x: clScalesForNext[d.clNextIdx](d.cumNumInstancesRatioInNext) + lineWidth / 2,
-          y: gLayout.getGlobalElLayout(gNextUpperBars).y1 - gLayout.getGlobalElLayout(gCurrLowerBars).y2 + 5
+          y: (gLayout.getGlobalElLayout(nextUpperBar).y1) - (gLayout.getGlobalElLayout(currLowerBar).y2) - lbr.h*2
         },
         isOutlier: d.isOutlier
       };

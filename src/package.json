@@ -40,6 +40,8 @@
     "clusterfck": "^1.0.0",
     "d3": "^5.12.0",
     "d3-tooltip": "^0.0.1",
+    "d3fc": "^14.2.4",
+    "d3fc-label-layout": "^5.1.0",
     "fetch-sync": "^2.0.0",
     "hclust": "^1.0.2",
     "jquery": "^3.4.1",

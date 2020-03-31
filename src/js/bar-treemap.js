@@ -17,6 +17,7 @@ function BarTreemap() {
 	}
 
 	function _bar(container) {
+		const selectedLvIdx = lvData.idx;
 		const cls = lvData.cls,
 			numFeatures = lvData.features.length;
 		const featureNames = lvData.features.map(d => d.labels);
@@ -47,17 +48,31 @@ function BarTreemap() {
 
 				dataTreemapForFeature.name = feature.name;
 				dataTreemapForFeature.children = [];
-				dataTreemapForFeature.ratio = 1;
-				console.log('feature name: ', feature.name)
+				dataTreemapForFeature.ratio = 0;
+				console.log('cl.dominantCats[featureName]: ', cl.dominantCats[featureName])
+				console.log('cl.instances: ', cl.instances);
+				// Determine the most dominant one
+				let maxRatioCat = null,
+					maxRatio = 0;
 				feature.domain.forEach((featureValue) => {
+					const instancesForCat = cl.instances.filter(d => d[feature.name] === featureValue),
+						catRatio = instancesForCat.length / numClInstances;
+					if (maxRatio < catRatio) {
+						maxRatioCat = featureValue;
+						maxRatio = catRatio;
+					}
+				});
+
+				// Store all information for each treemap
+				feature.domain.forEach((featureValue, i) => {
 					const numInstancesForCat = cl.instances.filter(d => d[feature.name] === featureValue).length;
-					console.log('store dominance: ', featureValue, cl.dominantCat, (featureValue == cl.dominantCat))
+					console.log('calculate: ', cl.idx, feature.name, feature.labels[i], numInstancesForCat / numClInstances)
 					const dataTreemapForCat = {
 						clIdx: cl.idx,
 						featureIdx: featureIdx,
 						name: featureValue,
 						ratio: numInstancesForCat / numClInstances,
-						isDominant: (featureValue == cl.dominantCats[featureName]) ? true : false
+						isDominant: (featureValue === maxRatioCat) ? true : false // (featureValue == cl.dominantCats[featureName]) ? true : false
 					}
 					dataTreemapForFeature.children.push(dataTreemapForCat);
 					dataTreemapCatLabelsForCls.push(dataTreemapForCat);
@@ -74,18 +89,18 @@ function BarTreemap() {
 				.attr('class', (d, i) => 'g_treemaps cl_' + d.clIdx + ' feature_' + d.featureIdx)
 				.attr('transform', (d, i) => {
 					console.log('treemapsXScale(i): ', treemapsXScale(i))
-					return 'translate(' + treemapsXScale(i) + ',' + 0 + ')'})
+					return 'translate(' + treemapsXScale(i) + ',' + 3 + ')'})
 				.each(renderTreemaps);
 		});
 
 		console.log('dataTreemapCatLabelsForCls: ', dataTreemapCatLabelsForCls);
 
 		// Collecting all label data and put into the labeling layout at once
-		renderLabels(container, dataTreemapCatLabelsForCls, featureNames);
+		renderLabels(container, selectedLvIdx, dataTreemapCatLabelsForCls, featureNames);
 
 		function renderTreemaps(d, i) {
 			const rectForCl = d3.select(this.parentNode).select('.bar_rect').node(),
-				rectHeight = gLayout.getElLayout(d3.select(this.parentNode).select('.bar_rect')).height;
+				rectHeight = gLayout.getElLayout(d3.select(this.parentNode).select('.bar_rect')).height - 6;
 			const colorScaleForTreemap = scales.treemapColorScales[i];
 
 			const rootNode = d3.hierarchy(d)
@@ -94,10 +109,10 @@ function BarTreemap() {
 				});
 
 			const treemapLayout = d3.treemap()
-				.size([d.width, rectHeight*2])
-				.paddingOuter(1);
+				.size([d.width, rectHeight])
+				.paddingOuter(2);
 			
-			treemapLayout.tile(d3['treemapBinary'])
+			treemapLayout.tile(d3['treemapSlice']);
 			treemapLayout(rootNode);
 		
 			const nodes = d3.select(this)
@@ -111,18 +126,21 @@ function BarTreemap() {
 		
 			nodes
 				.append('rect')
-				.attr('class', d => (typeof(d.children) == 'undefined') ? 'treemap_rect cat': 'treemap_rect feature')
+				.attr('class', d => (typeof(d.children) == 'undefined') 
+							? 'treemap_rect cl_' + d.data.clIdx + ' feature_' + d.data.featureIdx + ' cat_' + d.data.name 
+							: 'treemap_rect cl_' + d.data.clIdx + ' feature_' + d.data.name
+				)
 				.attr('width', function(d) { return d.x1 - d.x0; })
 				.attr('height', function(d) { return d.y1 - d.y0; })
 				.style('fill', d => {
-					console.log('d.ratio: ', d.data, d.data.ratio, colorScaleForTreemap(d.data.ratio))
 					return colorScaleForTreemap(d.data.ratio)
 				})
-				.style('stroke', d => (typeof(d.children) == 'undefined') ? 'white' : 'black')
-				.style('stroke-width', d => (typeof(d.children) == 'undefined') ? '1.5px' : '2px')
+				.style('stroke', d => (typeof(d.children) == 'undefined') ? 'white' : 'transparent')
+				.style('stroke-width', d => (typeof(d.children) == 'undefined') ? '1px' : '3px')
+				.on('mouseover', d => console.log(gLayout.getGlobalElLayout(d3.select(this))));
 		}
 
-		function renderLabels(container, dataTreemapCatLabelsForCls, featureNames) {
+		function renderLabels(container, selectedLvIdx, dataTreemapCatLabelsForCls, featureNames) {
 			// the component used to render each label
 			const labelPadding = 2;
 			const labelTopSpacing = 20;
@@ -142,18 +160,24 @@ function BarTreemap() {
 							// measure the label and add the required padding
 							var textSize = d3.select(g[i])
 									.select('text')
-									.attr('class', 'treemap_label')
+									.attr('class', d => 'treemap_label cl_' + d.clIdx + ' cat_' + d.name)
 									.node()
 									.getBBox();
 							
 							d3.select(g[i])
 								.select('rect')
-								.style('fill', d => scales.treemapColorScales[d.featureIdx](d.ratio))
+								.attr('class', d => 'treemap_rect cl_' + d.clIdx + ' cat_' + d.name)
+								.style('fill', d => {
+									console.log('label rect fill: ', d.ratio)
+									return scales.treemapColorScales[d.featureIdx](d.ratio)
+								});
 							return [textSize.width + labelPadding * 2, textSize.height + labelPadding * 2];
 					})
 					.position(function(d) {
-						return [gLayout.getGlobalElLayout(container.select('.g_treemaps.cl_' + d.clIdx + '.feature_' + d.featureIdx)).x1, 
-							gLayout.getElLayout(container.select('.g_treemaps.cl_' + d.clIdx + '.feature_' + d.featureIdx)).y1 - labelTopSpacing]; 
+						return [
+							gLayout.getGlobalElLayout(container.select('.g_treemaps.cl_' + d.clIdx + '.feature_' + 0)).x1, 
+							gLayout.getElLayout(container.select('.g_treemaps.cl_' + d.clIdx + '.feature_' + d.featureIdx)).y1 - labelTopSpacing*(d.featureIdx+1)
+						]; 
 					})
 					.component(textLabel);
 
@@ -172,6 +196,41 @@ function BarTreemap() {
 						})
 					)
 					.call(labels);
+
+			d3.selectAll('.label > rect')
+				.each(function(d){
+					const catLabel = d3.select(this);
+					// Select the corresponding cat rect in treemap
+					const gBars = d3.select('.g_bars.upper.lv_' + selectedLvIdx);
+					const treemapForFeature = gBars
+							.select('.g_treemaps.cl_' + d.clIdx + '.feature_' + d.featureIdx);
+					const catRect = treemapForFeature
+							.select('.treemap_rect.cat_' + d.name);	
+
+					// console.log('selected .g_bars: ', d3.select('.g_bars.upper.lv_' + selectedLvIdx).attr('class'));
+					// console.log('catRect: ', catRect.attr('class'));
+					// console.log('cat Rect position: ', gLayout.getGlobalElLayout(catRect))
+					// d3.select('.container')
+					// 	.append('line')
+					// 	.attr('class', 'treemap_line_label_to_cat' + ' cl_' + d.clIdx + ' feature_' + d.featureIdx + ' cat_' + d.name)
+					// 	.attr('x1', function(d){ 
+					// 		return gLayout.getGlobalElLayout(catLabel).x1 + gLayout.getGlobalElLayout(catLabel).width/2
+					// 	})
+					// 	.attr('x2', function(d){ 
+					// 		return gLayout.getGlobalElLayout(catRect).x1 + gLayout.getGlobalElLayout(catRect).width/2
+					// 	})
+					// 	.attr('y1', function(d){ 
+					// 		return gLayout.getGlobalElLayout(catLabel).y2
+					// 	})
+					// 	.attr('y2', function(d){ 
+					// 		return gLayout.getGlobalElLayout(catRect).y1
+					// 	});
+
+				})
+				.on('mouseover', d => console.log(d));
+
+			d3.selectAll('.label > text')
+			.on('mouseover', function(d) { console.log(gLayout.getGlobalElLayout(d3.select(this)))});
 		}
 		
 	}

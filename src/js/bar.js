@@ -17,7 +17,7 @@ function Bar() {
 	function _bar(container) {
 		const cls = lvData.cls,
 					clScales = lvData.clScales;
-		const LV = d3.select('.g_level_' + lvData.idx)
+		const LV = d3.select('.g_level_' + lvData.idx);
 		let gBRSet, gBRs;
 
 		// If it is first or last, then only lower or upper bar set
@@ -36,21 +36,23 @@ function Bar() {
 		}
 
 		function renderLowerCls() {
+			const gLevel = d3.select('.g_level_' + lvData.idx);
+			const lowerBar = gLevel.select('.level_bar_bottom');
 			gBRSet = container
 				.append('g')
 				.data([cls])
 				.attr('class', 'g_bars lower lv_' + lvData.idx)
 				.attr('transform', 'translate(' + 
-					gLayout.getGlobalElLayout(LV).x1 + 
+					gLayout.getElLayout(lowerBar).x1 + 
 					',' + 
-					gLayout.getGlobalElLayout(LV).y2 + ')'
+					(gLayout.getGlobalElLayout(lowerBar).y2) + ')'
 				);
 	
 			gBRs = gBRSet
 				.selectAll('.g_bar.lv_' + lvData.idx)
 				.data(cls).enter()
 				.append('g')
-				.attr('class', 'g_bar lower lv_' + lvData.idx)
+				.attr('class', cl => 'g_bar lower lv_' + lvData.idx + ' cl_' + cl.idx)
 				.attr('transform', (cl, clIdx) => 'translate(' +
 					(clScales[cl.idx].range()[0]) + // i*2 is cumulative margin
 					',0)'
@@ -67,7 +69,7 @@ function Bar() {
 					.append('rect')	
 					.attr('class', 'bar_rect lv_' + lvData.idx)
 					.attr('x', 0) 
-					.attr('y', -5)
+					.attr('y', 0)
 					.attr('width', clWidth < 0 ? 1 : clWidth) // When there is no items in the cluster, set it as 1
 					.attr('height', lbr.h);
 					
@@ -75,7 +77,7 @@ function Bar() {
 					.append('text')
 					.attr('class', 'cl_label')
 					.attr('x', 0)
-					.attr('y', 5)
+					.attr('y', 10)
 					.text(cl.idx)
 
 				gProto = container
@@ -163,21 +165,24 @@ function Bar() {
 		}
 
 		function renderUpperCls() {
+			
+			const topBar = d3.select('.g_level_' + lvData.idx).select('.level_bar_top');
+			console.log('check transform: ', gLayout.getGlobalElLayout(topBar).x1)
 			gBRSet = container
 				.append('g')	
 				.data([cls])
 				.attr('class', 'g_bars upper lv_' + lvData.idx)
 				.attr('transform', 'translate(' + 
-					gLayout.getGlobalElLayout(LV).x1 + 
+					gLayout.getElLayout(topBar).x1 + 
 					',' + 
-					(gLayout.getGlobalElLayout(LV).y1-lbr.h) + ')'
+					(gLayout.getGlobalElLayout(topBar).y1 - (lbr.h)) + ')'
 				);
 	
 			gBRs = gBRSet
 				.selectAll('.g_bar')
 				.data(cls).enter()
 				.append('g')
-				.attr('class', 'g_bar upper lv_' + lvData.idx)
+				.attr('class', cl => 'g_bar upper lv_' + lvData.idx + ' cl_' + cl.idx)
 				.attr('transform', (cl, clIdx) => 'translate(' +
 					(clScales[cl.idx].range()[0]) + // i*2 is cumulative margin
 					',0)'
@@ -189,8 +194,6 @@ function Bar() {
 				const proto = cl.prototype;
 				let gProto;
 				let protoPathData = [], protoCircleData = [];
-
-				console.log('checkkk: ', cl.lvIdx, clWidth);
 
 				gBR
 					.append('rect')	
@@ -204,7 +207,7 @@ function Bar() {
 					.append('text')
 					.attr('class', 'cl_label')
 					.attr('x', 0)
-					.attr('y', 5)
+					.attr('y', 10)
 					.text(cl.idx);
 
 				if (lvData.features.length > 1) {

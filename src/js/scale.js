@@ -1,9 +1,6 @@
 import * as d3 from 'd3';
 import { gLayout, gColors, l, ll, lbl, llv, lbr, lCom, lBtn} from './layout';
 
-const data = require('./dataMapping');
-
-
 const catWidthScale = d3
     .scaleLinear()
     .domain([0, 2000]) // size of whole instances
@@ -18,6 +15,19 @@ const protoPathScale = d3
     .scaleLinear()
     .domain([0, 1])
     .range([1, 4]);
+  
+let treemapColorScales = [
+  d3.scaleLinear().domain([0, 1])
+    .range(['whitesmoke', gLayout.getCssVar('--treemap-fill-cl-1')]),
+  d3.scaleLinear().domain([0, 1])
+    .range(['whitesmoke', gLayout.getCssVar('--treemap-fill-cl-2')]),
+  d3.scaleLinear().domain([0, 1])
+    .range(['whitesmoke', gLayout.getCssVar('--treemap-fill-cl-3')]),
+  d3.scaleLinear().domain([0, 1])
+    .range(['whitesmoke', gLayout.getCssVar('--treemap-fill-cl-4')]),
+  d3.scaleLinear().domain([0, 1])
+    .range(['whitesmoke', gLayout.getCssVar('--treemap-fill-cl-5')])
+]
 
 export const scales = {
   catWidthScale: catWidthScale,
@@ -26,7 +36,8 @@ export const scales = {
   yLvsScale: d3.scalePoint(),
   colorClOnSelectScale: d3.scaleLinear(),
   colorClOnSelectTwoGroupsScale: d3.scaleLinear(),
-  colorOnCatOnSelectScale: d3.scaleLinear()
+  colorCatOnSelectScale: d3.scaleLinear(),
+  treemapColorScales: []
 };
 
 scales.calculatecolorClOnSelectScale = function(cssVar) {
@@ -52,6 +63,13 @@ scales.calculateColorCatOnSelectTwoGroupsScale = function(cssVarForFirstGroup, c
     .domain([-1, 0, 1])
     .range([gLayout.getCssVar(cssVarForSecondGroup), 'lightgray', gLayout.getCssVar(cssVarForFirstGroup)]);
 }
+
+scales.calculateColorTreemapsScale = function(cssVar, i) {
+  this.treemapColorScales.push(d3.scaleLinear()
+    .domain([0, 1]) 
+    .range(['whitesmoke', gLayout.getCssVar(cssVar)]));
+}
+
 
 scales.calculateYLevelScale = function(LVData) {
   const numLevels = LVData.length;
@@ -134,10 +152,10 @@ scales.calculateScalesForCls = function(rawData, sortedCls, wholeWidth) { //feat
   const barWidthScale = d3
     .scaleLinear()
     .domain([0, 1])
-    .range([0, wholeWidth-20]);
+    .range([10, wholeWidth-30]);
 
   let cumulativeClWidth = 0;
-  const widthDecayingRatio = 1;
+  const widthDecayingRatio = 0.9;
   const sumClWidths = barWidthScale(1) * widthDecayingRatio; // ratio==1; all instances
   // lbr.m.btn = (wholeWidth - sumClWidths) / (sortedCls.length-1) // btnInterval
   

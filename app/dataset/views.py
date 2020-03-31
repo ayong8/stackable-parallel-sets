@@ -311,12 +311,14 @@ def hClustering(k, X):
     # dhcl_model = cl.DivisiveClustering(dist_mat)
     # dhcl.fit()
     #dist_mat = euclidean_distances(X, X)
+    np.random.seed(0)
     cl_fit = AgglomerativeClustering(n_clusters=k, affinity='euclidean').fit(X)
 
     return cl_fit.labels_, cl_fit.n_clusters_
 
 # Input: Dataset itself
 def kmdeoidsClustering(X, k):
+    random.seed(42)
     initial_medoids_idx = random.sample(range(len(X)), k) # random.sample(range(len(X)), 4)
     dist_mat = calculate_distance_matrix(X)
     kmedoids_instance = kmedoids(dist_mat, initial_medoids_idx, data_type='distance_matrix')
@@ -331,32 +333,24 @@ def kmdeoidsClustering(X, k):
     return cls_idx_list, protos_idx_list
 
 def calculate_pairwise_correlation(feature1, feature2):
-    print('feature1: ', feature1['name'], feature1['type'])
-    print('feature2: ', feature2['name'], feature2['type'])
-
     # Analyze the statistical coefficience
     # cont-cont => Pearson
     is_significant = 'false'
     if feature1['type'] == 'continuous' and feature2['type'] == 'continuous':
         coef, p_value = stats.pearsonr(feature1['featureValues'], feature2['featureValues'])
         is_significant = 'true' if p_value < 0.05 else 'false'
-        print('cont-cont, pearson: ', coef, p_value, p_value < 0.05)
     # cat-ord, or cat-cat => Chi
     elif (feature1['type'] == 'categorical' and feature2['type'] == 'categorical') or \
     (feature1['type'] == 'categorical' and feature2['type'] == 'categorical') or \
     (feature1['type'] == 'categorical' and feature2['type'] == 'categorical'):
-        print('check chi-square: ', feature1['featureValues'])
-        print('check chi-square: ', feature2['featureValues'])
         df_feature_values = pd.DataFrame({'feature1': feature1['featureValues'], 'feature2':feature2['featureValues']})
         contingency_table = pd.crosstab(df_feature_values['feature1'], df_feature_values['feature2'])
         coef, p_value, _, _ = stats.chi2_contingency(contingency_table)
         is_significant = 'true' if p_value < 0.05 else 'false'
-        print('cont-cat, chi: ', coef, p_value, p_value < 0.05)
     # ord-ord => Spearman
     elif feature1['type'] == 'ordinal' and feature2['type'] == 'ordinal':
         coef, p_value = stats.spearmanr(feature1['featureValues'], feature2['featureValues'])
         is_significant = 'true' if p_value < 0.05 else 'false'
-        print('ord-ord, spearman: ', coef, p_value, p_value < 0.05)
     # cont-(ord or cat) => ANOVA
     elif (feature1['type'] == 'categorical' and feature2['type'] == 'continuous') or \
     (feature1['type'] == 'continuous' and feature2['type'] == 'categorical'):
@@ -391,6 +385,76 @@ def calculate_G(freq_mat_np):
     G = nx.from_numpy_matrix(weighted_adj_mat)
 
     return G
+
+def calculate_G_for_cluster_set(C): # for a set of clusters
+    # Calculate the frequency matrix
+    C_freqs = []
+    C_super_cluster = sum(C_freqs)
+
+    C_freqs.append(C_super_cluster)
+    C_freqs.extend([ len(cl) for cl in C ])
+
+    freq_mat_np = np.array([[0]*(len(C_freqs))]*(len(C_freqs)))
+    for row_idx, cl_freq1 in enumerate(C_freqs): # Go over clusters except for super cluster
+        if row_idx == 0:
+            for col_idx, cl_freq2 in enumerate(C_freqs):
+                if col_idx != 0:
+                    freq_mat_np[row_idx, col_idx] = cl_freq2
+        else:
+            freq_mat_np[row_idx, 0] = cl_freq1
+
+    G = nx.from_numpy_matrix(freq_mat_np)
+    
+    return G
+
+def calculate_G_and_dominant_cats_for_cl(features, df_instances_in_cl): # for each cluster
+    dominant_cats = {}
+    cl_num_instances = df_instances_in_cl.shape[0]
+    feature_names = [ feature['name'] for feature in features ]
+
+    for feature in features:
+        feature_name = feature['name']
+        feature_domain = feature['domain']
+        cat_freqs = []
+
+        cat_freqs.append(cl_num_instances) # Add all-instances-freq as super node 
+        for feature_value in feature_domain:
+            cnt = df_instances_in_cl.loc[df_instances_in_cl[feature_name]==feature_value, feature_name].count()
+            cat_freqs.append(cnt)
+    #         category_cnts.append({
+    #             'cat': feature_value,
+    #             'cnt': cnt
+    #         })
+        print(cat_freqs)
+        freq_mat_np = np.array([[0]*(len(cat_freqs))]*(len(cat_freqs)))
+        for row_idx, cat_freq1 in enumerate(cat_freqs): # Go over clusters except for super cluster
+            if row_idx == 0:
+                for col_idx, cat_freq2 in enumerate(cat_freqs):
+                    if col_idx != 0:
+                        print('cat_freq2: ', cat_freq2)
+                        freq_mat_np[row_idx, col_idx] = cat_freq2 if cat_freq2 != 0 else 1 # if no frequency for a cat, an edge isn't generated
+            else:
+                print('cat_freq1: ', cat_freq1)
+                freq_mat_np[row_idx, 0] = cat_freq1 if cat_freq1 != 0 else 1
+        print('freq_mat_np: ', freq_mat_np)
+        G = nx.from_numpy_matrix(freq_mat_np)
+        
+        # Detect dominant clusters for ...
+        G = out.disparity_filter(G)
+
+        dominant_node_idx_list = []
+        dominant_node_idx = None
+        min_outlier_score = 1
+        for u, v, d in G.edges(data=True):
+            print('d: ', d)
+            if d['alpha'] <= min_outlier_score:
+                dominant_node_idx = v-1 # should exclude super node which is index 0, so subtract by 1
+                min_outlier_score = d['alpha']
+                dominant_d = d
+        
+        dominant_cats[feature_name] = dominant_node_idx
+    
+    return dominant_cats
 
 def sort_nodes(G, num_cls1, num_cls2):
     L = nx.laplacian_matrix(G).toarray()
@@ -437,9 +501,22 @@ def detect_outlier_edges(G, standardized_cut, n_cls1, n_cls2):
     num_total_edges = n_cls1 * n_cls2
     non_outlier_edges = [ e for e in edges if e['isOutlier'] == 0 ]
     non_outlier_ratio = len(non_outlier_edges) / num_total_edges
-    pd.DataFrame(edges).to_csv('./app/static/data/edges_check.csv')
 
     return edges, non_outlier_ratio
+
+def detect_outlier_nodes(G):
+    G = out.disparity_filter(G)
+
+    dominant_node_idx_list = []
+    dominant_node_idx = None
+    min_outlier_score = 1
+    for u, v, d in G.edges(data=True):
+        if d['alpha'] < min_outlier_score:
+            dominant_node_idx = v-1 # should exclude super node which is index 0, so subtract by 1
+            min_outlier_score = d['alpha']
+    dominant_node_idx_list.append(dominant_node_idx)
+
+    return dominant_node_idx_list
 
 class LoadData(APIView):
     def get(self, request, format=None):
@@ -525,16 +602,20 @@ class HClusteringForAllLVs(APIView):
     def post(self, request, format=None):
         json_request = json.loads(request.body.decode(encoding='UTF-8'))
         lv_data = json_request['data']
+        print('lv_data: ', lv_data)
+
         sort_cls_by = json_request['sortClsBy'] # 'layout_optimization' or any given feature name
         df_instances = pd.DataFrame(json_request['instances'])
         df_instances = df_instances.set_index('idx')
         num_lvs = len(lv_data)
-        print('lv_data: ', lv_data)
 
         # Clustering for levels
         lv_cl_list_dict = {}
         for lv_idx, lv in enumerate(lv_data):
             df_instances_for_lv = pd.DataFrame({ feature['name']:feature['featureValues'] for feature in lv['features'] })
+            features = lv['features']
+            domain_list = [ feature['domain'] for feature in lv['features'] ]
+            feature_names = [ feature['name'] for feature in lv['features'] ]
 
             if (len(lv['features']) > 1) and (lv['btnMode']['mode'] == 'clustering'):
                 cl_labels_np, n_cls = hClustering(lv['btnMode']['numCls'], df_instances_for_lv.values)
@@ -551,7 +632,6 @@ class HClusteringForAllLVs(APIView):
                     instances_for_cl = df_instances_for_lv.loc[instances_idx_for_cl]
 
                     # centroid
-
                     prototypes_for_cl = df_instances_for_lv.loc[prototypes_idx_for_cl]
                     prototype_feature_list = [ {'name': feature_name, 'value': feature_value } for feature_name, feature_value in prototypes_for_cl.to_dict().items() if feature_name != 'idx' ]
                     prototype = {
@@ -559,25 +639,27 @@ class HClusteringForAllLVs(APIView):
                         'features': prototype_feature_list  # [ {'name': 'air pollution', 'value': 1}, ... ]
                     }
 
+                    print('instances_for_cl: ', instances_for_cl)
+                    instances_for_cl.to_csv('instances_for_cl.csv')
+                    dominant_cats = calculate_G_and_dominant_cats_for_cl(features, instances_for_cl)
+
                     cl_list.append({
                         'idx': cl_idx,
                         'lvIdx': lv_idx,
                         'sortedIdx': cl_idx,
                         'instances': instances_for_cl.to_dict('records'),
-                        'prototype': prototype
+                        'dominantCat': 0,
+                        'prototype': prototype,
+                        'dominantCats': dominant_cats
                     })
                 lv_cl_list_dict[lv_idx] = cl_list
             elif (len(lv['features']) > 1) and (lv['btnMode']['mode'] == 'binning'):
-                domain_list = [ feature['domain'] for feature in lv['features'] ]
-                feature_names = [ feature['name'] for feature in lv['features'] ]
                 cat_permutations = list(itertools.product(*domain_list))
                 
                 cls_idx_list = []
                 protos_idx_list = []
                 for cat_combi in cat_permutations:
                     df_instances_for_bin = df_instances_for_lv[ df_instances_for_lv[feature_names] == list(cat_combi) ].dropna()
-                    print('df_instances_for_bin:')
-                    print(df_instances_for_bin)
                     cl_idx_list = list(df_instances_for_bin.index)
                     
                     if len(cl_idx_list) == 0:
@@ -598,13 +680,18 @@ class HClusteringForAllLVs(APIView):
                         'idx': df_instances_for_lv.loc[prototypes_idx_for_cl, 'idx'],
                         'features': prototype_feature_list  # [ {'name': 'air pollution', 'value': 1}, ... ]
                     }
+                    dominant_cats = {} #[ { feature: 'sex', dominancCat: 0 }, ... ]
+                    for feature_idx, feature_name in enumerate(feature_names):
+                        dominant_cats[feature_name] = cat_permutations[cl_idx][feature_idx]
 
                     cl_list.append({
                         'idx': cl_idx,
                         'lvIdx': lv_idx,
                         'sortedIdx': cl_idx,
                         'instances': instances_for_cl.to_dict('records'),
-                        'prototype': prototype
+                        'dominantCat': 0,
+                        'prototype': prototype,
+                        'dominantCats': dominant_cats
                     })
                 lv_cl_list_dict[lv_idx] = cl_list
             else: # if number of features = 1
@@ -613,15 +700,31 @@ class HClusteringForAllLVs(APIView):
                 for cat in feature['domain']:
                     df_instances_for_lv['idx'] = list(df_instances_for_lv.index) # Add index as explicit column
                     instances_for_cl = df_instances_for_lv.loc[df_instances_for_lv[feature['name']] == cat]
+
+                    dominant_cats = {}
+                    for feature_idx, feature_name in enumerate(feature_names):
+                        dominant_cats[feature_name] = cat
                     
                     cat_instances_list.append({
                         'idx': cat,
                         'lvIdx': lv_idx,
                         'sortedIdx': cat,
                         'instances': instances_for_cl.to_dict('records'),
-                        'prototype': {}
+                        'dominantCat': 0,
+                        'prototype': {},
+                        'dominantCats': dominant_cats
                     })
                 lv_cl_list_dict[lv_idx] = cat_instances_list
+
+        # Identify the dominant clusters per level(=cluster set)
+        dominant_cls_in_lvs = []
+        for lv_idx, cls_for_lv in lv_cl_list_dict.items():
+            C_instance_set = [ cl['instances'] for cl in lv_cl_list_dict[lv_idx] ]
+            G = calculate_G_for_cluster_set(C_instance_set)
+            dominant_cls_in_lvs.append({
+                'lv': lv_idx,
+                'dominantCl': detect_outlier_nodes(G)
+            })
 
         # Between-level clusters sorting
         # go over clusters to sort the nodex
@@ -665,23 +768,22 @@ class HClusteringForAllLVs(APIView):
                 pairwise_corrs[lv_idx] = []
                 for feature_idx, feature in enumerate(feature_list): # for each pair of adjacent cats
                     if feature_idx < num_features-1:
-                        C1_instance_sets = feature_list[feature_idx]['instances']
-                        C2_instance_sets = feature_list[feature_idx+1]['instances']
+                        C1_instance_set = feature_list[feature_idx]['instances']
+                        C2_instance_set = feature_list[feature_idx+1]['instances']
 
-                        freq_mat_np = calculate_freq_mat(C1_instance_sets, C2_instance_sets)
+                        freq_mat_np = calculate_freq_mat(C1_instance_set, C2_instance_set)
                         G = calculate_G(freq_mat_np)
-                        sorted_C1_idx, sorted_C2_idx = sort_nodes(G, len(C1_instance_sets), len(C2_instance_sets))
+                        sorted_C1_idx, sorted_C2_idx = sort_nodes(G, len(C1_instance_set), len(C2_instance_set))
                         sorted_cats_idx_for_lvs[lv_idx][feature_idx] = list(sorted_C1_idx)
                         sorted_cats_idx_for_lvs[lv_idx][feature_idx+1] = list(sorted_C2_idx)
 
                         # Identifying outlier edges
                         outlier_cut_threshold = -0.3
-                        edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_sets), len(C2_instance_sets))
+                        edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_set), len(C2_instance_set))
 
                         # Calculating correlation
                         for feature_idx2 in range(feature_idx+1, num_features):
                             coef, p_value, is_significant = calculate_pairwise_correlation(feature_list[feature_idx], feature_list[feature_idx2])
-                            print('p_value: ', coef, p_value, is_significant)
                             pairwise_corrs[lv_idx].append({ 
                                 'featurePair': [feature_idx, feature_idx2], 
                                 'coef': coef,
@@ -696,6 +798,7 @@ class HClusteringForAllLVs(APIView):
             'clResult': lv_cl_list_dict,
             'sortedCatsIdxForLvs': sorted_cats_idx_for_lvs,
             'edgesWithOutlierInfo': edges,
+            'dominantClsForLvs': dominant_cls_in_lvs,
             'pairwiseCorrs': pairwise_corrs
         })
 
@@ -706,20 +809,20 @@ class SortNodes(APIView):
 class OptimizeEdges(APIView):
     def post(self, request, format=None):
         json_request = json.loads(request.body.decode(encoding='UTF-8'))
-        C1_instance_sets = json_request['currNodes']
-        C2_instance_sets = json_request['nextNodes']
+        C1_instance_set = json_request['currNodes']
+        C2_instance_set = json_request['nextNodes']
         
-
-        freq_mat_np = calculate_freq_mat(C1_instance_sets, C2_instance_sets)
+        freq_mat_np = calculate_freq_mat(C1_instance_set, C2_instance_set)
         G = calculate_G(freq_mat_np)
 
         # Sorting clusters
-        sorted_cl1_idx, sorted_cl2_idx = sort_nodes(G, len(C1_instance_sets), len(C2_instance_sets))
-        # Identifying outlier edges
+        sorted_cl1_idx, sorted_cl2_idx = sort_nodes(G, len(C1_instance_set), len(C2_instance_set))
+        
+        # Identifying outlier edges between cluster sets
         outlier_cut_threshold = -0.35
-        edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_sets), len(C2_instance_sets))
+        edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_set), len(C2_instance_set))
         # while non_outlier_ratio > 0.25:
-        #     edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_sets), len(C2_instance_sets))
+        #     edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_set), len(C2_instance_set))
         #     outlier_cut_threshold -= 0.1
 
         # for e in edges:

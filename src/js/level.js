@@ -89,8 +89,8 @@ function Level(selection) { // User-defined sementic category
 						gLV
 							.append('text')
 							.attr('class', 'level_label')
-							.attr('x', 0)
-							.attr('y', heightForLv)
+							.attr('x', llv.w + 20 + 20)
+							.attr('y', heightForLv + 13)
 							.text((d, i) => d.name);
 
 						gLV
