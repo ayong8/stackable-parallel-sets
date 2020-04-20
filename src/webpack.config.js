@@ -13,7 +13,6 @@ var dir_lib = path.resolve(__dirname, 'lib');
 
 module.exports = {
   entry: [
-    path.resolve(dir_js, 'dataMapping.js'), 
     path.resolve(dir_js, 'index.js'), 
     path.resolve(dir_lib, 'bootstrap_submenu.js'),
     // path.resolve(dir_lib, './bootstrap_submenu/css/bootstrap_submenu.css'),

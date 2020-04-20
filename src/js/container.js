@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import {gColors, gLayout, l, llv, lbl, lBtn, lwbr, lbr} from './layout';
 import {globalScales, scales} from './scale';
-import {dataMapping} from './dataMapping';
+import {data} from './data';
 
 import Level from './level';
 import Bar from './bar';
@@ -19,7 +19,7 @@ window.lbl = lbl;
 window.lBtn = lBtn;
 window.lwbr = lwbr;
 window.scales = scales;
-window.dataMapping = dataMapping;
+window.data = data;
 
 function Container() {
 	let data = [];  // data
@@ -101,9 +101,10 @@ function Container() {
 		const BRs = gContainer.selectAll('.g_bars'); 
 		LVs.each(function(lvData, lvId) {
 			const LV = d3.select(this);
+			console.log('LVs[lvId]: ', LVs.data()[lvId].cls, LVs[lvId+1])
 			if (lvId < numLVs-1) {
-				const currCls = d3.select('.g_bars.lower.lv_' + lvId).datum(),
-					nextCls = d3.select('.g_bars.upper.lv_' + (lvId+1)).datum();
+				const currLvData = LVs.data()[lvId],
+					nextLvData = LVs.data()[lvId+1];
 				const currLowerBar = d3.select('.g_level_' + lvId + '> .level_bar_bottom'),
 					nextUpperBar = d3.select('.g_level_' + (lvId+1) + '> .level_bar_top');
 				
@@ -115,7 +116,7 @@ function Container() {
 						(gLayout.getGlobalElLayout(currLowerBar).y2 + lbr.h) + 
 						')');
 
-				gLayout.renderClToClLines(gBtnLVs, instances, currCls, nextCls, currLowerBar, nextUpperBar, llv.w)
+				gLayout.renderClToClLines(gBtnLVs, instances, currLvData, nextLvData, currLowerBar, nextUpperBar, llv.w)
 			}
 		});
 

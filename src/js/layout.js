@@ -35,7 +35,7 @@ export const l = {
     },
     local: {
       p: {
-        l: 100
+        l: 0
       }
     }
   }
@@ -186,14 +186,6 @@ gLayout.getGlobalElLayout = function(el, parentEl) {
       height: thisL.height
     }
   }
-    
-
-  // if (isLogging) {
-  //   console.log('thisL: ', thisL);
-  //   console.log('l.container.global: ', l.container.global);
-  // }
-
-  
 }
 
 gLayout.getGlobalElLayoutTest = function(el, parentEl) {
@@ -296,15 +288,13 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
     cumNumInstancesRatioInNext[cat] = 0;
   }
 
-  fetchForOptimizingEdges();  
+  fetchForOptimizingEdgesForCats();  
 
   // Detect outliers here
-  async function fetchForOptimizingEdges (){
-    const response = await fetch('/dataset/optimizeEdges/', {
+  async function fetchForOptimizingEdgesForCats (){
+    const response = await fetch('/dataset/optimizeEdgesForCats/', {
       method: 'post',
       body: JSON.stringify({
-        currNodesName: currFeature.name,
-        nextNodesName: nextFeature.name,
         currNodes: sortedCatsInCurr.map(d => d.instances),
         nextNodes: sortedCatsInNext.map(d => d.instances)
       })
@@ -411,9 +401,30 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
   }
 }
 
-gLayout.renderClToClLines = function(selection, instances, currCls, nextCls, currLowerBar, nextUpperBar, wholeWidth) {
-  const clScalesForCurr = scales.calculateScalesForCls(instances, currCls, wholeWidth);
-  const clScalesForNext = scales.calculateScalesForCls(instances, nextCls, wholeWidth);
+gLayout.renderClToClLines = function(selection, instances, currLvData, nextLvData, currLowerBar, nextUpperBar, wholeWidth) {
+  const currCls = currLvData.cls, 
+    nextCls = nextLvData.cls;
+  const currLvBipartiteMode = currLvData.btnMode.bipartiteMode,
+    nextLvBipartiteMode = nextLvData.btnMode.bipartiteMode;
+
+  let totalCntForCurr = 0,
+    totalCntForNext = 0;
+  let bipartiteMat = [];
+  if (currLvBipartiteMode == 1) {
+    totalCntForCurr = currLvData.btnMode.totalFreqCnt;
+    totalCntForNext = instances.length;
+    bipartiteMat = currLvData.btnMode.bipartiteMat;
+  } else if (nextLvBipartiteMode == 1) {
+    totalCntForCurr = instances.length;
+    totalCntForNext = nextLvData.btnMode.totalFreqCnt;
+    bipartiteMat = nextLvData.btnMode.bipartiteMat;
+  } else {
+    totalCntForCurr = instances.length;
+    totalCntForNext = instances.length;
+  }
+
+  const clScalesForCurr = scales.calculateScalesForCls(currLvBipartiteMode, currCls, wholeWidth, totalCntForCurr);
+  const clScalesForNext = scales.calculateScalesForCls(nextLvBipartiteMode, nextCls, wholeWidth, totalCntForNext);
 
   // { catInCurr: 0, catInNext: 0, catIdxInCurr: 0, catIdxInNext: 0, numInstances: 50 }
   let instancesBtnCls = [];
@@ -427,17 +438,17 @@ gLayout.renderClToClLines = function(selection, instances, currCls, nextCls, cur
   for (const clIdx of d3.range(nextCls.length)) {
     cumNumInstancesInNext[clIdx] = 0;
   }
-
   
-  fetchForOptimizingEdges();  
+  fetchForOptimizingEdgesForCls();  
 
   // Detect outliers here
-  async function fetchForOptimizingEdges (){
-    const response = await fetch('/dataset/optimizeEdges/', {
+  async function fetchForOptimizingEdgesForCls (){
+    const response = await fetch('/dataset/optimizeEdgesForCls/', {
       method: 'post',
       body: JSON.stringify({
-        currNodesName: currCls.length,
-        nextNodesName: nextCls.length,
+        currBipartiteMode: currLvBipartiteMode,
+        nextBipartiteMode: nextLvBipartiteMode,
+        bipartiteMat: bipartiteMat,
         currNodes: _.sortBy(currCls, ['idx']).map(d => d.instances),
         nextNodes: _.sortBy(nextCls, ['idx']).map(d => d.instances)
       })
@@ -449,12 +460,13 @@ gLayout.renderClToClLines = function(selection, instances, currCls, nextCls, cur
       edgesWithOutlierInfo = response.edgesWithOutlierInfo;
 
       console.log('edgesWithOutlierInfo-ClToCl: ', edgesWithOutlierInfo.map(d => [d.source, d.target, d.weight, d.alpha, d.isOutlier]));
-      prepareClData(currCls, nextCls);
+      prepareClData(currCls, nextCls, currLvBipartiteMode, nextLvBipartiteMode);
+      console.log('instancesBtnCls: ', instancesBtnCls);
       renderClToClLines(instancesBtnCls, currLowerBar, nextUpperBar);
     })
   }
 
-  function prepareClData(currCls, nextCls) {
+  function prepareClData(currCls, nextCls, currLvBipartiteMode, nextLvBipartiteMode) {
     // Adding sorted index after eigendecomposition
 
     //currCls.forEach((cl, clIdx) => cl.sortedIdx = sortedCurrNodesIdx[clIdx]);
@@ -463,7 +475,12 @@ gLayout.renderClToClLines = function(selection, instances, currCls, nextCls, cur
     // Prepare the btn-clustering instance data
     currCls.forEach((clCurr, idxCurr) => {
       nextCls.forEach((clNext, idxNext) => {
-        const filteredInstances = _.intersectionBy(clCurr.instances, clNext.instances, 'idx');
+        let filteredInstances = [],
+          numFilteredInstances = 0,
+          numInstancesRatioInCurr = 0,
+          cumNumInstancesRatioInCurr = 0,
+          cumNumInstancesRatioInNext = 0;
+        
         const edge = _.find(edgesWithOutlierInfo, {'source': clCurr.idx, 'target': clNext.idx})
         let isEdgeOutlier = false;
         if (typeof(edge) !== 'undefined')
@@ -471,21 +488,44 @@ gLayout.renderClToClLines = function(selection, instances, currCls, nextCls, cur
         else
           isEdgeOutlier = false;
 
+        if (currLvBipartiteMode == 1) {
+          // Retrieve primary node clusters (users or patients)
+          filteredInstances = [];
+          numFilteredInstancesForCurr = data.calculateClToClFreqForBipartite(clCurr.instances);
+          numInstancesRatioInCurr = numFilteredInstances / totalCntForCurr;
+          cumNumInstancesRatioInCurr = cumNumInstancesInCurr[clCurr.idx] / totalCntForCurr;
+          cumNumInstancesRatioInNext = cumNumInstancesInNext[clNext.idx] / totalCntForCurr;
+          console.log('clNext.instances: ', clNext.instances)
+        } else if (nextLvBipartiteMode == 1) {
+          filteredInstances = [];
+          numFilteredInstances = data.calculateClToClFreqForBipartite(clNext.instances);
+          numInstancesRatioInCurr = numFilteredInstances / totalCntForNext;
+          cumNumInstancesRatioInCurr = cumNumInstancesInCurr[clCurr.idx] / totalCntForNext;
+          cumNumInstancesRatioInNext = cumNumInstancesInNext[clNext.idx] / totalCntForNext;
+          console.log('cumNumInstancesRatioInCurr: ', cumNumInstancesRatioInCurr, cumNumInstancesRatioInNext)
+        } else {
+          filteredInstances = _.intersectionBy(clCurr.instances, clNext.instances, 'idx');
+          numFilteredInstances = filteredInstances.length;
+          numInstancesRatioInCurr = numFilteredInstances / clCurr.instances.length;
+          cumNumInstancesRatioInCurr = cumNumInstancesInCurr[clCurr.idx] / clCurr.instances.length;
+          cumNumInstancesRatioInNext = cumNumInstancesInNext[clNext.idx] / clNext.instances.length;
+        }
+
         instancesBtnCls.push({
           clCurrIdx: clCurr.idx,
           clNextIdx: clNext.idx,
           sortedClCurrIdx: clCurr.idx,
           sortedClNextIdx: clNext.idx,
-          numInstancesRatioInCurr: filteredInstances.length / clCurr.instances.length,
-          cumNumInstancesRatioInCurr: cumNumInstancesInCurr[clCurr.idx] / clCurr.instances.length,
-          cumNumInstancesRatioInNext: cumNumInstancesInNext[clNext.idx] / clNext.instances.length,
+          numInstancesRatioInCurr: numInstancesRatioInCurr,
+          cumNumInstancesRatioInCurr: cumNumInstancesRatioInCurr,
+          cumNumInstancesRatioInNext: cumNumInstancesRatioInNext,
           instancesInCurr: clCurr.instances,
           instancesClToCl: filteredInstances,
           isOutlier: isEdgeOutlier
         });
 
-        cumNumInstancesInCurr[clCurr.idx] += filteredInstances.length;
-        cumNumInstancesInNext[clNext.idx] += filteredInstances.length;
+        cumNumInstancesInCurr[clCurr.idx] += numFilteredInstances;
+        cumNumInstancesInNext[clNext.idx] += numFilteredInstances;
       });
     });
   }
@@ -533,7 +573,7 @@ gLayout.renderClToClLines = function(selection, instances, currCls, nextCls, cur
       .style('fill', 'none')
       //.style('stroke-width', d => d.lineHeight)
       .style('stroke-width', d => d.lineWidth)
-      .style('opacity', d => d.isOutlier ? 0 : 0.5);
+      .style('opacity', d => d.isOutlier ? 0 : 0.2);
 
     clLines
       .on('mouseover', function(d){

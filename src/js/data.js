@@ -1,9 +1,9 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 
-export const dataMapping = {};
+export const data = {};
 
-dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
+data.mapLevelToFeatures = function(dataAbbr, features) {
   let levels = [];
   switch(dataAbbr) {
     case 'demoemo':
@@ -16,7 +16,10 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             height: 0
           },
           btnMode: {
-            mode: 'binning',  
+            bipartiteMode: 0,
+            totalFreqCnt: 0,
+            bipartiteMat: [],
+            aggrMode: 'binning',  
             numBins: 4,
             featureForBinning: ['gender', 'race']
           },
@@ -38,13 +41,16 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             height: 0
           },
           btnMode: {
-            mode: 'clustering',
+            bipartiteMode: 0,
+            totalFreqCnt: 0,
+            bipartiteMat: [],
+            aggrMode: 'clustering',
             numCls: 4,  
             candidateKs: [4,5,6,7],
             featuresForClustering: []
           },
           // btnMode: {
-          //   mode: 'binning',  
+          //   aggrMode: 'binning',  
           //   numBins: 4,
           //   featureForBinning: ['education']
           // },
@@ -61,13 +67,16 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
         },
         { 
           idx: 2, 
-          name: 'hashtags',
+          name: 'emotion',
           mode: {
             folded: false,
             height: 0
           },
           btnMode: {
-            mode: 'clustering',
+            bipartiteMode: 0,
+            totalFreqCnt: 0,
+            bipartiteMat: [],
+            aggrMode: 'clustering',
             numCls: 4,  
             candidateKs: [4,5,6,7],
             featuresForClustering: []
@@ -89,7 +98,10 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             height: 0
           },
           btnMode: {
-            mode: 'clustering',
+            bipartiteMode: 0,
+            totalFreqCnt: 0,
+            bipartiteMat: [],
+            aggrMode: 'clustering',
             numCls: 4,  
             candidateKs: [4,5,6,7],
             featuresForClustering: []
@@ -112,7 +124,10 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             height: 0
           },
           btnMode: {
-            mode: 'clustering',
+            bipartiteMode: 1,
+            totalFreqCnt: 0,
+            bipartiteMat: [],
+            aggrMode: 'clustering',
             numCls: 4,  
             candidateKs: [4,5,6,7],
             featuresForClustering: []
@@ -122,7 +137,9 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             _.find(features, ['name', 'anger']),
             _.find(features, ['name', 'sad']),
             _.find(features, ['name', 'joy']),
-            
+            _.find(features, ['name', 'fear']),
+            _.find(features, ['name', 'disgust']),
+            _.find(features, ['name', 'surprise']),
           ],
           cls: [],
           clScales: [],
@@ -139,7 +156,10 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             height: 0
           },
           btnMode: {
-            mode: 'clustering',
+            bipartiteMode: 0,
+            totalFreqCnt: 0,
+            bipartiteMat: [],
+            aggrMode: 'clustering',
             numCls: 6,
             candidateKs: [4,5,6,7],
             featuresForClustering: []
@@ -160,7 +180,10 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             height: 0
           },
           btnMode: {
-            mode: 'clustering',
+            bipartiteMode: 0,
+            totalFreqCnt: 0, // sum of total frequency in users x hashtags matrix
+            bipartiteMat: [],
+            aggrMode: 'clustering',
             numCls: 6,
             candidateKs: [4,5,6,7],
             featuresForClustering: []
@@ -184,7 +207,10 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             height: 0
           },
           btnMode: {
-            mode: 'binning',
+            bipartiteMode: 0,
+            totalFreqCnt: 0,
+            bipartiteMat: [],
+            aggrMode: 'binning',
             numBins: 4,
             featureForBinning: ['Gender', 'Smoking Binary']
           },
@@ -206,7 +232,10 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             height: 0
           },
           btnMode: {
-            mode: 'clustering',
+            bipartiteMode: 0,
+            totalFreqCnt: 0,
+            bipartiteMat: [],
+            aggrMode: 'clustering',
             numCls: 6,
             candidateKs: [4,5,6,7],
             featuresForClustering: []
@@ -229,7 +258,10 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
             height: 0
           },
           btnMode: {
-            mode: 'clustering',
+            bipartiteMode: 0,
+            totalFreqCnt: 0,
+            bipartiteMat: [],
+            aggrMode: 'clustering',
             numCls: 6,
             candidateKs: [4,5,6,7],
             featuresForClustering: []
@@ -248,8 +280,20 @@ dataMapping.mapLevelToFeatures = function(dataAbbr, features) {
   }
 }
 
-dataMapping.convertStrToUnderbar = function(str) {
+data.convertStrToUnderbar = function(str) {
   // e.g., 'Air Pollution' to 'air_pollution'
   const strLower = str.toLowerCase()
   return strLower.split(' ').join('_')
+}
+
+data.calculateClToClFreqForBipartite = function(instances) {
+  console.log('# of instances: ', instances.length);
+  let sumFreq = 0;
+  
+  // Sum all frequencies except for idx
+  instances.forEach(instance => {
+    sumFreq += _.sum(_.values(_.omit(instance, 'idx')));
+  });
+
+  return sumFreq;
 }

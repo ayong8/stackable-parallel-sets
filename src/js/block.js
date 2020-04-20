@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import {gColors, l, llv, lbl, lwbr, gLayout} from './layout';
 import {globalScales, scales} from './scale';
-import {dataMapping} from './dataMapping';
+import {data} from './data';
 
 import "../css/index.css";
 
@@ -69,8 +69,8 @@ function Block() {
 		gBLs
 			.append('text')
 			.attr('class', 'block_label')
-			.attr('x', 0)
-			.attr('y', 0)
+			.attr('x', llv.w - 10)
+			.attr('y', 15)
 			.text((d, i) => d.name)
 		/*  
 		start -- For shadow

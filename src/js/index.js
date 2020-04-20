@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import skmeans from 'skmeans';
 import { globalScales, scales } from './scale';
 import { gLayout, l, ll, lbr, lCom } from './layout';
-import { dataMapping } from './dataMapping';
+import { data } from './data';
 
 import Container from './container';
 import { controller } from './controller';
@@ -13,7 +13,6 @@ import BarTreemap from './bar-treemap';
 import '../css/bootstrap_submenu.css';
 import "../css/index.css";
 
-const data = require('./dataMapping');
 const container = d3.select('#container');
 
 let LVData = [];
@@ -35,7 +34,7 @@ function fetchForInitialLoad(sortClsBy) {
           features = response.features,
           instances = JSON.parse(response.instances);
   
-    LVData = dataMapping.mapLevelToFeatures(datasetAbbr, features);
+    LVData = data.mapLevelToFeatures(datasetAbbr, features);
     controller(LVData, features);
     l.h = LVData.length * 250;
     
@@ -52,15 +51,35 @@ function fetchForInitialLoad(sortClsBy) {
     }).then((response) => {
       const clResult = response.clResult,
         sortedCatsIdxForLvs = response.sortedCatsIdxForLvs,
-        dominantClsForLvs = response.outlierClsForLvs,
-        pairwiseCorrs = response.pairwiseCorrs;
+        dominantClsForLvs = response.dominantClsForLvs,
+        pairwiseCorrs = response.pairwiseCorrs,
+        totalFreqsForLvs = response.totalFreqsForLvs,
+        bipartiteMat = response.bipartiteMat;
 
       LVData.forEach((lvData, lvIdx) => {
         // Assign data to sort clusters
         const sortedCls = _.sortBy(clResult[lvIdx], ['sortedIdx']);
-        lvData.cls = sortedCls;
-        lvData.clScales = scales.calculateScalesForCls(rawData, sortedCls, llv.w);
+        
+
         lvData.pairwiseCorrs = pairwiseCorrs[lvIdx];
+        lvData.dominantCl = dominantClsForLvs[lvIdx];
+        lvData.btnMode.totalFreqCnt = totalFreqsForLvs[lvIdx];
+
+        lvData.cls = sortedCls;
+        if (lvData.btnMode.bipartiteMode == 0) {
+          lvData.clScales = scales.calculateScalesForCls(lvData.btnMode.bipartiteMode, sortedCls, llv.w, rawData.length);
+          lvData.btnMode.bipartiteMat = bipartiteMat;
+        }
+        else if (lvData.btnMode.bipartiteMode == 1) {
+          lvData.clScales = scales.calculateScalesForCls(lvData.btnMode.bipartiteMode, sortedCls, llv.w, lvData.btnMode.totalFreqCnt);
+          lvData.btnMode.bipartiteMat = bipartiteMat;
+        }
+        
+          // Assign dominant cluster information
+        lvData.cls.forEach((cl) => (cl.idx === dominantClsForLvs[lvIdx]) 
+          ? cl.isDominant = true
+          : cl.isDominant = false 
+        );
   
         // Assign data to sort categories
         lvData.features.forEach((feature, featureIdx) => {
@@ -118,7 +137,7 @@ function fetchForInitialLoad(sortClsBy) {
             d3.select(this).classed('cat_rect_mouseovered', false);
           });
 
-      // Select a subgroup
+      //*** Select a subgroup
       d3.selectAll('.bar_rect')
           .on('click', function(selectedCl) {
             const selectedBar = d3.select(this), 
@@ -132,51 +151,87 @@ function fetchForInitialLoad(sortClsBy) {
               // { lv: 3, cl: 0 }
             ]
 
-            const isSelected = selectedBar.classed('bar_rect_selected');
+            const isSelected = selectedBar.classed('bar_rect_selected') || selectedBar.classed('bar_rect_selected2');
             const isFirstSelected = d3.select('.bar_rect_selected'),
               isSecondSelected = d3.select('.bar_rect_selected2');
-            // Select the color scale to color other levels (not selected),
+            let mode = null;
+            // Select the color scale to color other levels (to determine two-groups or one-group based coloring),
             let selectedClColorScale = null;
             let selectedCatColorScale = null;
+            let selectedInGroupRatioFunc = null;
 
             // Register the selections
             if (isSelected == false) {
               if (isFirstSelected.empty() && isSecondSelected.empty()) { // Both wasn't selected
-                console.log('XX: ');
+                mode = 'first'
                 selectedBar.classed('bar_rect_selected', true); // Put in the first one
+                // Color by one group
                 selectedClColorScale = scales.colorClOnSelectScale;
                 selectedCatColorScale = scales.colorCatOnSelectScale;
-              } else if (!isFirstSelected.empty() && isSecondSelected.empty()) { // First one was
-                console.log('OX: ');
+                selectedInGroupRatioFunc = calculateInGroupRatio;
+              } else if (!isFirstSelected.empty() && isSecondSelected.empty()) { // First one was selected
+                mode = 'both'
+                selectedBar.classed('bar_rect_selected2', true); // Put in the second one
+                // Color by two groups
+                selectedClColorScale = scales.colorClOnSelectTwoGroupsScale;
+                selectedCatColorScale = scales.colorCatOnSelectTwoGroupsScale;
+                selectedInGroupRatioFunc = calculateInGroupRatioForTwoGroups;
+              } else if (isFirstSelected.empty() && !isSecondSelected.empty()) { // Second one was selected
+                mode = 'both'
+                selectedBar.classed('bar_rect_selected', true); // Put in the first one
+                selectedClColorScale = scales.colorClOnSelectTwoGroupsScale;
+                selectedCatColorScale = scales.colorCatOnSelectTwoGroupsScale;
+                selectedInGroupRatioFunc = calculateInGroupRatioForTwoGroups;
+              } else { // Both are selected
+                mode = 'both'
+                isSecondSelected.classed('bar_rect_selected2', false); // cancel the current second one
                 selectedBar.classed('bar_rect_selected2', true); // Put in the second one
                 selectedClColorScale = scales.colorClOnSelectTwoGroupsScale;
                 selectedCatColorScale = scales.colorCatOnSelectTwoGroupsScale;
-              } else if (isFirstSelected.empty() && !isSecondSelected.empty()) { // One of them
-                console.log('XO: ');
-                selectedBar.classed('bar_rect_selected2', true); // Put in the second one
-              } else { // Both are selected
-                isSecondSelected.classed('bar_rect_selected2', false); // cancel the current second one
-                selectedBar.classed('bar_rect_selected2', true); // Put in the second one
+                selectedInGroupRatioFunc = calculateInGroupRatioForTwoGroups;
               }
               // cancelSelection(selectedClColorScale);
-              colorByTwoGroups(selectedClColorScale, selectedCatColorScale);
+              colorByTwoGroups(mode, selectedClColorScale, selectedCatColorScale, selectedInGroupRatioFunc);
             }
             else {  // if the bar was already selected
               if (!isFirstSelected.empty() && isSecondSelected.empty()) {
                 selectedBar.classed('bar_rect_selected', false);
-                colorByTwoGroups(selectedClColorScale, selectedCatColorScale);
+                // Come back to initial color
+                d3.selectAll('.cl_line')
+                  .style('stroke', '');
+                d3.selectAll('.cat_line')
+                  .style('stroke', '');
+                d3.selectAll('.cat_rect')
+                  .style('fill', '')
+                  .style('fill-opacity', '');
+                d3.selectAll('.bar_rect')
+                  .style('fill', '')
+                  .style('fill-opacity', '');
               } else if (isFirstSelected.empty() && !isSecondSelected.empty()) {
                 selectedBar.classed('bar_rect_selected2', false);
-                colorByTwoGroups(selectedClColorScale, selectedCatColorScale);
-              } else if (isFirstSelected.empty() && isSecondSelected.empty()) {
+                d3.selectAll('.cl_line')
+                  .style('stroke', '');
+                d3.selectAll('.cat_line')
+                  .style('stroke', '');
+                d3.selectAll('.cat_rect')
+                  .style('fill', '')
+                  .style('fill-opacity', '');
+                d3.selectAll('.bar_rect')
+                  .style('fill', '')
+                  .style('fill-opacity', '');
+              } else if (!isFirstSelected.empty() && !isSecondSelected.empty()) {
+                mode = 'first'
                 selectedBar.classed('bar_rect_selected2', false);
-                cancelSelection(selectedClColorScale);
-                colorByTwoGroups(selectedClColorScale, selectedCatColorScale);
+                isSecondSelected.classed('bar_rect_selected2', false); // cancel the current second one
+                // cancelSelection(selectedClColorScale);
+                selectedClColorScale = scales.colorClOnSelectScale;
+                selectedCatColorScale = scales.colorCatOnSelectScale;
+                selectedInGroupRatioFunc = calculateInGroupRatioForTwoGroups;
+                colorByTwoGroups(mode, selectedClColorScale, selectedCatColorScale, selectedInGroupRatioFunc);
               }
             }
             
-            function colorByTwoGroups(selectedClColorScale, selectedCatColorScale) {
-              // selectedBar.classed('bar_rect_selected', true);
+            function colorByTwoGroups(mode, selectedClColorScale, selectedCatColorScale, selectedInGroupRatioFunc) {
               // other bars in the same level
               d3.selectAll('.bar_rect_lv_2')  
                 .filter((cl) => cl.idx !== selectedClIdx)
@@ -189,51 +244,123 @@ function fetchForInitialLoad(sortClsBy) {
                 .classed('proto_circle_hidden', false)
                 .attr('r', function(d){
                   const instancesInSelectedCat = selectedCl.instances.filter(instance => instance[d.name] === d.value)
-                  return scales.protoCircleRScale(calculateInGroupRatio(instancesInSelectedCat, selectedCl.instances))
+                  return scales.protoCircleRScale(selectedInGroupRatioFunc(instancesInSelectedCat, selectedCl.instances))
                 });
               // Color other bars, wtn-lines and btn-lines
               // go over other levels
               const inGroupRatioThreshold = 0.2;
               LVData.forEach((lvData, lvIdx) => {
-                if (lvIdx !== selectedLV) {
-                  // look at bars per level
-                  d3.selectAll('.g_bars.lv_' + lvIdx)
-                    .selectAll('.g_bars')
-                    .each(function(cl) {
-                      //calculateInGroupRatio(clToCl.instancesClToCl, selectedCl.instances)
-                      
-                    })
-                }
                 // Go over calculated ratios and pick the best one -- to 'dominantClsForSubgroup'                
                 if (selectedLV < LVData.length) {
-                  d3.select('.g_btn_lvs' + '.lv_' + lvIdx)
-                    .selectAll('.cl_line')
-                    .style('stroke', function(clToCl) {
-                      return selectedClColorScale(calculateInGroupRatio(clToCl.instancesClToCl, selectedCl.instances));
+                  console.log('current level: ', lvIdx, LVData.length);
+                  // Calculate dominant clusters
+                  // If two groups are selected, 
+                    // the higher the inGroupRatio, more dominant by first group
+                    // the lower the inGroupRatio, more dominant by second group
+                  let maxInGroupRatio = 0;
+                  let minInGroupRatio = 1;
+                  let clLineIdxWithMax = null;
+                  let clLineIdxWithMin = null;
+                  let dominantPrototype = null;
+
+                  console.log('selectedClColorScale: ', selectedClColorScale.range());
+                  const clLinesBtnLvs = d3.select('.g_btn_lvs' + '.lv_' + lvIdx)
+                      .selectAll('.cl_line')
+                      .style('stroke', clToCl => {
+                        if (mode == 'both') {
+                          return selectedClColorScale(selectedInGroupRatioFunc(clToCl.instancesClToCl, selectedCl.instances));
+                        } else {
+                          return selectedClColorScale(selectedInGroupRatioFunc(clToCl.instancesClToCl, selectedCl.instances));
+                        }
+                      });
+
+                  clLinesBtnLvs
+                    .style('opacity', 0);
+                    
+                  const dominantClLine = clLinesBtnLvs // The most dominant cl_line for the first group
+                    .each((clToCl, i) => {
+                      const inGroupRatio = selectedInGroupRatioFunc(clToCl.instancesClToCl, selectedCl.instances);
+                      // Identify the element with max inGroupRatio
+                      if (inGroupRatio >= maxInGroupRatio) {
+                        maxInGroupRatio = inGroupRatio;
+                        clLineIdxWithMax = i;
+                      }
                     })
-                    .filter(clToCl => {
-                      const inGroupRatio = calculateInGroupRatio(clToCl.instancesClToCl, selectedCl.instances)
-                      return inGroupRatio < inGroupRatioThreshold;
-                    })
-                    .classed('cl_line_filtered', true);
+                    .filter((clToCl, i) => i === clLineIdxWithMax)
+                    .classed('cl_line_dominant', true);
+
+                  // Color prototypes of dominant clusters
+                  dominantClLine
+                    .each(function(clToCl) {
+                      const dominantCl = clToCl.clCurrIdx;
+                      console.log('dominant ones: ', selectedLV, dominantCl);
+                      d3.selectAll('.g_prototype.lv_' + lvIdx + '.cl_' + dominantCl + '> *')
+                        .classed('proto_dominant', true);
+                    });
+
+                  // Do the same thing for the second group when two groups are selected
+                  if (mode == 'both') {
+                    const dominantClLineBySecond = clLinesBtnLvs // The most dominant cl_line for the first group
+                      .each((clToCl, i) => {
+                        const inGroupRatio = selectedInGroupRatioFunc(clToCl.instancesClToCl, selectedCl.instances);
+                        // Identify the element with max inGroupRatio
+                        if (inGroupRatio <= minInGroupRatio) {
+                          minInGroupRatio = inGroupRatio;
+                          clLineIdxWithMin = i;
+                        }
+                      })
+                      .filter((clToCl, i) => i === clLineIdxWithMin)
+                      .classed('cl_line_dominant', true);
+
+                    // Color prototypes of dominant clusters
+                    dominantClLineBySecond
+                      .each(function(clToCl) {
+                        const dominantCl = clToCl.clCurrIdx;
+                        d3.selectAll('.g_prototype.lv_' + lvIdx + '.cl_' + dominantCl + '> path')
+                          .classed('proto_dominant2', true);
+                        d3.selectAll('.g_prototype.lv_' + lvIdx + '.cl_' + dominantCl + '> circle')
+                          .classed('proto_dominant_circle2', true);
+                      });
+                  }
                 }
 
                 // Color all within-edges
-                lvData.features.forEach(function(feature, featureIdx) {
-                  if (featureIdx < lvData.features.length) {
-                    d3.select('.g_btn_bls' + '.bl_' + feature.id)
-                      .selectAll('.cat_line')
-                      .style('stroke', function(catToCat) {
-                        return scales.colorCatOnSelectScale(calculateInGroupRatio(catToCat.instancesInCatToCat, selectedCl.instances));
-                      })
-                      .filter(catToCat => {
-                        const inGroupRatio = calculateInGroupRatio(catToCat.instancesInCatToCat, selectedCl.instances)
-                        return inGroupRatio < inGroupRatioThreshold;
-                      })
-                      .style('opacity', 0);
-                  }
-                })
+                // lvData.features.forEach(function(feature, featureIdx) {
+                //   let maxInGroupRatio = 0;
+                //   let minInGroupRatio = 1;
+                //   let catLineIdxWithMax = null;
+                //   let catLineIdxWithMin = null;
+
+                //   if (featureIdx < lvData.features.length) {
+
+                //     const catLinesBtnLvs = d3.select('.g_btn_bls' + '.bl_' + feature.id)
+                //       .selectAll('.cat_line')
+                //       .style('stroke', catToCat => {
+                //         calculateInGroupRatioForTwoGroups
+                //         if (mode == 'both') {
+                //           return selectedClColorScale(selectedInGroupRatioFunc(catToCat.instancesInCatToCat, selectedCl.instances));
+                //         } else {
+                //           return selectedClColorScale(selectedInGroupRatioFunc(catToCat.instancesInCatToCat, selectedCl.instances));
+                //         }
+                //       });
+
+                //     catLinesBtnLvs
+                //       .each((catToCat, i) => {
+                //         const inGroupRatio = selectedInGroupRatioFunc(catToCat.instancesInCatToCat, selectedCl.instances);
+                //         // Identify the element with max inGroupRatio
+                //         if (inGroupRatio >= maxInGroupRatio) {
+                //           minInGroupRatio = inGroupRatio;
+                //           catLineIdxWithMax = i;
+                //         }
+                //       })
+                //       .filter((catToCat, i) => i === catLineIdxWithMax)
+                //       .classed('cat_line_dominant', true);
+                //   }
+                // })
               });
+
+              d3.selectAll('.cat_line')
+                .style('opacity', 0);
 
               // Highlight dominant clusters
               dominantClsForSubgroup.forEach(function(d) {
@@ -241,7 +368,7 @@ function fetchForInitialLoad(sortClsBy) {
                   .classed('proto_path_for_bar_selected', true)
                   .style('stroke-width', function(d){
                     const instancesInSelectedCat = selectedCl.instances.filter(instance => instance[d.name] === d.value)
-                    return scales.protoPathScale(calculateInGroupRatio(instancesInSelectedCat, selectedCl.instances));
+                    return scales.protoPathScale(selectedInGroupRatioFunc(instancesInSelectedCat, selectedCl.instances));
                   })
                 d3.selectAll('.proto_circle' + '.lv_' + d.lv + '.cl_' + d.dominantCl)
                   .classed('proto_circle_for_bar_selected', true);
@@ -252,7 +379,7 @@ function fetchForInitialLoad(sortClsBy) {
                     
                     const instancesInSelectedCat = selectedCl.instances.filter(instance => instance[d.name] === d.value)
                     // console.log('r check: ', d, calculateInGroupRatio(instancesInSelectedCat, selectedCl.instances));
-                    return scales.protoCircleRScale(calculateInGroupRatio(instancesInSelectedCat, selectedCl.instances));
+                    return scales.protoCircleRScale(selectedInGroupRatioFunc(instancesInSelectedCat, selectedCl.instances));
                   });
               });
 
@@ -262,7 +389,7 @@ function fetchForInitialLoad(sortClsBy) {
                   return cl.lvIdx !== selectedLV
                 })
                 .style('fill', function(cl){
-                  return selectedClColorScale(calculateInGroupRatioForTwoGroups(cl.instances, selectedCl.instances));
+                  return selectedClColorScale(selectedInGroupRatioFunc(cl.instances, selectedCl.instances));
                 })
                 .style('fill-opacity', 0.9);
               // Highlight the protos
@@ -274,7 +401,7 @@ function fetchForInitialLoad(sortClsBy) {
               // Color cat bars
               d3.selectAll('.cat_rect')
                 .style('fill', function(cat){
-                  return scales.colorCatOnSelectScale(calculateInGroupRatio(cat.instances, selectedCl.instances));
+                  return selectedClColorScale(selectedInGroupRatioFunc(cat.instances, selectedCl.instances));
                 })
                 .style('fill-opacity', 0.9);
 
@@ -310,12 +437,19 @@ function fetchForInitialLoad(sortClsBy) {
             }
           })
           .on('mouseover', function(d) {
-            d3.select(this).classed('bar_rect_mouseovered', true);
-            d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
-              .classed('proto_circle_mouseovered', true)
-              .classed('proto_circle_hidden', false);
-            d3.selectAll('.proto_path.lv_' + d.lvIdx + '.cl_' + d.idx)
-              .classed('proto_path_mouseovered', true);
+            console.log('d on bar_rect: ', d);
+            if (LVData[d.lvIdx].mode.folded == true) {
+              d3.select(this.parentNode.parentNode) // g_bars
+                .selectAll('.treemap_label.cl_' + d.idx)
+                .classed('label_for_non_dominant_cl', false);
+            } else {
+              d3.select(this).classed('bar_rect_mouseovered', true);
+              d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
+                .classed('proto_circle_mouseovered', true)
+                .classed('proto_circle_hidden', false);
+              d3.selectAll('.proto_path.lv_' + d.lvIdx + '.cl_' + d.idx)
+                .classed('proto_path_mouseovered', true);
+            }
           })
           .on('mouseout', function(d) {
             d3.select(this).classed('bar_rect_mouseovered', false);
@@ -335,12 +469,13 @@ function fetchForInitialLoad(sortClsBy) {
             const lvIdx = d3.select(this.parentNode).attr('class').split(' ')[1].split('_')[1],
               clIdx = d3.select(this.parentNode).attr('class').split(' ')[2].split('_')[1];
 
+            d3.selectAll('.proto_circle.lv_' + lvIdx + '.cl_' + clIdx)
+              .classed('proto_circle_hidden', false);
             d3.selectAll('.proto_path.lv_' + lvIdx + '.cl_' + clIdx)
               .classed('proto_path_mouseovered', true);
             gProto.selectAll('.proto_circle')
               .classed('proto_circle_selected', true);
-            d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
-              .classed('proto_circle_hidden', false);
+            
           })
           .on('mouseout', function(d) {
             const gProto = d3.select(this.parentNode);
@@ -436,6 +571,7 @@ function fetchForInitialLoad(sortClsBy) {
                 minus5 = -minus5;
                 minus10 = -minus10;
               }
+
               const gBarsLowerSelected = d3.selectAll('.g_bars.lower' + '.lv_' + lvData.idx),
                 gBarsUpperSelected = d3.selectAll('.g_bars.upper' + '.lv_' + lvData.idx),
                 gBtnLvsSelected = d3.selectAll('.g_btn_lvs' + '.lv_' + lvData.idx);
@@ -443,6 +579,8 @@ function fetchForInitialLoad(sortClsBy) {
                 topBar = d3.select('.g_level_' + lvData.idx + ' > .level_bar_top'),
                 foldButton = d3.select('.g_level_' + lvData.idx + ' > .level_fold_button'),
                 lvLabel = d3.select('.g_level_' + lvData.idx + ' > .level_label');
+
+
               const Treemap = BarTreemap();
               
               // make within-level transparent or back to it
@@ -474,6 +612,8 @@ function fetchForInitialLoad(sortClsBy) {
                 bottomBar.style('opacity', 0);
                 topBar.style('opacity', 0);
 
+                console.log('check bar_rect data (before1): ', gBarsUpperSelected.select('.g_bar.cl_' + 0).select('.bar_rect').data());
+
                 // Create treemap
                 if (lvData.idx === 0) {
                   gBarsLowerSelected
@@ -488,6 +628,8 @@ function fetchForInitialLoad(sortClsBy) {
                       .data(lvData)
                     );
                 }
+
+                console.log('check bar_rect data (after1): ', gBarsUpperSelected.select('.g_bar.cl_' + 0).select('.bar_rect').data());
               } else if (folded == false) {
                 repositionEl(gBarsLowerSelected, yDiff);
                 repositionEl(gBtnLvsSelected, yDiff);
@@ -561,13 +703,11 @@ function fetchForInitialLoad(sortClsBy) {
           instancesIdxInSelection1 = firstCl.data()[0].instances.map(d => d.idx);
           overlappedIdx1 = _.intersection(instancesIdx, instancesIdxInSelection1);
 
-          console.log('OX: ', overlappedIdx1.length / instancesIdxInSelection1.length);
           return overlappedIdx1.length / instancesIdxInSelection1.length;
         } else if (firstCl.empty() && !secondCl.empty()) {
           instancesIdxInSelection2 = secondCl.data()[0].instances.map(d => d.idx);
           overlappedIdx2 = _.intersection(instancesIdx, instancesIdxInSelection1);
 
-          console.log('XO: ', overlappedIdx2.length / instancesIdxInSelection2.length);
           return overlappedIdx2.length / instancesIdxInSelection2.length;
         } else if (!firstCl.empty() && !secondCl.empty()) {
           instancesIdxInSelection1 = firstCl.data()[0].instances.map(d => d.idx);
@@ -579,7 +719,6 @@ function fetchForInitialLoad(sortClsBy) {
           inGroupRatio1 = overlappedIdx1.length / instancesIdxInSelection1.length,
           inGroupRatio2 = overlappedIdx2.length / instancesIdxInSelection2.length;
 
-          console.log('OO: ', inGroupRatio1 - inGroupRatio2);
           return inGroupRatio1 - inGroupRatio2;
         }
         

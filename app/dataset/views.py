@@ -82,7 +82,7 @@ dataset_features = {
             'type': 'categorical',
             'scale': '',
             'domain': [0, 1, 2, 3, 4],
-            'labels': ['Very dissatisfied', 'Dissatisfied', 'Neither dissatisfied nor satisfied', 'Satisfied', 'Very satisfied'],
+            'labels': ['Very dissatisfied', 'Dissatisfied', 'None', 'Satisfied', 'Very satisfied'],
             'instances': []
         },
         { 
@@ -91,7 +91,7 @@ dataset_features = {
             'type': 'categorical',
             'scale': '',
             'domain': [0, 1, 2],
-            'labels': ['Pessimist', 'Neither pessimist nor optimist', 'Optimist'],
+            'labels': ['Pessimist', 'None', 'Optimist'],
             'instances': []
         },
         { 
@@ -124,6 +124,33 @@ dataset_features = {
         { 
             'name': 'joy', 
             'id': 'joy',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1],
+            'labels': [0, 1],
+            'instances': []
+        },
+        { 
+            'name': 'surprise', 
+            'id': 'surprise',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1],
+            'labels': [0, 1],
+            'instances': []
+        },
+        { 
+            'name': 'fear', 
+            'id': 'fear',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1],
+            'labels': [0, 1],
+            'instances': []
+        },
+        { 
+            'name': 'disgust', 
+            'id': 'disgust',
             'type': 'categorical',
             'scale': '',
             'domain': [0, 1],
@@ -376,17 +403,19 @@ def calculate_freq_mat(C1, C2):
     return freq_mat_np
 
 def calculate_G(freq_mat_np):
+    print('freq_mat_np: ', freq_mat_np)
     num_cls1, num_cls2 = freq_mat_np.shape
     weighted_adj_mat = np.vstack([
         np.hstack([ np.zeros([num_cls1, num_cls1]), freq_mat_np ]),
         np.hstack([ np.transpose(freq_mat_np), np.zeros([num_cls2, num_cls2])])
     ])
+    print('weighted_adj_mat: ', weighted_adj_mat)
 
     G = nx.from_numpy_matrix(weighted_adj_mat)
 
     return G
 
-def calculate_G_for_cluster_set(C): # for a set of clusters
+def calculate_G_for_cluster_set(C): # for a set of clusters (combine two functions - calculate_freq_mat + calculate_G)
     # Calculate the frequency matrix
     C_freqs = []
     C_super_cluster = sum(C_freqs)
@@ -425,18 +454,16 @@ def calculate_G_and_dominant_cats_for_cl(features, df_instances_in_cl): # for ea
     #             'cat': feature_value,
     #             'cnt': cnt
     #         })
-        print(cat_freqs)
+
         freq_mat_np = np.array([[0]*(len(cat_freqs))]*(len(cat_freqs)))
         for row_idx, cat_freq1 in enumerate(cat_freqs): # Go over clusters except for super cluster
             if row_idx == 0:
                 for col_idx, cat_freq2 in enumerate(cat_freqs):
                     if col_idx != 0:
-                        print('cat_freq2: ', cat_freq2)
                         freq_mat_np[row_idx, col_idx] = cat_freq2 if cat_freq2 != 0 else 1 # if no frequency for a cat, an edge isn't generated
             else:
-                print('cat_freq1: ', cat_freq1)
                 freq_mat_np[row_idx, 0] = cat_freq1 if cat_freq1 != 0 else 1
-        print('freq_mat_np: ', freq_mat_np)
+
         G = nx.from_numpy_matrix(freq_mat_np)
         
         # Detect dominant clusters for ...
@@ -446,7 +473,6 @@ def calculate_G_and_dominant_cats_for_cl(features, df_instances_in_cl): # for ea
         dominant_node_idx = None
         min_outlier_score = 1
         for u, v, d in G.edges(data=True):
-            print('d: ', d)
             if d['alpha'] <= min_outlier_score:
                 dominant_node_idx = v-1 # should exclude super node which is index 0, so subtract by 1
                 min_outlier_score = d['alpha']
@@ -602,7 +628,6 @@ class HClusteringForAllLVs(APIView):
     def post(self, request, format=None):
         json_request = json.loads(request.body.decode(encoding='UTF-8'))
         lv_data = json_request['data']
-        print('lv_data: ', lv_data)
 
         sort_cls_by = json_request['sortClsBy'] # 'layout_optimization' or any given feature name
         df_instances = pd.DataFrame(json_request['instances'])
@@ -611,13 +636,25 @@ class HClusteringForAllLVs(APIView):
 
         # Clustering for levels
         lv_cl_list_dict = {}
+        lv_total_freqs_dict = {}
         for lv_idx, lv in enumerate(lv_data):
-            df_instances_for_lv = pd.DataFrame({ feature['name']:feature['featureValues'] for feature in lv['features'] })
+            # Prepare the instances and features, domains
+            if lv['btnMode']['bipartiteMode'] == 1:
+                df_instances_for_lv = pd.DataFrame({ feature['name']:feature['featureValues'] for feature in lv['features'] })
+                # df_instances_for_lv.set_index('idx')
+                df_instances_for_lv = df_instances_for_lv.transpose()
+                lv_data[lv_idx]['btnMode']['bipartiteMat'] = df_instances_for_lv # matrix of e.g., hashtags (rows) and users (columns)
+                lv_total_freqs_dict[lv_idx] = df_instances_for_lv.sum().sum()
+            elif lv['btnMode']['bipartiteMode'] == 0:
+                df_instances_for_lv = pd.DataFrame({ feature['name']:feature['featureValues'] for feature in lv['features'] })
+                lv_total_freqs_dict[lv_idx] = 0
             features = lv['features']
             domain_list = [ feature['domain'] for feature in lv['features'] ]
             feature_names = [ feature['name'] for feature in lv['features'] ]
 
-            if (len(lv['features']) > 1) and (lv['btnMode']['mode'] == 'clustering'):
+            # Do clustering and identify centroids and dominant categories
+            # -- For bipartite level, only do clustering (it doesn't have within-level layout)
+            if lv['btnMode']['bipartiteMode'] == 1:
                 cl_labels_np, n_cls = hClustering(lv['btnMode']['numCls'], df_instances_for_lv.values)
                 
                 num_cls = 6
@@ -626,115 +663,154 @@ class HClusteringForAllLVs(APIView):
                 cl_list = []
                 for cl_idx in range(n_cls):
                     df_instances_for_lv['idx'] = list(df_instances_for_lv.index) # Add index as explicit column
-
                     instances_idx_for_cl = cls_idx_list[cl_idx]
                     prototypes_idx_for_cl = protos_idx_list[cl_idx]
-                    instances_for_cl = df_instances_for_lv.loc[instances_idx_for_cl]
-
-                    # centroid
-                    prototypes_for_cl = df_instances_for_lv.loc[prototypes_idx_for_cl]
-                    prototype_feature_list = [ {'name': feature_name, 'value': feature_value } for feature_name, feature_value in prototypes_for_cl.to_dict().items() if feature_name != 'idx' ]
-                    prototype = {
-                        'idx': df_instances_for_lv.loc[prototypes_idx_for_cl, 'idx'],
-                        'features': prototype_feature_list  # [ {'name': 'air pollution', 'value': 1}, ... ]
-                    }
-
-                    print('instances_for_cl: ', instances_for_cl)
-                    instances_for_cl.to_csv('instances_for_cl.csv')
-                    dominant_cats = calculate_G_and_dominant_cats_for_cl(features, instances_for_cl)
+                    instances_for_cl = df_instances_for_lv.iloc[instances_idx_for_cl]
 
                     cl_list.append({
                         'idx': cl_idx,
                         'lvIdx': lv_idx,
                         'sortedIdx': cl_idx,
-                        'instances': instances_for_cl.to_dict('records'),
-                        'dominantCat': 0,
-                        'prototype': prototype,
-                        'dominantCats': dominant_cats
+                        'instances': instances_for_cl.to_dict('records')
                     })
                 lv_cl_list_dict[lv_idx] = cl_list
-            elif (len(lv['features']) > 1) and (lv['btnMode']['mode'] == 'binning'):
-                cat_permutations = list(itertools.product(*domain_list))
-                
-                cls_idx_list = []
-                protos_idx_list = []
-                for cat_combi in cat_permutations:
-                    df_instances_for_bin = df_instances_for_lv[ df_instances_for_lv[feature_names] == list(cat_combi) ].dropna()
-                    cl_idx_list = list(df_instances_for_bin.index)
-                    
-                    if len(cl_idx_list) == 0:
-                        protos_idx_list.append(0)
-                    else:
-                        protos_idx_list.append(cl_idx_list[0]) # Prototype is just the first instance
-                    cls_idx_list.append(cl_idx_list)
-                    
-                cl_list = []
-                for cl_idx in range(len(cat_permutations)):
-                    df_instances_for_lv['idx'] = list(df_instances_for_lv.index)
-                    instances_idx_for_cl = cls_idx_list[cl_idx]
-                    prototypes_idx_for_cl = protos_idx_list[cl_idx]
-                    instances_for_cl = df_instances_for_lv.loc[instances_idx_for_cl]
-                    prototypes_for_cl = df_instances_for_lv.loc[prototypes_idx_for_cl]
-                    prototype_feature_list = [ {'name': feature_name, 'value': feature_value } for feature_name, feature_value in prototypes_for_cl.to_dict().items() if feature_name != 'idx' ]
-                    prototype = {
-                        'idx': df_instances_for_lv.loc[prototypes_idx_for_cl, 'idx'],
-                        'features': prototype_feature_list  # [ {'name': 'air pollution', 'value': 1}, ... ]
-                    }
-                    dominant_cats = {} #[ { feature: 'sex', dominancCat: 0 }, ... ]
-                    for feature_idx, feature_name in enumerate(feature_names):
-                        dominant_cats[feature_name] = cat_permutations[cl_idx][feature_idx]
 
-                    cl_list.append({
-                        'idx': cl_idx,
-                        'lvIdx': lv_idx,
-                        'sortedIdx': cl_idx,
-                        'instances': instances_for_cl.to_dict('records'),
-                        'dominantCat': 0,
-                        'prototype': prototype,
-                        'dominantCats': dominant_cats
-                    })
-                lv_cl_list_dict[lv_idx] = cl_list
-            else: # if number of features = 1
-                feature = lv['features'][0]
-                cat_instances_list = []
-                for cat in feature['domain']:
-                    df_instances_for_lv['idx'] = list(df_instances_for_lv.index) # Add index as explicit column
-                    instances_for_cl = df_instances_for_lv.loc[df_instances_for_lv[feature['name']] == cat]
-
-                    dominant_cats = {}
-                    for feature_idx, feature_name in enumerate(feature_names):
-                        dominant_cats[feature_name] = cat
+            elif lv['btnMode']['bipartiteMode'] == 0:
+                if (len(lv['features']) > 1) and (lv['btnMode']['aggrMode'] == 'clustering'):
+                    cl_labels_np, n_cls = hClustering(lv['btnMode']['numCls'], df_instances_for_lv.values)
                     
-                    cat_instances_list.append({
-                        'idx': cat,
-                        'lvIdx': lv_idx,
-                        'sortedIdx': cat,
-                        'instances': instances_for_cl.to_dict('records'),
-                        'dominantCat': 0,
-                        'prototype': {},
-                        'dominantCats': dominant_cats
-                    })
-                lv_cl_list_dict[lv_idx] = cat_instances_list
+                    num_cls = 6
+                    cls_idx_list, protos_idx_list = kmdeoidsClustering(df_instances_for_lv.values, num_cls)
+                    # Organize the cluster information to export
+                    cl_list = []
+                    for cl_idx in range(n_cls):
+                        df_instances_for_lv['idx'] = list(df_instances_for_lv.index) # Add index as explicit column
 
-        # Identify the dominant clusters per level(=cluster set)
-        dominant_cls_in_lvs = []
+                        instances_idx_for_cl = cls_idx_list[cl_idx]
+                        prototypes_idx_for_cl = protos_idx_list[cl_idx]
+                        instances_for_cl = df_instances_for_lv.iloc[instances_idx_for_cl]
+
+                        # centroid
+                        prototypes_for_cl = df_instances_for_lv.iloc[prototypes_idx_for_cl]
+                        prototype_feature_list = [ {'name': feature_name, 'value': feature_value } for feature_name, feature_value in prototypes_for_cl.to_dict().items() if feature_name != 'idx' ]
+                        prototype = {
+                            'idx': df_instances_for_lv.iloc[prototypes_idx_for_cl, df_instances_for_lv.columns.get_loc('idx')],
+                            'features': prototype_feature_list  # [ {'name': 'air pollution', 'value': 1}, ... ]
+                        }
+
+                        instances_for_cl.to_csv('instances_for_cl.csv')
+                        dominant_cats = calculate_G_and_dominant_cats_for_cl(features, instances_for_cl)
+
+                        cl_list.append({
+                            'idx': cl_idx,
+                            'lvIdx': lv_idx,
+                            'sortedIdx': cl_idx,
+                            'instances': instances_for_cl.to_dict('records'),
+                            'dominantCat': 0,
+                            'prototype': prototype,
+                            'dominantCats': dominant_cats
+                        })
+                    lv_cl_list_dict[lv_idx] = cl_list
+                elif (len(lv['features']) > 1) and (lv['btnMode']['aggrMode'] == 'binning'):
+                    cat_permutations = list(itertools.product(*domain_list))
+                    
+                    cls_idx_list = []
+                    protos_idx_list = []
+                    for cat_combi in cat_permutations:
+                        df_instances_for_bin = df_instances_for_lv[ df_instances_for_lv[feature_names] == list(cat_combi) ].dropna()
+                        cl_idx_list = list(df_instances_for_bin.index)
+                        
+                        if len(cl_idx_list) == 0:
+                            protos_idx_list.append(0)
+                        else:
+                            protos_idx_list.append(cl_idx_list[0]) # Prototype is just the first instance
+                        cls_idx_list.append(cl_idx_list)
+                        
+                    cl_list = []
+                    for cl_idx in range(len(cat_permutations)):
+                        df_instances_for_lv['idx'] = list(df_instances_for_lv.index)
+                        instances_idx_for_cl = cls_idx_list[cl_idx]
+                        prototypes_idx_for_cl = protos_idx_list[cl_idx]
+                        instances_for_cl = df_instances_for_lv.loc[instances_idx_for_cl]
+                        prototypes_for_cl = df_instances_for_lv.loc[prototypes_idx_for_cl]
+                        prototype_feature_list = [ {'name': feature_name, 'value': feature_value } for feature_name, feature_value in prototypes_for_cl.to_dict().items() if feature_name != 'idx' ]
+                        prototype = {
+                            'idx': df_instances_for_lv.loc[prototypes_idx_for_cl, 'idx'],
+                            'features': prototype_feature_list  # [ {'name': 'air pollution', 'value': 1}, ... ]
+                        }
+                        dominant_cats = {} #[ { feature: 'sex', dominancCat: 0 }, ... ]
+                        for feature_idx, feature_name in enumerate(feature_names):
+                            dominant_cats[feature_name] = cat_permutations[cl_idx][feature_idx]
+
+                        cl_list.append({
+                            'idx': cl_idx,
+                            'lvIdx': lv_idx,
+                            'sortedIdx': cl_idx,
+                            'instances': instances_for_cl.to_dict('records'),
+                            'dominantCat': 0,
+                            'prototype': prototype,
+                            'dominantCats': dominant_cats
+                        })
+                    lv_cl_list_dict[lv_idx] = cl_list
+                else: # if number of features = 1
+                    feature = lv['features'][0]
+                    cat_instances_list = []
+                    for cat in feature['domain']:
+                        df_instances_for_lv['idx'] = list(df_instances_for_lv.index) # Add index as explicit column
+                        instances_for_cl = df_instances_for_lv.loc[df_instances_for_lv[feature['name']] == cat]
+
+                        dominant_cats = {}
+                        for feature_idx, feature_name in enumerate(feature_names):
+                            dominant_cats[feature_name] = cat
+                        
+                        cat_instances_list.append({
+                            'idx': cat,
+                            'lvIdx': lv_idx,
+                            'sortedIdx': cat,
+                            'instances': instances_for_cl.to_dict('records'),
+                            'dominantCat': 0,
+                            'prototype': {},
+                            'dominantCats': dominant_cats
+                        })
+                    lv_cl_list_dict[lv_idx] = cat_instances_list
+
+            # Identify the dominant clusters per level(=cluster set) - algorithm version
+            # dominant_cls_in_lvs = []
+            # for lv_idx, cls_for_lv in lv_cl_list_dict.items():
+            #     C_instance_set = [ cl['instances'] for cl in lv_cl_list_dict[lv_idx] ]
+            #     G = calculate_G_for_cluster_set(C_instance_set)
+            #     dominant_cls_in_lvs.append({
+            #         'lv': lv_idx,
+            #         'dominantCl': detect_outlier_nodes(G)
+            #     })
+
+        # Identify the dominant clusters per level(=cluster set) - pick the biggest cluster
+        dominant_cls_in_lvs = {}
         for lv_idx, cls_for_lv in lv_cl_list_dict.items():
-            C_instance_set = [ cl['instances'] for cl in lv_cl_list_dict[lv_idx] ]
-            G = calculate_G_for_cluster_set(C_instance_set)
-            dominant_cls_in_lvs.append({
-                'lv': lv_idx,
-                'dominantCl': detect_outlier_nodes(G)
-            })
+            max_cl_idx = np.argmax([ len(cl['instances']) for cl in cls_for_lv ])
+            dominant_cls_in_lvs[lv_idx] = cls_for_lv[max_cl_idx]['idx']
 
         # Between-level clusters sorting
         # go over clusters to sort the nodex
+        df_bipartite_instances = pd.DataFrame()
         for lv_idx, cls_for_lv in lv_cl_list_dict.items():
             if sort_cls_by == 'layout_optimization':
                 if lv_idx < num_lvs-1:
                     C1_instances = [ cl['instances'] for cl in lv_cl_list_dict[lv_idx]]
                     C2_instances = [ cl['instances'] for cl in lv_cl_list_dict[lv_idx+1]]
 
-                    freq_mat_np = calculate_freq_mat(C1_instances, C2_instances)
+                    # If one of two levels is bipartite
+                    if lv_data[lv_idx]['btnMode']['bipartiteMode'] == 1: # If current level is bipartite
+                        df_bipartite_instances = lv_data[lv_idx]['btnMode']['bipartiteMat']
+                        df_bipartite_instances = df_bipartite_instances.drop('idx', axis=1)
+                        freq_mat_np = df_bipartite_instances.values
+                    elif lv_data[lv_idx+1]['btnMode']['bipartiteMode'] == 1: # If next level is bipartite
+                        df_bipartite_instances = lv_data[lv_idx+1]['btnMode']['bipartiteMat']
+                        df_bipartite_instances = df_bipartite_instances.drop('idx', axis=1)
+                        freq_mat_np = df_bipartite_instances.values
+                    else:
+                        freq_mat_np = calculate_freq_mat(C1_instances, C2_instances)
+                        
                     G = calculate_G(freq_mat_np)
                     sorted_C1_idx, sorted_C2_idx = sort_nodes(G, len(C1_instances), len(C2_instances))
 
@@ -799,20 +875,64 @@ class HClusteringForAllLVs(APIView):
             'sortedCatsIdxForLvs': sorted_cats_idx_for_lvs,
             'edgesWithOutlierInfo': edges,
             'dominantClsForLvs': dominant_cls_in_lvs,
-            'pairwiseCorrs': pairwise_corrs
+            'pairwiseCorrs': pairwise_corrs,
+            'totalFreqsForLvs': lv_total_freqs_dict,
+            'bipartiteMat': df_bipartite_instances.values if not df_bipartite_instances.empty else []
         })
 
 class SortNodes(APIView):
     def post(self, request, format=None):
         pass
 
-class OptimizeEdges(APIView):
+class OptimizeEdgesForCats(APIView):
     def post(self, request, format=None):
         json_request = json.loads(request.body.decode(encoding='UTF-8'))
+        # C1_bipartite_mode = json_request['currBipartiteMode']
+        # C2_bipartite_mode = json_request['nextBipartiteMode']
         C1_instance_set = json_request['currNodes']
         C2_instance_set = json_request['nextNodes']
         
         freq_mat_np = calculate_freq_mat(C1_instance_set, C2_instance_set)
+        G = calculate_G(freq_mat_np)
+
+        # Sorting clusters
+        sorted_cl1_idx, sorted_cl2_idx = sort_nodes(G, len(C1_instance_set), len(C2_instance_set))
+        
+        # Identifying outlier edges between cluster sets
+        outlier_cut_threshold = -0.35
+        edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_set), len(C2_instance_set))
+        # while non_outlier_ratio > 0.25:
+        #     edges, non_outlier_ratio = detect_outlier_edges(G, outlier_cut_threshold, len(C1_instance_set), len(C2_instance_set))
+        #     outlier_cut_threshold -= 0.1
+
+        # for e in edges:
+        #     print('weight and score: ', e['u'], e['v'], e['source'], e['target'], e['weight'], e['alpha'], e['isOutlier'])
+
+        return Response({
+            'sortedCurrNodes': sorted_cl1_idx,
+            'sortedNextNodes': sorted_cl2_idx,
+            'edgesWithOutlierInfo': edges
+        })
+
+class OptimizeEdgesForCls(APIView):
+    def post(self, request, format=None):
+        json_request = json.loads(request.body.decode(encoding='UTF-8'))
+        C1_bipartite_mode = json_request['currBipartiteMode']
+        C2_bipartite_mode = json_request['nextBipartiteMode']
+        C1_instance_set = json_request['currNodes']
+        C2_instance_set = json_request['nextNodes']
+        bipartite_mat = json_request['bipartiteMat']
+
+        # If one of two levels is bipartite
+        # freq_mat_np = calculate_freq_mat(C1_instance_set, C2_instance_set)
+        # G = calculate_G(freq_mat_np)
+
+        if (C1_bipartite_mode == 1) or (C2_bipartite_mode == 1): # If current level is bipartite
+            freq_mat_np = np.array(bipartite_mat)
+            print('bimode111: ', C1_bipartite_mode, C2_bipartite_mode, freq_mat_np)
+        else:
+            freq_mat_np = calculate_freq_mat(C1_instance_set, C1_instance_set)
+            print('bimode112: ', C1_bipartite_mode, C2_bipartite_mode, freq_mat_np)
         G = calculate_G(freq_mat_np)
 
         # Sorting clusters

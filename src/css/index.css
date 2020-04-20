@@ -1,11 +1,12 @@
 :root {
   --stroke: lightslategray;
-  --level-bar: #9e9e9e; /*#01b39f;*/
-  --block-fill: #7de6b1;
-  --bar-fill: #9e9e9e; /*#00e0c7;*/ /*#00ffe2;*/
+  --level-bar: #cecece; /*#01b39f;*/
+  --block-fill: #bdc7c2;
+  --bar-fill: #c7c7d2; /*#00e0c7;*/ /*#00ffe2;*/
   --cl-line-stroke: black;
-  --proto: #d5c0fb; /*#af6ed4;*/
-  --proto-selected: #af6ed4;
+  --proto: #0667c7; /*#af6ed4;*/
+  --proto-selected: #0667c7;
+  --proto-second-selected: red;
 
   --bar-fill-selected: #0667c7;
   --bar-fill-second-selected: red;
@@ -105,7 +106,8 @@ svg {
 
 /* Block */
 .block_rect {
-  fill: #2ee087;
+  fill: var(--block-fill);
+  /* fill-opacity: 0.7; */
   /* stroke: var(--block-fill); */
 }
 
@@ -120,7 +122,7 @@ svg {
 }
 
 .block_icon {
-  fill: #00e070;
+  fill: var(--block-fill);
 }
 
 .feature_selected {
@@ -132,7 +134,7 @@ svg {
 .cat_rect {
   fill: var(--block-fill);
   /* stroke: var(--block-fill); */
-  fill-opacity: 0.7;
+  /* fill-opacity: 0.7; */
   /* filter: url(#drop-shadow); */
 }
 
@@ -141,7 +143,7 @@ svg {
 }
 
 .cat_label {
-  fill: #505050;
+  fill: black;
   font-size: 0.7rem;
   font-weight: bold;
   font-style: italic;
@@ -150,7 +152,7 @@ svg {
 .bar_rect {
   fill: var(--bar-fill);
   /* stroke: var(--bar-fill); */
-  fill-opacity: 0.5;
+  /* fill-opacity: 0.5; */
 }
 
 .bar_rect_mouseovered {
@@ -173,11 +175,19 @@ svg {
   opacity: 0 !important;
 }
 
+.cl_line_dominant {
+  opacity: 0.3 !important;
+}
+
 .cat_line {
   fill: none;
   stroke: gray;
   stroke-width: 5;
   opacity: 0.5;
+}
+
+.cat_line_dominant {
+  opacity: 0.3 !important;
 }
 
 .proto_circle {
@@ -192,14 +202,14 @@ svg {
   stroke-dasharray: 4, 1;
   fill: none;
   /* filter: url(#drop-shadow); */
-  opacity: 0.2;
+  opacity: 0;
 }
 
 .proto_path_selected,
 .proto_path_mouseovered {
   stroke-width: 4px;
   opacity: 1;
-  stroke: #af6ed4;
+  stroke: var(--proto);
 }
 
 .proto_path_for_bar_selected {
@@ -209,13 +219,13 @@ svg {
 }
 
 .proto_circle_selected {
-  fill: #af6ed4;
+  fill: var(--proto);
   fill-opacity: 1;
 }
 
 .proto_circle_mouseovered {
   opacity: 1;
-  fill: #af6ed4;
+  fill: var(--proto);
 }
 
 .proto_circle_for_bar_selected {
@@ -224,7 +234,26 @@ svg {
 }
 
 .proto_circle_hidden {
-  fill-opacity: 0;
+  fill-opacity: 0 !important;
+}
+
+.proto_dominant {
+  stroke-width: 4px;
+  opacity: 1 !important;
+  fill-opacity: 1 !important;
+}
+
+.proto_dominant2 {
+  stroke: var(--proto-second-selected);
+  stroke-width: 4px;
+  opacity: 1 !important;
+  fill-opacity: 1 !important;
+}
+
+.proto_dominant_circle2 {
+  fill: var(--proto-second-selected);
+  opacity: 1;
+  fill-opacity: 1 !important;
 }
 
 /* For event */
@@ -313,7 +342,7 @@ svg {
   margin-top: 0px;
   max-height: 100% !important;
   width: 100%;
-  background: #bcf;
+  /* background: #bcf; */
   border-radius: 2px;
   z-index: -1;
 }
@@ -398,12 +427,30 @@ svg {
   opacity: 0 !important;
 }
 
+.label_for_non_dominant_cl {
+  opacity: 0 !important;
+}
+
 .treemap_label {
-  fill: black;
+  /* fill: black; */
   font-size: 12px;
 }
 
 .treemap_line_label_to_cat {
   stroke: gray;
   stroke-dasharray: 3, 3;
+}
+
+.secondary_instance_circle {
+  fill: darkgray;
+}
+
+.secondary_instance_label {
+  font-size: 0.8rem;
+  /* font-weight: bold; */
+  font-style: italic;
+}
+
+.bipartite_1 > rect {
+  fill: #d0c7d2;
 }

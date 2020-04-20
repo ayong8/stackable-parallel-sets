@@ -43,7 +43,7 @@ export const scales = {
 scales.calculatecolorClOnSelectScale = function(cssVar) {
   this.colorClOnSelectScale = d3.scaleLinear()
     .domain([0, 1])
-    .range(['lightblue', gLayout.getCssVar(cssVar)]);
+    .range(['whitesmoke', gLayout.getCssVar(cssVar)]);
 }
 
 scales.calculateColorCatOnSelectScale = function(cssVar) {
@@ -55,7 +55,7 @@ scales.calculateColorCatOnSelectScale = function(cssVar) {
 scales.calculateColorClOnSelectTwoGroupsScale = function(cssVarForFirstGroup, cssVarForSecondGroup) {
   this.colorClOnSelectTwoGroupsScale = d3.scaleLinear()
     .domain([-1, 0, 1])
-    .range([gLayout.getCssVar(cssVarForSecondGroup), 'lightgray', gLayout.getCssVar(cssVarForFirstGroup)]);
+    .range([gLayout.getCssVar(cssVarForSecondGroup), 'whitesmoke', gLayout.getCssVar(cssVarForFirstGroup)]);
 }
 
 scales.calculateColorCatOnSelectTwoGroupsScale = function(cssVarForFirstGroup, cssVarForSecondGroup) {
@@ -142,7 +142,7 @@ scales.calculateScalesForCats = function(feature, wholeWidth) { //feature
   return catScales;
 }
 
-scales.calculateScalesForCls = function(rawData, sortedCls, wholeWidth) { //feature
+scales.calculateScalesForCls = function(bipartiteMode, sortedCls, wholeWidth, totalCnt) { //feature
   // Get scales for each category
   // - get the height of each category
   // - get the cumulative height for y position
@@ -160,8 +160,13 @@ scales.calculateScalesForCls = function(rawData, sortedCls, wholeWidth) { //feat
   // lbr.m.btn = (wholeWidth - sumClWidths) / (sortedCls.length-1) // btnInterval
   
   sortedCls.forEach((cl, clIdx) => {
-    const numTweetRatioPerCl = cl.instances.length / rawData.length,
-      clWidth = barWidthScale(numTweetRatioPerCl) * widthDecayingRatio,
+    console.log('cl and total cnt: ', data.calculateClToClFreqForBipartite(cl.instances), totalCnt);
+    let numInstancesRatioPerCl = 0;
+    if (bipartiteMode == 0) 
+      numInstancesRatioPerCl = cl.instances.length / totalCnt;
+    else if (bipartiteMode == 1) 
+      numInstancesRatioPerCl = data.calculateClToClFreqForBipartite(cl.instances) / totalCnt;
+    const clWidth = barWidthScale(numInstancesRatioPerCl) * widthDecayingRatio,
       clEndY = cumulativeClWidth + clWidth;
 
     let clStartY = 0;
