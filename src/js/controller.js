@@ -127,8 +127,12 @@ export const controller = function(LVData, features) {
     }
 
     function addNewFeatureDivUnderLi(feature) {
-      return  `<div class="title" id="title` + feature.idx + `">` +
-        feature.name +
+      console.log('feature.idx: ', feature)
+      return  `<div class="title" id="title ` + feature.id + `">` +
+        `<div>` + feature.name + `</div>` +
+        `<div class="feature_type">` + (feature.type == 'categorical' ? 'cat' : 'cont') + `</div>` +
+        `<div class="clustering_button categorization_button">` + "C" + `</div>` +
+        `<div class="binning_button categorization_button">` + "B" + `</div>` +
         `</div>
           <span class="ui-icon ui-icon-grip-solid-horizontal"></span>
           <ul class="space ui-sortable" id="space` + feature.idx + `"></ul>`;

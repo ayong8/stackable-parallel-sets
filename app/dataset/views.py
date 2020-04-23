@@ -403,13 +403,12 @@ def calculate_freq_mat(C1, C2):
     return freq_mat_np
 
 def calculate_G(freq_mat_np):
-    print('freq_mat_np: ', freq_mat_np)
     num_cls1, num_cls2 = freq_mat_np.shape
     weighted_adj_mat = np.vstack([
         np.hstack([ np.zeros([num_cls1, num_cls1]), freq_mat_np ]),
         np.hstack([ np.transpose(freq_mat_np), np.zeros([num_cls2, num_cls2])])
     ])
-    print('weighted_adj_mat: ', weighted_adj_mat)
+    # print('weighted_adj_mat: ', weighted_adj_mat)
 
     G = nx.from_numpy_matrix(weighted_adj_mat)
 
@@ -926,14 +925,14 @@ class OptimizeEdgesForCls(APIView):
         # If one of two levels is bipartite
         # freq_mat_np = calculate_freq_mat(C1_instance_set, C2_instance_set)
         # G = calculate_G(freq_mat_np)
-
-        if (C1_bipartite_mode == 1) or (C2_bipartite_mode == 1): # If current level is bipartite
+        
+        if (C1_bipartite_mode == 0) and (C2_bipartite_mode == 0):
+            freq_mat_np = calculate_freq_mat(C1_instance_set, C2_instance_set)
+        else: # If current level is bipartite
             freq_mat_np = np.array(bipartite_mat)
-            print('bimode111: ', C1_bipartite_mode, C2_bipartite_mode, freq_mat_np)
-        else:
-            freq_mat_np = calculate_freq_mat(C1_instance_set, C1_instance_set)
-            print('bimode112: ', C1_bipartite_mode, C2_bipartite_mode, freq_mat_np)
         G = calculate_G(freq_mat_np)
+        
+        print('freq_mat_npp: ', freq_mat_np)
 
         # Sorting clusters
         sorted_cl1_idx, sorted_cl2_idx = sort_nodes(G, len(C1_instance_set), len(C2_instance_set))

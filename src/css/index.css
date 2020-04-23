@@ -18,6 +18,8 @@
   --treemap-fill-cl-2: #f1c232ff;
   --treemap-fill-cl-3: #fb8072;
   --treemap-fill-cl-4: #80b1d3;
+
+  --bipartite-instance: #d6c6cb;
 }
 
 body {
@@ -376,6 +378,28 @@ svg {
   background: lightgray;
   border-radius: 2px;
   pointer-events: none;
+  display: flex;
+}
+
+.feature_type {
+  text-indent: 0;
+  text-align: center;
+  width: 30px;
+  font-size: 0.7rem;
+  font-style: normal;
+  background: #b5b5b5;
+  border: 1px solid darkgray;
+  margin-left: 5px;
+  color: white;
+}
+
+.categorization_button {
+  text-indent: 0;
+  text-indent: 0;
+  margin-left: 5px;
+  padding: 0 3px;
+  background-color: whitesmoke;
+  border: 1px solid darkgray;
 }
 
 .lv {
@@ -442,7 +466,7 @@ svg {
 }
 
 .secondary_instance_circle {
-  fill: darkgray;
+  fill: var(--bipartite-instance);
 }
 
 .secondary_instance_label {
@@ -452,5 +476,5 @@ svg {
 }
 
 .bipartite_1 > rect {
-  fill: #d0c7d2;
+  fill: var(--bipartite-instance);
 }

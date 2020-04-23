@@ -27,7 +27,9 @@ let treemapColorScales = [
     .range(['whitesmoke', gLayout.getCssVar('--treemap-fill-cl-4')]),
   d3.scaleLinear().domain([0, 1])
     .range(['whitesmoke', gLayout.getCssVar('--treemap-fill-cl-5')])
-]
+];
+
+
 
 export const scales = {
   catWidthScale: catWidthScale,
