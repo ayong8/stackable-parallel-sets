@@ -143,6 +143,7 @@ function Block() {
 						sortedCatsIdx = BLData.sortedIdx,
 						sortedCatInstanceSets = BLData.instances,
 						catScales = BLData.catScales;
+			const numCats = sortedCats.length;
 			let gCats, gCatsData, catRects, catLabels;
 
 			gCatsData = gBL
@@ -164,7 +165,7 @@ function Block() {
 				.attr('class', (cat, i) => 'cat_rect cat_rect_' + BLData.id + '_' + cat.idx)
 				.attr('x', 0) 
 				.attr('y', 0)
-				.attr('width', (cat, i) => (catScales[i].range()[1] - catScales[i].range()[0])) // i*2 is cumulative margin
+				.attr('width', (cat, i) => (catScales[i].range()[1] - catScales[i].range()[0]) <=0 ? 4 : (catScales[i].range()[1] - catScales[i].range()[0])) // i*2 is cumulative margin
 				.attr('height', lwbr.h);
 
 			catLabels = gCats
@@ -177,7 +178,22 @@ function Block() {
 					else if (BLIdx==numFeatures-1) return lwbr.h/2
 					else return lwbr.h * 2/3
 				})
-				.text((cat, i) => cat.label);
+				.text((cat, i) => {
+					const catRectWidth = (catScales[i].range()[1] - catScales[i].range()[0]);
+					return ((i == numCats-1) || ((catRectWidth > 4) && (catRectWidth < 10)))
+						? cat.label.slice(0, 4) + '...' 
+						: (catRectWidth <= 4) 
+							? ''
+							: cat.label
+				})
+				.on('mouseover', function(cat){
+					d3.select(this.parentElement)
+						.append('text')
+						.text(cat.label)
+				})
+				.on('mouseout', function(cat){
+					d3.select(this.parentElement);
+				});
 		})
 		// const gBLl = gLayout.getElLayout(gBLs);
 

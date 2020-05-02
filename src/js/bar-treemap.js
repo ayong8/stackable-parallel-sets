@@ -23,6 +23,8 @@ function BarTreemap() {
 		const featureNames = lvData.features.map(d => d.labels);
 		let dataTreemapCatLabelsForCls = [];
 
+		console.log('cls: ', cls);
+
 		cls.forEach(function(cl){
 			// Build up a data
 			let dataTreemapsForCl = [];
@@ -32,6 +34,8 @@ function BarTreemap() {
 			const treemapsXScale = d3.scaleBand()
 				.domain(d3.range(numFeatures))
 				.range([10, rectWidth]);
+
+			console.log('rectWidth: ', rectWidth);
 
 			lvData.features.forEach(function(feature, featureIdx){
 				const featureName = feature.name;

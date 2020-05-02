@@ -3,11 +3,12 @@ import _ from 'lodash';
 
 export const data = {};
 
-data.mapLevelToFeatures = function(dataAbbr, features) {
+data.mapLevelToFeatures = function(dataAbbr, features, rawDataForBp) {
   let levels = [];
+  let LVData = [];
   switch(dataAbbr) {
     case 'demoemo':
-      return [
+      LVData = [
         { 
           idx: 0, 
           name: 'demographic',
@@ -58,8 +59,6 @@ data.mapLevelToFeatures = function(dataAbbr, features) {
           features: [
             _.find(features, ['name', 'education']),
             _.find(features, ['name', 'income']),
-            _.find(features, ['name', 'religion']),
-            
           ],
           cls: [],
           clScales: [],
@@ -108,46 +107,19 @@ data.mapLevelToFeatures = function(dataAbbr, features) {
           },
           order: 'middle',
           features: [
+            _.find(features, ['name', 'religion']),
             _.find(features, ['name', 'life_satisfaction']),
-            _.find(features, ['name', 'optimism'])
-            
+            _.find(features, ['name', 'optimism']),
+            _.find(features, ['name', 'political']),
           ],
           cls: [],
           clScales: [],
           blScale: d3.scalePoint()
-        },
-        { 
-          idx: 4, 
-          name: 'hashtags',
-          mode: {
-            folded: false,
-            height: 0
-          },
-          btnMode: {
-            bipartiteMode: 1,
-            totalFreqCnt: 0,
-            bipartiteMat: [],
-            aggrMode: 'clustering',
-            numCls: 4,  
-            candidateKs: [4,5,6,7],
-            featuresForClustering: []
-          },
-          order: 'last',
-          features: [
-            _.find(features, ['name', 'anger']),
-            _.find(features, ['name', 'sad']),
-            _.find(features, ['name', 'joy']),
-            _.find(features, ['name', 'fear']),
-            _.find(features, ['name', 'disgust']),
-            _.find(features, ['name', 'surprise']),
-          ],
-          cls: [],
-          clScales: [],
-          blScale: d3.scalePoint()
-        },
+        }
       ];
+      break;
     case 'cancer':
-      return [
+      LVData = [
         { 
           idx: 0, 
           name: 'diagnosis',
@@ -277,7 +249,35 @@ data.mapLevelToFeatures = function(dataAbbr, features) {
           blScale: d3.scalePoint()
         }
       ];
+      break;
   }
+
+  if (Object.entries(rawDataForBp).length != 0)
+    LVData.push({ 
+        idx: 4, 
+        name: 'hashtags',
+        mode: {
+          folded: false,
+          height: 0
+        },
+        btnMode: {
+          bipartiteMode: 1,
+          totalFreqCnt: 0,
+          bipartiteMat: [],
+          aggrMode: 'clustering',
+          numCls: 4,  
+          candidateKs: [4,5,6,7],
+          featuresForClustering: []
+        },
+        order: 'last',
+        features: [
+        ],
+        cls: [],
+        clScales: [],
+        blScale: d3.scalePoint()
+      })
+
+  return LVData;
 }
 
 data.convertStrToUnderbar = function(str) {
@@ -287,7 +287,6 @@ data.convertStrToUnderbar = function(str) {
 }
 
 data.calculateClToClFreqForBipartite = function(instances) {
-  console.log('# of instances: ', instances.length);
   let sumFreq = 0;
   
   // Sum all frequencies except for idx

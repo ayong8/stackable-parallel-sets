@@ -8,8 +8,9 @@
   --proto-selected: #0667c7;
   --proto-second-selected: red;
 
-  --bar-fill-selected: #0667c7;
+  --bar-fill-selected: #3f90e0;
   --bar-fill-second-selected: red;
+  --bar-fill-mouseovered: #00ceb6;
   --block-fill-selected: limegreen;
   --block-fill-second-selected: orange;
 
@@ -158,11 +159,11 @@ svg {
 }
 
 .bar_rect_mouseovered {
-  fill: #00ceb6;
+  fill: var(--bar-fill-mouseovered);
 }
 
 .cl_label {
-  fill: gray;
+  /* fill: gray; */
   font-size: 0.7rem;
   font-weight: bold;
   font-style: italic;
@@ -177,8 +178,14 @@ svg {
   opacity: 0 !important;
 }
 
+.cl_line_dominant_for_all,
 .cl_line_dominant {
-  opacity: 0.3 !important;
+  opacity: 0.5 !important;
+}
+
+.cl_line_mouseovered {
+  opacity: 0.5 !important;
+  stroke: var(--bar-fill-mouseovered);
 }
 
 .cat_line {
@@ -252,6 +259,11 @@ svg {
   fill-opacity: 1 !important;
 }
 
+.proto_dominant_circle {
+  fill: var(--proto-selected);
+  opacity: 1;
+  fill-opacity: 1 !important;
+}
 .proto_dominant_circle2 {
   fill: var(--proto-second-selected);
   opacity: 1;
@@ -262,21 +274,21 @@ svg {
 .bar_rect_selected {
   fill: var(--bar-fill-selected);
   stroke: black;
-  stroke-width: 2px;
+  stroke-width: 4px;
   fill-opacity: 0.9;
 }
 
 .bar_rect_selected2 {
   fill: var(--bar-fill-second-selected);
   stroke: black;
-  stroke-width: 2px;
+  stroke-width: 4px;
   fill-opacity: 0.9;
 }
 
 /*** Controller ***/
 #controller {
   position: relative;
-  width: 200px;
+  width: 250px;
   margin-left: 60px;
   margin-right: 20px;
   padding-bottom: 10px;
@@ -342,6 +354,7 @@ svg {
   padding: 0;
   top: 5px;
   margin-top: 0px;
+  margin-bottom: 10px;
   max-height: 100% !important;
   width: 100%;
   /* background: #bcf; */
@@ -377,7 +390,11 @@ svg {
   font-style: italic;
   background: lightgray;
   border-radius: 2px;
-  pointer-events: none;
+  display: flex;
+  justify-content: space-between;
+}
+
+.feature_info_wrapper {
   display: flex;
 }
 
@@ -393,6 +410,11 @@ svg {
   color: white;
 }
 
+.categorization_button_wrapper {
+  display: flex;
+  margin-right: 5px;
+}
+
 .categorization_button {
   text-indent: 0;
   text-indent: 0;
@@ -400,6 +422,7 @@ svg {
   padding: 0 3px;
   background-color: whitesmoke;
   border: 1px solid darkgray;
+  z-index: 99;
 }
 
 .lv {
@@ -477,4 +500,65 @@ svg {
 
 .bipartite_1 > rect {
   fill: var(--bipartite-instance);
+}
+
+/* For tooltip */
+.tooltip_mouseovered {
+  opacity: 1 !important;
+}
+
+.d3-tooltip {
+  line-height: 1.5;
+  font-weight: 400;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tooltip:after {
+  /* box-sizing: border-box; */
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Northward tooltips */
+.d3-tooltip.n:after {
+  content: "\25BC";
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+  text-align: center;
+}
+
+/* Eastward tooltips */
+.d3-tooltip.e:after {
+  content: "\25C0";
+  margin: -4px 0 0 0;
+  top: 50%;
+  left: -8px;
+}
+
+/* Southward tooltips */
+.d3-tooltip.s:after {
+  content: "\25B2";
+  margin: 0 0 1px 0;
+  top: -8px;
+  left: 0;
+  text-align: center;
+}
+
+/* Westward tooltips */
+.d3-tooltip.w:after {
+  content: "\25B6";
+  margin: -4px 0 0 -1px;
+  top: 50%;
+  left: 100%;
 }

@@ -38,6 +38,7 @@ function Bar() {
 		function renderLowerCls() {
 			const gLevel = d3.select('.g_level_' + lvData.idx);
 			const lowerBar = gLevel.select('.level_bar_bottom');
+
 			gBRSet = container
 				.append('g')
 				.data([cls])
@@ -78,7 +79,7 @@ function Bar() {
 					.attr('class', 'cl_label')
 					.attr('x', 0)
 					.attr('y', 10)
-					.text(cl.idx);
+					.text(lvData['features'].length > 1 ? cl.idx : cl.label);
 
 				gProto = container
 					.selectAll('.g_prototype.lv_' + lvData.idx + '.cl_' + cl.idx)
@@ -231,7 +232,7 @@ function Bar() {
 					.attr('class', 'cl_label')
 					.attr('x', 0)
 					.attr('y', 10)
-					.text(cl.idx);
+					.text(lvData['features'].length > 1 ? cl.idx : cl.label);
 
 				// if (lvData.features.length > 1) {
 				// 	gProto = container

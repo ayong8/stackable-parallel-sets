@@ -94,7 +94,7 @@ function Level(selection) { // User-defined sementic category
 								.append('text')
 								.attr('class', 'level_label')
 								.attr('x', llv.w + 20 + 20)
-								.attr('y', heightForLv + 13)
+								.attr('y', 5)
 								.text((d, i) => d.name);
 					}
 					else if (numFeatures > 1) {
@@ -197,15 +197,15 @@ function Level(selection) { // User-defined sementic category
 					
 									return draw(
 										d3.path(),
-										20, lvData.blScale(upperFeature),
-										40, lvData.blScale(upperFeature) + Math.abs(lvData.blScale(lowerFeature)-lvData.blScale(upperFeature))/2,
-										20, lvData.blScale(lowerFeature)
+										20+5, lvData.blScale(upperFeature)+7.5,
+										40 + Math.abs(lvData.blScale(lowerFeature)-lvData.blScale(upperFeature))/4, lvData.blScale(upperFeature) + Math.abs(lvData.blScale(lowerFeature)-lvData.blScale(upperFeature))/2,
+										20+5, lvData.blScale(lowerFeature)+7.5
 									);
 								})
 								.style('fill', 'none')
 								.style('stroke', 'black')
 								.style('opacity', 0.2)
-								.style('stroke-width', d => 5+10*d.corr);
+								.style('stroke-width', d => 3);
 							
 		
 							// Render the edges between blocks

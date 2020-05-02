@@ -13,7 +13,6 @@ export const controller = function(LVData, features) {
       
     const selectedFeatures = _.flatten(LVData.map(d => d.features));
     const notSelectedFeatures = features.filter(b => selectedFeatures.every(a => a.name !== b.name));
-    console.log('notSelectedFeatures: ', notSelectedFeatures)
 
     const featureDivs = d3.select('.feature_list')
       .selectAll('.feature')
@@ -38,13 +37,13 @@ export const controller = function(LVData, features) {
       })
 
     // Adding buttons to feature divs
-    d3.selectAll('.feature')
-      .append('div')
-      .attr('class', 'buttons')
-      .html('<div class="coloring_button">c</div>')
-      .on('click', function(d){
+    // d3.selectAll('.feature')
+    //   .append('div')
+    //   .attr('class', 'buttons')
+    //   .html('<div class="coloring_button"></div>')
+    //   .on('click', function(d){
 
-      });
+    //   });
   
     calcWidth($('#title0'));
     
@@ -94,6 +93,35 @@ export const controller = function(LVData, features) {
         sorting();
       });
 
+    $('.clustering_button')
+      .on('click', function(d, i) {
+        $(this).parent().parent()
+          .append('div')
+        
+        // $('#controller')
+        //   .children('.level_list')
+        //   .append(addNewLVDiv(numLVs))
+        //   .addClass('selected' + numLVs);
+
+        // calcWidth($('#title0'));
+        // sorting();
+      });
+
+    $('.clustering_button')
+    .on('mouseover', function(d, i) {
+      console.log('mouseoverred')
+      $(this).parent().parent()
+        .append('div')
+      
+      // $('#controller')
+      //   .children('.level_list')
+      //   .append(addNewLVDiv(numLVs))
+      //   .addClass('selected' + numLVs);
+
+      // calcWidth($('#title0'));
+      // sorting();
+    });
+
     $('.coloring_button')
       .on('click', function(d, i) {
       });
@@ -127,12 +155,15 @@ export const controller = function(LVData, features) {
     }
 
     function addNewFeatureDivUnderLi(feature) {
-      console.log('feature.idx: ', feature)
       return  `<div class="title" id="title ` + feature.id + `">` +
-        `<div>` + feature.name + `</div>` +
-        `<div class="feature_type">` + (feature.type == 'categorical' ? 'cat' : 'cont') + `</div>` +
-        `<div class="clustering_button categorization_button">` + "C" + `</div>` +
-        `<div class="binning_button categorization_button">` + "B" + `</div>` +
+        `<div class="feature_info_wrapper">` +
+          `<div>` + feature.name + `</div>` +
+        `</div>` +
+        `<div class="categorization_button_wrapper">` +
+          `<div class="feature_type">` + (feature.type == 'categorical' ? 'cat' : 'cont') + `</div>` +
+          `<div class="clustering_button categorization_button">` + "C" + `</div>` +
+          `<div class="binning_button categorization_button">` + "B" + `</div>` +
+        `</div>` +
         `</div>
           <span class="ui-icon ui-icon-grip-solid-horizontal"></span>
           <ul class="space ui-sortable" id="space` + feature.idx + `"></ul>`;

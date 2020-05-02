@@ -102,7 +102,6 @@ function Container() {
 		const BRs = gContainer.selectAll('.g_bars'); 
 		LVs.each(function(lvData, lvId) {
 			const LV = d3.select(this);
-			console.log('LVs[lvId]: ', LVs.data()[lvId].cls, LVs[lvId+1])
 			if (lvId < numLVs-1) {
 				const currLvData = LVs.data()[lvId],
 					nextLvData = LVs.data()[lvId+1];
@@ -137,8 +136,6 @@ function Container() {
 							return (d3.select(this).attr('class') != 'level_bar') ||
 							(d3.select(this).attr('class') != 'level_bar')
 						}).remove();
-
-					console.log('elsWithinLvRegion: ', elsWithinLvRegion);
 
 					// Recalculate the scale
 					scales.calculateYLevelScale(LVData);
