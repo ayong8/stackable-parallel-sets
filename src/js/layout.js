@@ -35,7 +35,8 @@ export const l = {
     },
     local: {
       p: {
-        l: 0
+        l: 0,
+        t: 0
       }
     }
   }
@@ -303,7 +304,7 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
       // sortedNextNodesIdx = response.sortedNextNodes;
       edgesWithOutlierInfo = response.edgesWithOutlierInfo;
       prepareCatData(sortedCatsInCurr, sortedCatsInNext);
-      renderCatToCatLines(instancesBtnCats, lvData);
+      renderCatToCatLines(instancesBtnCats, lvData, currFeature, nextFeature);
     });
   } 
 
@@ -344,7 +345,7 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
     });
   }
 
-  function renderCatToCatLines(instancesBtnCats, lvData) {
+  function renderCatToCatLines(instancesBtnCats, lvData, currFeature, nextFeature) {
     dataForCatToCatLines = instancesBtnCats.map((d, i) => {
       const widthForCurrCat = catScalesForCurr[d.catCurr].range()[1] - catScalesForCurr[d.catCurr].range()[0];
       const widthDecayingRatio = 0.25;
@@ -384,12 +385,27 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
     catLinesData
       .enter()
       .append('path')
-      .attr('class', d => 'cat_line cat_line_' + d.sortedCatCurr + '_' + d.sortedCatNext)
+      .attr('class', d => {
+        return d.isOutlier == true
+          ? 'cat_line' + ' feature_' + currFeature.name + '_cat_' + d.sortedCatCurr + ' cat_' + d.sortedCatCurr + ' feature_' + nextFeature.name + '_cat_' + d.sortedCatNext + ' cat_' + d.sortedCatNext
+          : 'cat_line' + ' feature_' + currFeature.name + '_cat_' + d.sortedCatCurr + ' cat_' + d.sortedCatCurr + ' feature_' + nextFeature.name + '_cat_' + d.sortedCatNext + ' cat_' + d.sortedCatNext + ' cat_line_dominant_for_all'
+      })
       .attr('d', drawTweetLine)
       .style('fill', 'none')
       //.style('stroke-width', d => d.lineHeight)
       .style('stroke-width', d => d.lineWidth)
-      .style('opacity', d => d.isOutlier === true ? 0 : 0.5);
+      .style('opacity', d => 0)
+      .on('mouseover', function(d){
+        const selectedCatLine = d3.select(this);
+        console.log('cat_line class: ', selectedCatLine.attr('class'));
+        selectedCatLine
+          .style('stroke', 'darkgray');
+      })
+      .on('mouseout', function(d){
+        const selectedCatLine = d3.select(this);
+        selectedCatLine
+          .style('stroke', '');
+      });
 
     catLinesData
       .attr('d', drawTweetLine)
@@ -573,11 +589,6 @@ gLayout.renderClToClLines = function(selection, instances, currLvData, nextLvDat
       //.style('stroke-width', d => d.lineHeight)
       .style('stroke-width', d => d.lineWidth)
       .style('opacity', 0);
-
-    clLines
-      .on('mouseover', function(d){
-
-      });
   }
   
 }

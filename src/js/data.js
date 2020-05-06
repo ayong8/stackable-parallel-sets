@@ -36,7 +36,7 @@ data.mapLevelToFeatures = function(dataAbbr, features, rawDataForBp) {
         },
         { 
           idx: 1, 
-          name: 'social_status',
+          name: 'family_background',
           mode: {
             folded: false,
             height: 0
@@ -57,8 +57,8 @@ data.mapLevelToFeatures = function(dataAbbr, features, rawDataForBp) {
           // },
           order: 'middle',
           features: [
-            _.find(features, ['name', 'education']),
-            _.find(features, ['name', 'income']),
+            _.find(features, ['name', 'relationship']),
+            _.find(features, ['name', 'children']),
           ],
           cls: [],
           clScales: [],
@@ -66,6 +66,33 @@ data.mapLevelToFeatures = function(dataAbbr, features, rawDataForBp) {
         },
         { 
           idx: 2, 
+          name: 'psychological',
+          mode: {
+            folded: false,
+            height: 0
+          },
+          btnMode: {
+            bipartiteMode: 0,
+            totalFreqCnt: 0,
+            bipartiteMat: [],
+            aggrMode: 'clustering',
+            numCls: 4,  
+            candidateKs: [4,5,6,7],
+            featuresForClustering: []
+          },
+          order: 'middle',
+          features: [
+            _.find(features, ['name', 'religion']),
+            _.find(features, ['name', 'political']),
+            _.find(features, ['name', 'life_satisfaction']),
+            _.find(features, ['name', 'optimism'])
+          ],
+          cls: [],
+          clScales: [],
+          blScale: d3.scalePoint()
+        },
+        { 
+          idx: 3, 
           name: 'emotion',
           mode: {
             folded: false,
@@ -90,8 +117,8 @@ data.mapLevelToFeatures = function(dataAbbr, features, rawDataForBp) {
           blScale: d3.scalePoint()
         },
         { 
-          idx: 3, 
-          name: 'psychological',
+          idx: 4, 
+          name: 'sentiment',
           mode: {
             folded: false,
             height: 0
@@ -107,15 +134,13 @@ data.mapLevelToFeatures = function(dataAbbr, features, rawDataForBp) {
           },
           order: 'middle',
           features: [
-            _.find(features, ['name', 'religion']),
-            _.find(features, ['name', 'life_satisfaction']),
-            _.find(features, ['name', 'optimism']),
-            _.find(features, ['name', 'political']),
+            _.find(features, ['name', 'sentiment'])
+            
           ],
           cls: [],
           clScales: [],
           blScale: d3.scalePoint()
-        }
+        },
       ];
       break;
     case 'cancer':
@@ -254,8 +279,8 @@ data.mapLevelToFeatures = function(dataAbbr, features, rawDataForBp) {
 
   if (Object.entries(rawDataForBp).length != 0)
     LVData.push({ 
-        idx: 4, 
-        name: 'hashtags',
+        idx: 5, 
+        name: 'words',
         mode: {
           folded: false,
           height: 0

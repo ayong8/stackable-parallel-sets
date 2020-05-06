@@ -32,7 +32,7 @@ function Container() {
 		l.setContainerBoundingClientRect(gContainer);
 		const gContainer = svg.append('g')
 			.attr('class', 'container')
-			.attr('transform', 'translate(' + l.container.local.p.l + ',0)');
+			.attr('transform', 'translate(' + l.container.local.p.l + ',' + l.container.local.p.t + ')');
 		
 		
 		// renderInterface();
@@ -119,92 +119,6 @@ function Container() {
 				gLayout.renderClToClLines(gBtnLVs, instances, currLvData, nextLvData, currLowerBar, nextUpperBar, llv.w)
 			}
 		});
-
-		function renderInterface() {
-			const rectButton1 = gContainer.append('rect')
-				.attr('x', 600)
-				.attr('y', 0)
-				.attr('width', 20)
-				.attr('height', 20)
-				.attr('fill', 'red')
-				.on('mouseover', function(d){
-					LVData[0].mode.folded = true;
-					LVData.splice(1, 1);
-
-					const elsWithinLvRegion = d3.selectAll('.g_level_0 > *')
-						.filter(function(d) {
-							return (d3.select(this).attr('class') != 'level_bar') ||
-							(d3.select(this).attr('class') != 'level_bar')
-						}).remove();
-
-					// Recalculate the scale
-					scales.calculateYLevelScale(LVData);
-					
-					const gLVsUpdated = d3.selectAll('.g_level')
-						.data(LVData, (d) => d.idx);
-
-					// delete all elements within the level rect
-					// gLVsUpdated
-					// 	.attr('transform', 'translate(0, 20)');
-
-					gLVsUpdated
-						.attr('transform', function(lvData, lvIdx) {
-							if (lvData.mode.folded == false)
-								return 'translate(' + 0 + ',' + scales.yLvsScale(lvIdx) + ')';
-							else if (lvData.mode.folded == true) {
-								return 'translate(' + 0 + ',' + 10 + ')';
-							}
-						});
-					
-					// gLVsUpdated.exit().remove();
-				});
-
-			const rectButton2 = gContainer.append('rect')
-				.attr('x', 650)
-				.attr('y', 0)
-				.attr('width', 20)
-				.attr('height', 20)
-				.attr('fill', 'blue')
-				.on('click', function(d){
-					const featureToUpdate = LVData[0].features[0];
-
-					// Update the data (order of cats in this case)
-					const catsUpdated = [
-						LVData[0].features[0].cats[3],
-						LVData[0].features[0].cats[1],
-						LVData[0].features[0].cats[2],
-						LVData[0].features[0].cats[0]
-					];
-					featureToUpdate.cats = catsUpdated;
-
-					// Update the catScale
-					// setScaleToFeature
-					const updatedScales = scales.setScaleToFeature(rawData, featureToUpdate, llv.w);
-					const catScalesUpdated = updatedScales['catScales'];
-					featureToUpdate.catScales = catScalesUpdated;
-
-					const gCatsUpdated = d3.select('.g_block.lv_0.bl_smoking')
-						.selectAll('.g_cat')
-						.data(catsUpdated, (d) => d.idx);
-
-					gCatsUpdated
-						.attr('transform', (cat, i) => 'translate(' + 
-							catScalesUpdated[i].range()[0] + ',' +
-							0 +
-							')'
-						);
-
-					const catLabelsUpdated = d3.select('.g_block.lv_0.bl_smoking')
-						.selectAll('.cat_label')
-						.data(catsUpdated, (d) => d.idx);
-					catLabelsUpdated.exit().remove();
-					catLabelsUpdated
-						.text((cat, i) => cat.idx);
-					
-					const gBtnBL = d3.select('.g_btn_bls ' + '.bl_smoking')
-					gLayout.renderCatToCatLines(gBtnBL, LVData[0], LVData[0].features[0], LVData[0].features[1], 1, llv.w);
-				});
-		}
 	}
 	
 	_container.data = function(dataset) {

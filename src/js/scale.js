@@ -57,7 +57,7 @@ scales.calculateColorCatOnSelectScale = function(cssVar) {
 scales.calculateColorClOnSelectTwoGroupsScale = function(cssVarForFirstGroup, cssVarForSecondGroup) {
   this.colorClOnSelectTwoGroupsScale = d3.scaleLinear()
     .domain([-1, 0, 1])
-    .range([gLayout.getCssVar(cssVarForSecondGroup), 'whitesmoke', gLayout.getCssVar(cssVarForFirstGroup)]);
+    .range([gLayout.getCssVar(cssVarForSecondGroup), 'lightgray', gLayout.getCssVar(cssVarForFirstGroup)]);
 }
 
 scales.calculateColorCatOnSelectTwoGroupsScale = function(cssVarForFirstGroup, cssVarForSecondGroup) {
@@ -166,8 +166,10 @@ scales.calculateScalesForCls = function(bipartiteMode, sortedCls, wholeWidth, to
     let numInstancesRatioPerCl = 0;
     if (bipartiteMode == 0) 
       numInstancesRatioPerCl = cl.instances.length / totalCnt;
-    else if (bipartiteMode == 1) 
-      numInstancesRatioPerCl = data.calculateClToClFreqForBipartite(cl.instances) / totalCnt;
+    else if (bipartiteMode == 1) {
+      numInstancesRatioPerCl = data.calculateClToClFreqForBipartite(cl.instances) / totalCnt; // totalCnt == totalFreqCnt
+    }
+      
     const clWidth = barWidthScale(numInstancesRatioPerCl) * widthDecayingRatio,
       clEndY = cumulativeClWidth + clWidth;
 

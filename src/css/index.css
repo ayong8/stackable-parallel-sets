@@ -1,15 +1,15 @@
 :root {
   --stroke: lightslategray;
-  --level-bar: #cecece; /*#01b39f;*/
+  --level-bar: #c7c7d2; /*#01b39f;*/
   --block-fill: #bdc7c2;
   --bar-fill: #c7c7d2; /*#00e0c7;*/ /*#00ffe2;*/
   --cl-line-stroke: black;
-  --proto: #0667c7; /*#af6ed4;*/
-  --proto-selected: #0667c7;
-  --proto-second-selected: red;
+  --proto: #0462bf; /*#af6ed4;*/
+  --proto-selected: #0462bf;
+  --proto-second-selected: #d60101;
 
-  --bar-fill-selected: #3f90e0;
-  --bar-fill-second-selected: red;
+  --bar-fill-selected: #0462bf;
+  --bar-fill-second-selected: #d60101;
   --bar-fill-mouseovered: #00ceb6;
   --block-fill-selected: limegreen;
   --block-fill-second-selected: orange;
@@ -163,8 +163,9 @@ svg {
 }
 
 .cl_label {
-  /* fill: gray; */
-  font-size: 0.7rem;
+  stroke: white;
+  stroke-width: 0.4;
+  font-size: 0.8rem;
   font-weight: bold;
   font-style: italic;
 }
@@ -195,8 +196,13 @@ svg {
   opacity: 0.5;
 }
 
+.cat_line_dominant_for_all,
 .cat_line_dominant {
   opacity: 0.3 !important;
+}
+
+.cat_line_mouseovered {
+  opacity: 0.5 !important;
 }
 
 .proto_circle {
@@ -474,13 +480,22 @@ svg {
   opacity: 0 !important;
 }
 
-.label_for_non_dominant_cl {
-  opacity: 0 !important;
-}
-
 .treemap_label {
   /* fill: black; */
   font-size: 12px;
+  opacity: 0 !important;
+}
+
+.treemap_label_for_dominant_cl {
+  opacity: 1 !important;
+}
+
+.treemp_label_mouseovered {
+  opacity: 1 !important;
+}
+
+.treemap_label_for_selected {
+  opacity: 1 !important;
 }
 
 .treemap_line_label_to_cat {
@@ -493,7 +508,7 @@ svg {
 }
 
 .secondary_instance_label {
-  font-size: 0.8rem;
+  font-size: 0.5rem;
   /* font-weight: bold; */
   font-style: italic;
 }
@@ -508,57 +523,30 @@ svg {
 }
 
 .d3-tooltip {
-  line-height: 1.5;
-  font-weight: 400;
-  padding: 12px;
+  line-height: 1;
+  padding: 6px;
   background: rgba(0, 0, 0, 0.8);
   color: #fff;
-  border-radius: 2px;
-  pointer-events: none;
+  border-radius: 4px;
+  font-size: 12px;
 }
 
 /* Creates a small triangle extender for the tooltip */
 .d3-tooltip:after {
-  /* box-sizing: border-box; */
+  box-sizing: border-box;
   display: inline;
   font-size: 10px;
   width: 100%;
   line-height: 1;
   color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
   position: absolute;
-  pointer-events: none;
+  text-align: center;
 }
 
-/* Northward tooltips */
+/* Style northward tooltips specifically */
 .d3-tooltip.n:after {
-  content: "\25BC";
-  margin: -1px 0 0 0;
+  margin: -2px 0 0 0;
   top: 100%;
   left: 0;
-  text-align: center;
-}
-
-/* Eastward tooltips */
-.d3-tooltip.e:after {
-  content: "\25C0";
-  margin: -4px 0 0 0;
-  top: 50%;
-  left: -8px;
-}
-
-/* Southward tooltips */
-.d3-tooltip.s:after {
-  content: "\25B2";
-  margin: 0 0 1px 0;
-  top: -8px;
-  left: 0;
-  text-align: center;
-}
-
-/* Westward tooltips */
-.d3-tooltip.w:after {
-  content: "\25B6";
-  margin: -4px 0 0 -1px;
-  top: 50%;
-  left: 100%;
 }

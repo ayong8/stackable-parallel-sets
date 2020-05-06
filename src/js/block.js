@@ -186,14 +186,19 @@ function Block() {
 							? ''
 							: cat.label
 				})
-				.on('mouseover', function(cat){
-					d3.select(this.parentElement)
-						.append('text')
-						.text(cat.label)
-				})
-				.on('mouseout', function(cat){
-					d3.select(this.parentElement);
-				});
+				// .on('mouseover', function(cat){
+				// 	const catTooltip =
+        //       '<div style="font-weight: 600">' +
+        //       'Label: ' +
+        //       cat.label +
+        //       '</div>';
+
+				// 	tooltip.html(catTooltip);
+				// 	tooltip.show();
+				// })
+				// .on('mouseout', function(cat){
+				// 	tooltip.hide();
+				// });
 		})
 		// const gBLl = gLayout.getElLayout(gBLs);
 

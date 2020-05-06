@@ -15,6 +15,7 @@ from scipy import stats
 from pyclustering.cluster.kmedoids import kmedoids
 from pyclustering.utils import calculate_distance_matrix
 import static.lib.edge_filtering as out
+import static.lib.dl_model as dl
 
 # import ..static.lib.clustering.divisive_clustering as cl
 # from ..static.lib.clustering.load_dist_matrix import read_data, load_dist_matrix
@@ -56,6 +57,24 @@ dataset_features = {
             'scale': '',
             'domain': [0, 1, 2],
             'labels': ['High School', "Bachelor's Degree", 'Graduate Degree'],
+            'instances': []
+        },
+        { 
+            'name': 'children', 
+            'id': 'children',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1],
+            'labels': ['No', 'Yes'],
+            'instances': []
+        },
+        { 
+            'name': 'relationship', 
+            'id': 'relationship',
+            'type': 'categorical',
+            'scale': '',
+            'domain': [0, 1, 2, 3, 4],
+            'labels': ['Single', 'In a relationship', 'Married', 'Divorced', 'Other'],
             'instances': []
         },
         { 
@@ -583,7 +602,7 @@ class LoadData(APIView):
             file_name_for_bipartite = './app/static/data/' + 'demoemo' + '_users_hashtags_simple.csv'
         elif dataset_abbr == 'demoemo':
             file_name = './app/static/data/' + dataset_abbr + '_users_simple_200.csv'
-            file_name_for_bipartite = './app/static/data/' + dataset_abbr + '_words_40_simple_200.csv'
+            file_name_for_bipartite = './app/static/data/' + dataset_abbr + '_words_simple_200.csv'
 
         df_dataset = pd.read_csv(file_name)
         df_dataset_bipartite = pd.read_csv(file_name_for_bipartite)
@@ -829,8 +848,6 @@ class HClusteringForAllLVs(APIView):
             # file_name = './app/static/data/' + dataset_abbr + '_users_simple.csv'
             file_name_for_bipartite = './app/static/data/' + dataset_abbr + '_users_hashtags_simple.csv'
 
-        
-
         # Clustering for levels
         lv_cl_list_dict = {}
         lv_total_freqs_dict = {}
@@ -846,8 +863,8 @@ class HClusteringForAllLVs(APIView):
             max_cl_idx = np.argmax([ len(cl['instances']) for cl in cls_for_lv ])
             dominant_cls_in_lvs[lv_idx] = cls_for_lv[max_cl_idx]['idx']
 
-        # Between-level clusters sorting
-        # go over clusters to sort the nodex
+        # Between-level clusters sorting..
+        # go over clusters to sort the nodes
         df_bipartite_instances = pd.DataFrame()
         for lv_idx, cls_for_lv in lv_cl_list_dict.items():
             if sort_cls_by == 'layout_optimization':
@@ -871,25 +888,43 @@ class HClusteringForAllLVs(APIView):
                     sorted_C1_idx, sorted_C2_idx = sort_nodes(G, len(C1_instances), len(C2_instances))
 
                     # Store the sortedIdx information in each cluster set
-                    for cl_idx, cl in enumerate(lv_cl_list_dict[lv_idx]):
-                        cl['sortedIdx'] = sorted_C1_idx[cl_idx]
-                    for cl_idx, cl in enumerate(lv_cl_list_dict[lv_idx+1]):
-                        cl['sortedIdx'] = sorted_C2_idx[cl_idx]
+                    print('sorted_C1_idx; ', sorted_C1_idx)
+
+                    if lv_data[lv_idx]['btnMode']['bipartiteMode'] == 0 and lv_data[lv_idx+1]['btnMode']['bipartiteMode'] == 0:
+                        for sorted_idx, cl_idx in enumerate(sorted_C1_idx):
+                            lv_cl_list_dict[lv_idx][cl_idx]['sortedIdx'] = sorted_idx
+                        for sorted_idx, cl_idx in enumerate(sorted_C2_idx):
+                            lv_cl_list_dict[lv_idx][cl_idx]['sortedIdx'] = sorted_idx
+                    else:
+                        for cl_idx, cl in enumerate(lv_cl_list_dict[lv_idx]):
+                            cl['sortedIdx'] = sorted_C1_idx[cl_idx]
+                        for cl_idx, cl in enumerate(lv_cl_list_dict[lv_idx+1]):
+                            cl['sortedIdx'] = sorted_C2_idx[cl_idx]
             else: # then sort by selected feature
-                cls_instances = [ cl['instances'] for cl in lv_cl_list_dict[lv_idx]]
-                df_instances_for_sorting_feature = df_instances[sort_cls_by]
+                if lv_data[lv_idx]['btnMode']['bipartiteMode'] == 0:
+                    cls_instances = [ cl['instances'] for cl in lv_cl_list_dict[lv_idx]]
+                    df_instances_for_sorting_feature = df_instances[sort_cls_by]
 
-                mean_values_by_feature = []
-                for instance_set in cls_instances:
-                    instances_idx = [ instance['idx'] for instance in instance_set ]
-                    mean_value = df_instances.loc[instances_idx, sort_cls_by].mean()
-                    mean_values_by_feature.append(mean_value)
+                    mean_values_by_feature = []
+                    for instance_set in cls_instances:
+                        instances_idx = [ instance['idx'] for instance in instance_set ]
+                        mean_value = df_instances.loc[instances_idx, sort_cls_by].mean()
+                        mean_values_by_feature.append(mean_value)
 
-                sorted_cls_idx = np.argsort(mean_values_by_feature) # in an ascending order
+                    sorted_cls_idx = np.argsort(mean_values_by_feature) # in an ascending order
+                    print('mean_values_by_feature: ', mean_values_by_feature)
+                    print('sorted_cls_idx: ', sorted_cls_idx)
 
-                for cl_idx, cl in enumerate(lv_cl_list_dict[lv_idx]):
-                    cl['sortedIdx'] = sorted_cls_idx[cl_idx]
-
+                    for sorted_idx, cl_idx in enumerate(sorted_cls_idx):
+                        lv_cl_list_dict[lv_idx][cl_idx]['sortedIdx'] = sorted_idx
+                    # for cl_idx, cl in enumerate(lv_cl_list_dict[lv_idx]):
+                    #     cl['sortedIdx'] = sorted_cls_idx[cl_idx]
+                    print('doublecheck: ', [ cl['sortedIdx'] for cl in lv_cl_list_dict[lv_idx]])
+                else:
+                    df_bipartite_instances = lv_data[lv_idx]['btnMode']['bipartiteMat']
+                    df_bipartite_instances = df_bipartite_instances.drop('idx', axis=1)
+                    for cl_idx, cl in enumerate(lv_cl_list_dict[lv_idx]):
+                        cl['sortedIdx'] = cl_idx
         # Within-level cats sorting and pairwise correlation
         sorted_cats_idx_for_lvs = [{} for _ in range(num_lvs)]
         pairwise_corrs = [{} for _ in range(num_lvs)]
@@ -994,17 +1029,13 @@ class OptimizeEdgesForCls(APIView):
         # G = calculate_G(freq_mat_np)
         
         if (C1_bipartite_mode == 0) and (C2_bipartite_mode == 0):
-            
             freq_mat_np = calculate_freq_mat(C1_instance_set, C2_instance_set)
             print('freq_mat_npp for non-bp: ', freq_mat_np)
         else: # If current level is bipartite
-            
             freq_mat_np = np.array(bipartite_mat)
             print('freq_mat_npp for bp: ', freq_mat_np)
         G = calculate_G(freq_mat_np)
         
-        
-
         # Sorting clusters
         sorted_cl1_idx, sorted_cl2_idx = sort_nodes(G, len(C1_instance_set), len(C2_instance_set))
         

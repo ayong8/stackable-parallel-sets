@@ -262,13 +262,13 @@ function Level(selection) { // User-defined sementic category
 
 					const xScale = d3.scaleLinear()
 						.domain([-1, 1])
-						.range([10, 300-10]);
+						.range([10, 400-10]);
 					const yScale = d3.scaleLinear()
 						.domain([-1, 1])
-						.range([10, 300-10]);
+						.range([10, 400-10]);
 					const circleRScale = d3.scaleLinear()
 						.domain(d3.extent(dataSecondaryInstancesForPlot.map(d => d.freq)))
-						.range([4, 10]);
+						.range([3, 15]);
 
 					const gBipartitePlot = gLV
 						.append('g')
@@ -278,8 +278,8 @@ function Level(selection) { // User-defined sementic category
 						.append('rect')
 						.attr('x', 0)
 						.attr('y', 0)
-						.attr('width', 300)
-						.attr('height', 300)
+						.attr('width', 400)
+						.attr('height', 400)
 						.style('fill', 'whitesmoke');
 
 					gBipartitePlot
