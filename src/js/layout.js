@@ -81,7 +81,7 @@ export const lbl = {
 export const lbr = {
   h: 20,
   m: {
-    btn: 10
+    btn: 5
   }
 }
 
@@ -398,6 +398,7 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
       .on('mouseover', function(d){
         const selectedCatLine = d3.select(this);
         console.log('cat_line class: ', selectedCatLine.attr('class'));
+        console.log('cat_line data: ', d.instancesInCatToCat);
         selectedCatLine
           .style('stroke', 'darkgray');
       })
@@ -545,8 +546,10 @@ gLayout.renderClToClLines = function(selection, instances, currLvData, nextLvDat
     // Prepare the data to draw lines
     dataForClToClLines = instancesBtnCls.map((d, i) => {
       const widthForCurrCat = clScalesForCurr[d.clCurrIdx].range()[1] - clScalesForCurr[d.clCurrIdx].range()[0];
-      const widthDecayingRatio = 0.25;
+      const widthDecayingRatio = 0.15;
       const lineWidth = widthForCurrCat * d.numInstancesRatioInCurr * widthDecayingRatio;
+
+      console.log('cl and cum: ', clScalesForNext[d.clNextIdx], d.cumNumInstancesRatioInNext)
       return {
         clCurrIdx: d.clCurrIdx,
         clNextIdx: d.clNextIdx,
@@ -568,6 +571,8 @@ gLayout.renderClToClLines = function(selection, instances, currLvData, nextLvDat
         isOutlier: d.isOutlier
       };
     });
+
+    console.log('dataForClToClLines: ', dataForClToClLines)
 
     const drawTweetLine = d3
       .linkVertical()

@@ -58,6 +58,11 @@ svg {
   display: flex;
 }
 
+.run_button {
+  background-color: gray !important;
+  border-color: unset !important;
+}
+
 .dropdown_sorting_clusters,
 .dropdown_sorting_cats {
   height: 25px;
@@ -400,6 +405,7 @@ svg {
   justify-content: space-between;
 }
 
+.lv_info_wrapper,
 .feature_info_wrapper {
   display: flex;
 }
@@ -416,12 +422,13 @@ svg {
   color: white;
 }
 
-.categorization_button_wrapper {
+.lv_aggr_button_wrapper,
+.feature_aggr_button_wrapper {
   display: flex;
   margin-right: 5px;
 }
 
-.categorization_button {
+.aggr_button {
   text-indent: 0;
   text-indent: 0;
   margin-left: 5px;
@@ -429,6 +436,10 @@ svg {
   background-color: whitesmoke;
   border: 1px solid darkgray;
   z-index: 99;
+}
+
+.aggr_selected {
+  background-color: yellow;
 }
 
 .lv {
@@ -508,9 +519,10 @@ svg {
 }
 
 .secondary_instance_label {
-  font-size: 0.5rem;
+  font-size: 0.8rem;
   /* font-weight: bold; */
   font-style: italic;
+  fill: gray;
 }
 
 .bipartite_1 > rect {

@@ -157,21 +157,27 @@ scales.calculateScalesForCls = function(bipartiteMode, sortedCls, wholeWidth, to
     .range([10, wholeWidth-30]);
 
   let cumulativeClWidth = 0;
-  const widthDecayingRatio = 0.9;
+  const widthDecayingRatio = 0.85;
+  const widthDecayingRatioForBipartite = 0.7;
   const sumClWidths = barWidthScale(1) * widthDecayingRatio; // ratio==1; all instances
   // lbr.m.btn = (wholeWidth - sumClWidths) / (sortedCls.length-1) // btnInterval
   
   sortedCls.forEach((cl, clIdx) => {
     console.log('cl and total cnt: ', data.calculateClToClFreqForBipartite(cl.instances), totalCnt);
     let numInstancesRatioPerCl = 0;
-    if (bipartiteMode == 0) 
+    let clWidth, clEndY;
+    if (bipartiteMode == 0) {
       numInstancesRatioPerCl = cl.instances.length / totalCnt;
+      clWidth = barWidthScale(numInstancesRatioPerCl) * widthDecayingRatio,
+      clEndY = cumulativeClWidth + clWidth;
+    }
     else if (bipartiteMode == 1) {
       numInstancesRatioPerCl = data.calculateClToClFreqForBipartite(cl.instances) / totalCnt; // totalCnt == totalFreqCnt
+      clWidth = barWidthScale(numInstancesRatioPerCl) * widthDecayingRatioForBipartite,
+      clEndY = cumulativeClWidth + clWidth;
     }
       
-    const clWidth = barWidthScale(numInstancesRatioPerCl) * widthDecayingRatio,
-      clEndY = cumulativeClWidth + clWidth;
+    
 
     let clStartY = 0;
     if (cl.idx==0) clStartY = lbl.m.btn + cumulativeClWidth;

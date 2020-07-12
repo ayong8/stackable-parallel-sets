@@ -22,7 +22,7 @@ export const controller = function(LVData, features) {
       .html((feature, i) => addNewFeatureDivUnderLi(feature));
 
     lvDivs
-      .html((lvData, i) => addNewLVDivUnderLi(lvData.idx+1));
+      .html((lvData, i) => addNewLVDivUnderLi(lvData.idx+1))
 
     lvDivs
       .each(function(lvData) {
@@ -80,7 +80,7 @@ export const controller = function(LVData, features) {
 
 
     // Event on interface
-    $('.add_button')
+    d3.select('.add_button')
       .on('click', function(d, i) {
         const numLVs = $('.level_list').children('.lv').length + 1;
         
@@ -88,49 +88,79 @@ export const controller = function(LVData, features) {
           .children('.level_list')
           .append(addNewLVDiv(numLVs))
           .addClass('selected' + numLVs);
-  
+
+        // Provoke the click function to newly added LV div
+        d3.selectAll('.aggr_button')
+          .on('click', clickAggrButton);
+        
         calcWidth($('#title0'));
         sorting();
       });
 
-    $('.clustering_button')
-      .on('click', function(d, i) {
-        $(this).parent().parent()
-          .append('div')
-        
-        // $('#controller')
-        //   .children('.level_list')
-        //   .append(addNewLVDiv(numLVs))
-        //   .addClass('selected' + numLVs);
+    d3.selectAll('.aggr_button')
+      .on('click', clickAggrButton);
 
-        // calcWidth($('#title0'));
-        // sorting();
-      });
-
-    $('.clustering_button')
-    .on('mouseover', function(d, i) {
-      console.log('mouseoverred')
-      $(this).parent().parent()
-        .append('div')
+    // $('.clustering_button')
+    // .on('mouseover', function(d, i) {
+    //   console.log('mouseoverred')
+    //   $(this).parent().parent()
+    //     .append('div')
       
-      // $('#controller')
-      //   .children('.level_list')
-      //   .append(addNewLVDiv(numLVs))
-      //   .addClass('selected' + numLVs);
+    //   // $('#controller')
+    //   //   .children('.level_list')
+    //   //   .append(addNewLVDiv(numLVs))
+    //   //   .addClass('selected' + numLVs);
 
-      // calcWidth($('#title0'));
-      // sorting();
-    });
+    //   // calcWidth($('#title0'));
+    //   // sorting();
+    // });
 
     $('.coloring_button')
       .on('click', function(d, i) {
       });
+    //   return  `<li class="lv route">
+    //   <div class="title" id="title` + cumlativeNumLVs + `">` +
+    //     `<div class="lv_info_wrapper">` +
+    //       `<div>` + 'Level ' + cumlativeNumLVs + `</div>` +
+    //     `</div>
+    //       <span class="ui-icon ui-icon-grip-solid-horizontal"></span>
+    //       <ul class="space ui-sortable" id="space` + cumlativeNumLVs + `"></ul>` +
+
+    //     `<div class="aggr_button_wrapper">` +
+    //       `<div class="clustering_button aggr_button">` + "C" + `</div>` +
+    //       `<div class="binning_button aggr_button">` + "B" + `</div>` +
+    //     `</div>` +
+    //   `</div>` +
+    // `</li>`;
+
+    function clickAggrButton(d, i) {
+      const _thisButton = d3.select(this);
+        const _buttonWrapper = d3.select(this.parentNode);
+        // $(this).parent().parent()
+        //   .append('div');
+
+        _buttonWrapper.selectAll('.aggr_button').classed('aggr_selected', false);
+
+        if (_thisButton.classed('aggr_selected')) {
+          _thisButton
+            .classed('aggr_selected', false);
+        } else {
+          _thisButton
+            .classed('aggr_selected', true);
+        }
+    }
 
     function addNewLVDiv(cumlativeNumLVs) {
-      return  `<li class="route">
-          <div class="title" id="title` + cumlativeNumLVs + `">` +
-        'Level ' + cumlativeNumLVs +
-        `</div>
+      return  `<li class="lv route">
+          <div class="title" id="title` + cumlativeNumLVs + `">` +    
+            `<div class="lv_info_wrapper">` +
+              `<div class="lv_title">` + 'Level ' + cumlativeNumLVs + `</div>` +
+            `</div>` +
+            `<div class="lv_aggr_button_wrapper">` +
+              `<div class="clustering lv_clustering_button aggr_button aggr_selected">` + "C" + `</div>` +
+              `<div class="binning lv_binning_button aggr_button">` + "B" + `</div>` +
+            `</div>` +
+          `</div>
           <span class="ui-icon ui-icon-grip-solid-horizontal"></span>
           <ul class="space ui-sortable" id="space` + cumlativeNumLVs + `"></ul>
         </li>`;
@@ -159,10 +189,10 @@ export const controller = function(LVData, features) {
         `<div class="feature_info_wrapper">` +
           `<div>` + feature.name + `</div>` +
         `</div>` +
-        `<div class="categorization_button_wrapper">` +
+        `<div class="feature_aggr_button_wrapper">` +
           `<div class="feature_type">` + (feature.type == 'categorical' ? 'cat' : 'cont') + `</div>` +
-          `<div class="clustering_button categorization_button">` + "C" + `</div>` +
-          `<div class="binning_button categorization_button">` + "B" + `</div>` +
+          `<div class="clustering feature_clustering_button aggr_button">` + "C" + `</div>` +
+          `<div class="binning feature_binning_button aggr_button aggr_selected">` + "B" + `</div>` +
         `</div>` +
         `</div>
           <span class="ui-icon ui-icon-grip-solid-horizontal"></span>

@@ -179,9 +179,10 @@ function Block() {
 					else return lwbr.h * 2/3
 				})
 				.text((cat, i) => {
+					console.log('cat.label: ', cat.label)
 					const catRectWidth = (catScales[i].range()[1] - catScales[i].range()[0]);
 					return ((i == numCats-1) || ((catRectWidth > 4) && (catRectWidth < 10)))
-						? cat.label.slice(0, 4) + '...' 
+						? cat.label.toString().slice(0, 4) + '...' 
 						: (catRectWidth <= 4) 
 							? ''
 							: cat.label

@@ -27,6 +27,7 @@ const featuresForSorting = {
 
 clSortingOpt = 'layout_optimization'
 renderInterface();
+renderRun();
 fetchForInitialLoad(clSortingOpt);
 
 function fetchForInitialLoad(sortClsBy) {
@@ -44,7 +45,9 @@ function fetchForInitialLoad(sortClsBy) {
           instances = JSON.parse(response.instances);
   
     LVData = data.mapLevelToFeatures(datasetAbbr, features, rawDataForBp);
+    // updateLVData();
     controller(LVData, features);
+    //data.mapLevelToFeatures(datasetAbbr, features, rawDataForBp);
     l.h = LVData.length * 250;
 
     // Render the levels given clustering result
@@ -351,7 +354,7 @@ function fetchForInitialLoad(sortClsBy) {
                 .classed('proto_circle_hidden', false)
                 .attr('r', function(d){
                   const instancesInSelectedCat = selectedCl.instances.filter(instance => instance[d.name] === d.value)
-                  return scales.protoCircleRScale(selectedInGroupRatioFunc(instancesInSelectedCat, selectedCl.instances))
+                  return scales.protoCircleRScale(selectedInGroupRatioFunc(false, instancesInSelectedCat, selectedCl.instances))
                 });
 
               // Color other bars, wtn-lines and btn-lines
@@ -378,9 +381,9 @@ function fetchForInitialLoad(sortClsBy) {
                       .selectAll('.cl_line')
                       .style('stroke', clToCl => {
                         if (mode == 'both') {
-                          return selectedClColorScale(selectedInGroupRatioFunc(clToCl.instancesClToCl, selectedCl.instances));
+                          return selectedClColorScale(selectedInGroupRatioFunc(lvData.btnMode.bipartiteMode, clToCl.instancesClToCl, selectedCl.instances));
                         } else {
-                          return selectedClColorScale(selectedInGroupRatioFunc(clToCl.instancesClToCl, selectedCl.instances));
+                          return selectedClColorScale(selectedInGroupRatioFunc(lvData.btnMode.bipartiteMode, clToCl.instancesClToCl, selectedCl.instances));
                         }
                       });
 
@@ -392,14 +395,17 @@ function fetchForInitialLoad(sortClsBy) {
                   const dominantClInLv = d3.select('.g_bars.lv_' + lvIdx)
                     .selectAll('.bar_rect')
                     .each((cl) => {
-                      const inGroupRatio = selectedInGroupRatioFunc(cl.instances, selectedCl.instances);
-                      console.log('inGroupRatio: ', inGroupRatio, cl.instances)
+                      if (lvData.btnMode.bipartiteMode == 1) {
+                        selectedInGroupRatioFunc(lvData.btnMode.bipartiteMode, cl.instances, selectedCl.instances);
+                      }
+                      const inGroupRatio = selectedInGroupRatioFunc(lvData.btnMode.bipartiteMode, cl.instances, selectedCl.instances);
+                        
                       if (inGroupRatio > maxInGroupRatioForCl) {
                         clIdxWithMaxGroupRatio = cl.idx;
                         maxInGroupRatioForCl = inGroupRatio;
                       }
                     });
-                  console.log(lvIdx, clIdxWithMaxGroupRatio);
+
                   dominantClsForSubgroup1.push({
                     lv: lvIdx,
                     cl: clIdxWithMaxGroupRatio
@@ -407,7 +413,7 @@ function fetchForInitialLoad(sortClsBy) {
                       
                   const dominantClLine = clLinesBtnLvs 
                     .each((clToCl, i) => {
-                      const inGroupRatio = selectedInGroupRatioFunc(clToCl.instancesClToCl, selectedCl.instances);
+                      const inGroupRatio = selectedInGroupRatioFunc(lvData.btnMode.bipartiteMode, clToCl.instancesClToCl, selectedCl.instances);
                       // Identify the element with max inGroupRatio
                       if (inGroupRatio >= maxInGroupRatioForClLine) {
                         maxInGroupRatioForClLine = inGroupRatio;
@@ -432,14 +438,17 @@ function fetchForInitialLoad(sortClsBy) {
                     const dominantClInLv = d3.select('.g_bars.lv_' + lvIdx)
                       .selectAll('.bar_rect')
                       .each((cl) => {
-                        const inGroupRatio = selectedInGroupRatioFunc(cl.instances, selectedCl.instances);
-                        console.log('inGroupRatio: ', inGroupRatio, cl.instances)
+                        if (lvData.btnMode.bipartiteMode == 1) {
+
+                        }
+                        const inGroupRatio = selectedInGroupRatioFunc(lvData.btnMode.bipartiteMode, cl.instances, selectedCl.instances);
+
                         if (inGroupRatio <= minInGroupRatioForCl) {
                           clIdxWithMinGroupRatio = cl.idx;
                           minInGroupRatioForCl = inGroupRatio;
                         }
                       });
-                    console.log(lvIdx, clIdxWithMaxGroupRatio);
+
                     dominantClsForSubgroup2.push({
                       lv: lvIdx,
                       cl: clIdxWithMinGroupRatio
@@ -447,7 +456,7 @@ function fetchForInitialLoad(sortClsBy) {
 
                     const dominantClLineBySecond = clLinesBtnLvs // The most dominant cl_line for the first group
                       .each((clToCl, i) => {
-                        const inGroupRatio = selectedInGroupRatioFunc(clToCl.instancesClToCl, selectedCl.instances);
+                        const inGroupRatio = selectedInGroupRatioFunc(lvData.btnMode.bipartiteMode, clToCl.instancesClToCl, selectedCl.instances);
                         // Identify the element with max inGroupRatio
                         if (inGroupRatio <= minInGroupRatio) {
                           minInGroupRatio = inGroupRatio;
@@ -512,9 +521,9 @@ function fetchForInitialLoad(sortClsBy) {
               dominantClsForSubgroup1.forEach(function(d) {
                 d3.selectAll('.proto_path' + '.lv_' + d.lv + '.cl_' + d.cl)
                   .classed('proto_dominant', true)
-                  .style('stroke-width', function(d){
-                    const instancesInSelectedCat = selectedCl.instances.filter(instance => instance[d.name] === d.value)
-                    return scales.protoPathScale(selectedInGroupRatioFunc(instancesInSelectedCat, selectedCl.instances));
+                  .style('stroke-width', function(e){
+                    const instancesInSelectedCat = selectedCl.instances.filter(instance => instance[d.name] === e.value)
+                    return scales.protoPathScale(selectedInGroupRatioFunc(LVData[d.lv].btnMode.bipartiteMode, instancesInSelectedCat, selectedCl.instances));
                   })
                 d3.selectAll('.proto_circle' + '.lv_' + d.lv + '.cl_' + d.cl)
                   .classed('proto_dominant_circle', true);
@@ -526,9 +535,9 @@ function fetchForInitialLoad(sortClsBy) {
               dominantClsForSubgroup2.forEach(function(d) {
                 d3.selectAll('.proto_path' + '.lv_' + d.lv + '.cl_' + d.cl)
                   .classed('proto_dominant2', true)
-                  .style('stroke-width', function(d){
-                    const instancesInSelectedCat = selectedCl.instances.filter(instance => instance[d.name] === d.value)
-                    return scales.protoPathScale(selectedInGroupRatioFunc(instancesInSelectedCat, selectedCl.instances));
+                  .style('stroke-width', function(e){
+                    const instancesInSelectedCat = selectedCl.instances.filter(instance => instance[e.name] === e.value)
+                    return scales.protoPathScale(selectedInGroupRatioFunc(LVData[d.lv].btnMode.bipartiteMode, instancesInSelectedCat, selectedCl.instances));
                   })
                 d3.selectAll('.proto_circle' + '.lv_' + d.lv + '.cl_' + d.cl)
                   .classed('proto_dominant_circle2', true);
@@ -543,7 +552,15 @@ function fetchForInitialLoad(sortClsBy) {
                   return cl.lvIdx !== selectedLV
                 })
                 .style('fill', function(cl){
-                  return selectedClColorScale(selectedInGroupRatioFunc(cl.instances, selectedCl.instances));
+                  return selectedClColorScale(selectedInGroupRatioFunc(LVData[cl.lvIdx].btnMode.bipartiteMode, cl.instances, selectedCl.instances));
+                });
+
+              d3.selectAll('.secondary_instance_circle')  // 
+                .filter(function(item) {
+                  return item.lvIdx !== selectedLV
+                })
+                .style('fill', function(item){
+                  return selectedClColorScale(selectedInGroupRatioFunc(LVData[item.lvIdx].btnMode.bipartiteMode, item.instances, selectedCl.instances));
                 });
 
               // Highlight the protos
@@ -555,7 +572,7 @@ function fetchForInitialLoad(sortClsBy) {
               // Color cat bars
               d3.selectAll('.cat_rect')
                 .style('fill', function(cat){
-                  return selectedClColorScale(selectedInGroupRatioFunc(cat.instances, selectedCl.instances));
+                  return selectedClColorScale(selectedInGroupRatioFunc(false, cat.instances, selectedCl.instances));
                 });
 
               // Hide the block icons
@@ -755,8 +772,6 @@ function fetchForInitialLoad(sortClsBy) {
                 repositionEl(gBarsLowerSelected, yDiff);
                 repositionEl(gBtnLvsSelected, yDiff);
 
-                
-
                 // Hide the gBars and create treemap
                 if (lvData.idx === 0) {
                   gBarsUpperSelected
@@ -835,16 +850,30 @@ function fetchForInitialLoad(sortClsBy) {
       }
 
       // Compute event-related measures
-      function calculateInGroupRatio(instancesInOther, instancesInSelection) {
-        const instancesIdx = instancesInOther.map(d => d.idx),
-        selectedInstancesIdx = instancesInSelection.map(d => d.idx),
-        overlappedIdx = _.intersection(instancesIdx, selectedInstancesIdx);
+      function calculateInGroupRatio(bipartiteModeInOther, instancesInOther, instancesInSelection) {
+        let instancesIdx;
+        if (bipartiteModeInOther == false)
+          instancesIdx = instancesInOther.map(d => d.idx);
+        else
+          instancesIdx = Object.keys(instancesInOther[0])
+              .filter(instanceIdx => instancesInOther[0][instanceIdx] !== 0)
+              .map(d => parseInt(d)); // instanncesIdxForBipartite
+
+        const selectedInstancesIdx = instancesInSelection.map(d => d.idx);
+        const overlappedIdx = _.intersection(instancesIdx, selectedInstancesIdx);
 
         return overlappedIdx.length / selectedInstancesIdx.length;
       }
 
-      function calculateInGroupRatioForTwoGroups(instancesInOther, instancesInSelection) {
-        const instancesIdx = instancesInOther.map(d => d.idx);
+      function calculateInGroupRatioForTwoGroups(bipartiteModeInOther, instancesInOther, instancesInSelection) {
+        let instancesIdx;
+        if (bipartiteModeInOther == false)
+          instancesIdx = instancesInOther.map(d => d.idx);
+        else
+          instancesIdx = Object.keys(instancesInOther[0])
+              .filter(instanceIdx => instancesInOther[0][instanceIdx] !== 0)
+              .map(d => parseInt(d)); // instanncesIdxForBipartite
+
         const firstCl = d3.select('.bar_rect_selected'),
               secondCl = d3.select('.bar_rect_selected2');
         let instancesIdxInSelection1 = [],
@@ -877,7 +906,6 @@ function fetchForInitialLoad(sortClsBy) {
 
           return inGroupRatio1 - inGroupRatio2;
         }
-        
       }
 
       function calculateGroupRatio(instancesInOther, instancesInSelection) {
@@ -887,6 +915,16 @@ function fetchForInitialLoad(sortClsBy) {
 
         return overlappedIdx.length / instancesIdx.length;
       }
+    });
+  });
+}
+
+function renderRun() {
+  $(document).ready(function(){
+    $('.run_button').on('click', function(e) {
+      fetchForInitialLoad(clSortingOpt);
+      d3.select('.svg')
+        .remove();
     });
   });
 }

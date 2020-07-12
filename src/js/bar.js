@@ -97,6 +97,7 @@ function Bar() {
 						.append('circle')
 						.attr('class', 'proto_circle lv_' + lvData.idx + ' cl_' + cl.idx)
 						.attr('cx', (d, i) => {
+							console.log(data.convertStrToUnderbar(d.name))
 							const catEl = gLayout.getGlobalElLayout(d3.select('.cat_rect_' + data.convertStrToUnderbar(d.name) + '_' + d.value));
 							return catEl.x1 + catEl.width/2;
 						})

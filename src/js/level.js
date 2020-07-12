@@ -54,7 +54,7 @@ function Level(selection) { // User-defined sementic category
 						.attr('x1', 0)
 						.attr('y1', heightForLv + 5)
 						.attr('x2', llv.w+10)
-						.attr('y2', heightForLv + 5);
+						.attr('y2', );
 						
 					gLV
 						.append('text')
@@ -235,11 +235,12 @@ function Level(selection) { // User-defined sementic category
 
 				function renderScatterPlot(gLV, secondaryInstances) {
 					let dataSecondaryInstancesForPlot = [];
+					let lvData = gLV.datum();
 					let model = new TSNE({
 						dim: 2,
-						perplexity: 30.0,
+						perplexity: 10.0,
 						earlyExaggeration: 4.0,
-						learningRate: 100.0,
+						learningRate: 1000.0,
 						nIter: 1000,
 						metric: 'euclidean'
 					});
@@ -256,16 +257,18 @@ function Level(selection) { // User-defined sementic category
 
 					dataSecondaryInstancesForPlot = secondaryInstances.map((d, i) => ({
 						idx: d.idx,
+						lvIdx: lvData.idx,
 						freq: _.sum(_.values(_.omit(d, 'idx'))),
-						coord: coords[i]
+						coord: coords[i],
+						instances: [ d ]
 					}));
 
 					const xScale = d3.scaleLinear()
 						.domain([-1, 1])
-						.range([10, 400-10]);
+						.range([10, 450-10]);
 					const yScale = d3.scaleLinear()
 						.domain([-1, 1])
-						.range([10, 400-10]);
+						.range([10, 450-10]);
 					const circleRScale = d3.scaleLinear()
 						.domain(d3.extent(dataSecondaryInstancesForPlot.map(d => d.freq)))
 						.range([3, 15]);
@@ -278,15 +281,15 @@ function Level(selection) { // User-defined sementic category
 						.append('rect')
 						.attr('x', 0)
 						.attr('y', 0)
-						.attr('width', 400)
-						.attr('height', 400)
-						.style('fill', 'whitesmoke');
+						.attr('width', 450)
+						.attr('height', 450)
+						.style('fill', '#fbfbfb');
 
 					gBipartitePlot
 						.selectAll('.secondary_instance_circle')
 						.data(dataSecondaryInstancesForPlot).enter()
 						.append('circle')
-						.attr('class', 'secondary_instance_circle')
+						.attr('class', d => 'secondary_instance_circle ' + d.idx)
 						.attr('cx', d => xScale(d.coord[0]))
 						.attr('cy', d => yScale(d.coord[1]))
 						.attr('r', d => circleRScale(d.freq));
@@ -296,8 +299,8 @@ function Level(selection) { // User-defined sementic category
 						.data(dataSecondaryInstancesForPlot).enter()
 						.append('text')
 						.attr('class', 'secondary_instance_label')
-						.attr('x', d => xScale(d.coord[0])+10)
-						.attr('y', d => yScale(d.coord[1])+5)
+						.attr('x', d => xScale(d.coord[0]) + circleRScale(d.freq) + 3)
+						.attr('y', d => yScale(d.coord[1]) + 5)
 						.text(d => d.idx);
 				}
 			});
