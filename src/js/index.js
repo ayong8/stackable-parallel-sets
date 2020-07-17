@@ -18,6 +18,7 @@ const container = d3.select('#container');
 const tooltip = d3tooltip(d3);
 
 let LVData = [];
+let numAllInstances = 0;
 let selectedGroups = [null, null];
 let clSortingOpt = [];
 const featuresForSorting = {
@@ -148,16 +149,13 @@ function fetchForInitialLoad(sortClsBy) {
             d3.select(this).classed('cat_rect_mouseovered', true);
             const catToCatLineHtml =
               '<div style="font-weight: 600">' +
-              'From: ' +
-              d +
+              'Instances: ' +
+              d.instances.length +
               '</br>' +
-              'To: ' +
-              d +
               '</div>';
 
             tooltip.html(catToCatLineHtml);
             tooltip.show();
-            
 
             d3.selectAll('.cat_line' + '.feature_' + featureName + '_cat_' + d.sortedIdx)
                 .classed('cat_line_mouseovered', true);

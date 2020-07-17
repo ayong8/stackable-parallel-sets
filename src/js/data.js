@@ -140,7 +140,6 @@ data.mapLevelToFeatures = function(dataAbbr, featuresData, rawDataForBp) {
           features: [
             _.find(featuresData, ['name', 'religion']),
             _.find(featuresData, ['name', 'political']),
-            _.find(featuresData, ['name', 'life_satisfaction']),
             _.find(featuresData, ['name', 'optimism'])
           ],
           cls: [],
@@ -503,7 +502,7 @@ data.mapLevelToFeatures = function(dataAbbr, featuresData, rawDataForBp) {
           bipartiteMat: [],
           aggrMode: 'clustering',
           numCls: 4,  
-          candidateKs: [4,5,6,7],
+            candidateKs: [4,5,6,7],
           featuresForClustering: []
         },
         order: 'last',
@@ -515,7 +514,7 @@ data.mapLevelToFeatures = function(dataAbbr, featuresData, rawDataForBp) {
       })
 
   console.log('LVData: ', LVData);
-  return LVData;
+  return LVDataBefore;
 }
 
 data.convertStrToUnderbar = function(str) {
