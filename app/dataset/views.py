@@ -66,7 +66,6 @@ def reassign_cluster_label_by_order(categorized_values, feature_values):
     return sorted_categorized_values, feature_values
 
 def convert_instances_to_instance_sets(category_domain, instances):
-    print('category_domain: ', category_domain, instances)
     instance_sets = [[] for _ in category_domain]
     for instance in instances:
         instance_sets[category_domain.index(instance['value'])].append(instance)
@@ -85,7 +84,6 @@ def hClustering(k, X):
 
 # Input: Dataset itself
 def kmdeoidsClustering(X, k):
-    print('XXX: ', X)
     random.seed(42)
     initial_medoids_idx = random.sample(range(len(X)), k) # random.sample(range(len(X)), 4)
     dist_mat = calculate_distance_matrix(X)
@@ -368,7 +366,6 @@ class LoadData(APIView):
             elif feature_type == 'categorical':
                 # feature values to instances
                 # [0,2,3,1,0] => [ {'idx': 0, 'value': 0}, ...]
-                print(feature_obj, feature_values)
                 
                 if dataset_abbr == 'como':
                     feature_values = convert_to_numbers(feature_obj['labels'], feature_values)

@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import d3tooltip from 'd3-tooltip';
 
 export const gColors = {
   system: 'mediumpurple',
@@ -93,6 +94,8 @@ export const lwbr = {
 }
 
 export const gLayout = {}
+
+const tooltip = d3tooltip(d3);
 
 llv.getT = function(idx) {
   return this.h * idx + lBtn.h * idx;
@@ -395,17 +398,20 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
       //.style('stroke-width', d => d.lineHeight)
       .style('stroke-width', d => d.lineWidth)
       .style('opacity', d => 0)
-      .on('mouseover', function(d){
-        const selectedCatLine = d3.select(this);
-        console.log('cat_line class: ', selectedCatLine.attr('class'));
-        console.log('cat_line data: ', d.instancesInCatToCat);
-        selectedCatLine
-          .style('stroke', 'darkgray');
-      })
-      .on('mouseout', function(d){
-        const selectedCatLine = d3.select(this);
-        selectedCatLine
-          .style('stroke', '');
+      .on('mouseover', function(d) {
+        d3.select(this).classed('cat_line_mouseovered', true);
+        const catToCatLineHtml =
+          '<div style="font-weight: 600">' +
+          'Ratio: ' +
+          d.instancesInCatToCat.length +
+          '</br>' +
+          'Ratio in upper category: ' +
+          (Math.ceil((d.numInstancesRatioInCurr)*100)/100) +
+          '</br>' +
+          '</div>';
+
+        tooltip.html(catToCatLineHtml);
+        tooltip.show();
       });
 
     catLinesData

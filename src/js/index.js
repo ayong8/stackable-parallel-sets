@@ -18,7 +18,6 @@ const container = d3.select('#container');
 const tooltip = d3tooltip(d3);
 
 let LVData = [];
-let numAllInstances = 0;
 let selectedGroups = [null, null];
 let clSortingOpt = [];
 const featuresForSorting = {
@@ -43,7 +42,8 @@ function fetchForInitialLoad(sortClsBy) {
           rawData = JSON.parse(response.dataset),
           rawDataForBp = JSON.parse(response.datasetForBp), // bp = bipartite
           features = response.features,
-          instances = JSON.parse(response.instances);
+          instances = JSON.parse(response.instances),
+          numAllInstances = instances.length;
   
     LVData = data.mapLevelToFeatures(datasetAbbr, features, rawDataForBp);
     // updateLVData();
@@ -152,6 +152,9 @@ function fetchForInitialLoad(sortClsBy) {
               'Instances: ' +
               d.instances.length +
               '</br>' +
+              'Ratio: ' +
+              (Math.ceil((d.instances.length / numAllInstances)*100)/100) +
+              '</br>' +
               '</div>';
 
             tooltip.html(catToCatLineHtml);
@@ -167,6 +170,40 @@ function fetchForInitialLoad(sortClsBy) {
 
             d3.selectAll('.cat_line' + '.feature_' + featureName + '_cat_' + d.sortedIdx)
                 .classed('cat_line_mouseovered', false);
+          });
+          // .on('mouseover', function(d){
+          //   const selectedCatLine = d3.select(this);
+          //   console.log('cat_line class: ', selectedCatLine.attr('class'));
+          //   console.log('cat_line data: ', d.instancesInCatToCat);
+          //   selectedCatLine
+          //     .style('stroke', 'darkgray');
+          // })
+          // .on('mouseout', function(d){
+          //   const selectedCatLine = d3.select(this);
+          //   selectedCatLine
+          //     .style('stroke', '');
+          // });
+      d3.selectAll('.cat_line')
+          .on('click', function(d) {
+          })
+          .on('mouseover', function(d) {
+            d3.select(this).classed('cat_line_mouseovered', true);
+            const catToCatLineHtml =
+              '<div style="font-weight: 600">' +
+              'Instances: ' +
+              d.instances.length +
+              '</br>' +
+              'Ratio: ' +
+              (Math.ceil((d.instances.length / numAllInstances)*100)/100) +
+              '</br>' +
+              '</div>';
+
+            tooltip.html(catToCatLineHtml);
+            tooltip.show();
+          })
+          .on('mouseout', function(d) {
+            d3.select(this).classed('cat_line_mouseovered', false);
+            tooltip.hide();
           });
 
       //*** Select a subgroup
