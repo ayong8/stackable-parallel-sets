@@ -22,7 +22,14 @@ export const controller = function(LVData, features) {
       .html((feature, i) => addNewFeatureDivUnderLi(feature));
 
     lvDivs
-      .html((lvData, i) => addNewLVDivUnderLi(lvData.idx+1))
+      .html((lvData, i) => {
+        let aggr_mode = '';
+        if (lvData.idx == 0)
+          aggr_mode = 'B';
+        else
+          aggr_mode = 'C';
+        return addNewLVDivUnderLi(lvData.idx+1, aggr_mode)
+      })
 
     lvDivs
       .each(function(lvData) {
@@ -176,10 +183,25 @@ export const controller = function(LVData, features) {
         </li>`;
     }
 
-    function addNewLVDivUnderLi(cumlativeNumLVs) {
+    function addNewLVDivUnderLi(cumlativeNumLVs, aggr_mode) {
+      let aggr_mode_div = '';
+      if (aggr_mode == 'B')
+        aggr_mode_div = `<div class="lv_aggr_button_wrapper">` +
+              `<div class="clustering lv_clustering_button aggr_button">` + "C" + `</div>` +
+              `<div class="binning lv_binning_button aggr_button aggr_selected">` + "B" + `</div>` +
+            `</div>`;
+      else
+        aggr_mode_div = `<div class="lv_aggr_button_wrapper">` +
+                `<div class="clustering lv_clustering_button aggr_button aggr_selected">` + "C" + `</div>` +
+                `<div class="binning lv_binning_button aggr_button">` + "B" + `</div>` +
+              `</div>`;
+
       return  `<div class="title" id="title` + cumlativeNumLVs + `">` +
-        'Level ' + cumlativeNumLVs +
-        `</div>
+              `<div class="lv_info_wrapper">` +
+              `<div class="lv_title">` + 'Level ' + cumlativeNumLVs + `</div>` +
+            `</div>` +
+            aggr_mode_div +
+          `</div>
           <span class="ui-icon ui-icon-grip-solid-horizontal"></span>
           <ul class="space ui-sortable" id="space` + cumlativeNumLVs + `"></ul>`;
     }
@@ -214,7 +236,5 @@ export const controller = function(LVData, features) {
       
       $('.space').disableSelection();
     }
-    
-    
     });
 }

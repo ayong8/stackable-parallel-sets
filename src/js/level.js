@@ -119,7 +119,7 @@ function Level(selection) { // User-defined sementic category
 								.attr('class', 'level_rect')
 								.attr('x', 0)
 								.attr('y', 0)
-								.attr('width', llv.w)
+								.attr('width', llv.w+10)
 								.attr('height', heightForLv);
 								
 							gLV

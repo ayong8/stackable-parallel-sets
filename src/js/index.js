@@ -42,9 +42,9 @@ function fetchForInitialLoad(sortClsBy) {
           rawData = JSON.parse(response.dataset),
           rawDataForBp = JSON.parse(response.datasetForBp), // bp = bipartite
           features = response.features,
-          instances = JSON.parse(response.instances),
-          numAllInstances = instances.length;
+          instances = JSON.parse(response.instances);
   
+    data.numAllInstances = instances.length;
     LVData = data.mapLevelToFeatures(datasetAbbr, features, rawDataForBp);
     // updateLVData();
     controller(LVData, features);
@@ -153,7 +153,7 @@ function fetchForInitialLoad(sortClsBy) {
               d.instances.length +
               '</br>' +
               'Ratio: ' +
-              (Math.ceil((d.instances.length / numAllInstances)*100)/100) +
+              (Math.ceil((d.instances.length / data.numAllInstances)*100)/100) +
               '</br>' +
               '</div>';
 
@@ -426,7 +426,6 @@ function fetchForInitialLoad(sortClsBy) {
                     .style('opacity', 0);
                     
                   // The most dominant cl_line for the first group
-                  console.log('lvIdx: ', lvIdx)
                   const dominantClInLv = d3.select('.g_bars.lv_' + lvIdx)
                     .selectAll('.bar_rect')
                     .each((cl) => {
@@ -618,44 +617,57 @@ function fetchForInitialLoad(sortClsBy) {
           })
           .on('mouseover', function(d) {
             console.log('d on bar_rect: ', d);
-            if (LVData[d.lvIdx].mode.folded == true) {
-              d3.select(this.parentNode.parentNode) // g_bars
-                .selectAll('.treemap_label.cl_' + d.idx)
-                .classed('treemp_label_mouseovered', true);
-
-              d3.selectAll('.cl_line' + '.from_lv_' + d.lvIdx + '_cl_' + d.idx)
-                .classed('cl_line_mouseovered', true);
+            const parentG = d3.select(this.parentNode);
+            if (parentG.attr('class').split(' ')[4] == 'bipartite_1') {
+              d3.select('.' + d.name)
+                .classed('secondary_instance_circle_mouseovered', true);
             } else {
-              d3.select(this).classed('bar_rect_mouseovered', true);
-              d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
-                .classed('proto_circle_mouseovered', true)
-                .classed('proto_circle_hidden', false);
-              d3.selectAll('.proto_path.lv_' + d.lvIdx + '.cl_' + d.idx)
-                .classed('proto_path_mouseovered', true);
+              if (LVData[d.lvIdx].mode.folded == true) {
+                d3.select(this.parentNode.parentNode) // g_bars
+                  .selectAll('.treemap_label.cl_' + d.idx)
+                  .classed('treemp_label_mouseovered', true);
+  
+                d3.selectAll('.cl_line' + '.from_lv_' + d.lvIdx + '_cl_' + d.idx)
+                  .classed('cl_line_mouseovered', true);
+              } else {
+                d3.select(this).classed('bar_rect_mouseovered', true);
+                d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
+                  .classed('proto_circle_mouseovered', true)
+                  .classed('proto_circle_hidden', false);
+                d3.selectAll('.proto_path.lv_' + d.lvIdx + '.cl_' + d.idx)
+                  .classed('proto_path_mouseovered', true);
+              }
+              d3.selectAll('.cl_line' + '.from_lv_' + d.lvIdx + '_cl_' + d.idx)
+                  .classed('cl_line_mouseovered', true);
+              d3.selectAll('.cl_line' + '.to_lv_' + d.lvIdx + '_cl_' + d.idx)
+                  .classed('cl_line_mouseovered', true);
             }
-            d3.selectAll('.cl_line' + '.from_lv_' + d.lvIdx + '_cl_' + d.idx)
-                .classed('cl_line_mouseovered', true);
-            d3.selectAll('.cl_line' + '.to_lv_' + d.lvIdx + '_cl_' + d.idx)
-                .classed('cl_line_mouseovered', true);
+            
           })
           .on('mouseout', function(d) {
-            if (LVData[d.lvIdx].mode.folded == true) {
-              d3.select(this.parentNode.parentNode) // g_bars
-                .selectAll('.treemap_label.cl_' + d.idx)
-                .classed('treemp_label_mouseovered', false);
+            const parentG = d3.select(this.parentNode);
+            if (parentG.attr('class').split(' ')[4] == 'bipartite_1') {
+              d3.select('.' + d.name)
+                .classed('secondary_instance_circle_mouseovered', false);
             } else {
-              d3.select(this).classed('bar_rect_mouseovered', false);
-              d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
-                .classed('proto_circle_mouseovered', false)
-                .classed('proto_circle_hidden', true);
-              d3.selectAll('.proto_path.lv_' + d.lvIdx + '.cl_' + d.idx)
-                .classed('proto_path_mouseovered', false)
-                .classed('proto_path_selected', false);
+              if (LVData[d.lvIdx].mode.folded == true) {
+                d3.select(this.parentNode.parentNode) // g_bars
+                  .selectAll('.treemap_label.cl_' + d.idx)
+                  .classed('treemp_label_mouseovered', false);
+              } else {
+                d3.select(this).classed('bar_rect_mouseovered', false);
+                d3.selectAll('.proto_circle.lv_' + d.lvIdx + '.cl_' + d.idx)
+                  .classed('proto_circle_mouseovered', false)
+                  .classed('proto_circle_hidden', true);
+                d3.selectAll('.proto_path.lv_' + d.lvIdx + '.cl_' + d.idx)
+                  .classed('proto_path_mouseovered', false)
+                  .classed('proto_path_selected', false);
+              }
+              d3.selectAll('.cl_line' + '.from_lv_' + d.lvIdx + '_cl_' + d.idx)
+                  .classed('cl_line_mouseovered', false);
+              d3.selectAll('.cl_line' + '.to_lv_' + d.lvIdx + '_cl_' + d.idx)
+                  .classed('cl_line_mouseovered', false);
             }
-            d3.selectAll('.cl_line' + '.from_lv_' + d.lvIdx + '_cl_' + d.idx)
-                .classed('cl_line_mouseovered', false);
-            d3.selectAll('.cl_line' + '.to_lv_' + d.lvIdx + '_cl_' + d.idx)
-                .classed('cl_line_mouseovered', false);
           });
 
       d3.selectAll('.proto_circle')

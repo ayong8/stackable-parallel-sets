@@ -79,7 +79,7 @@ function Bar() {
 					.attr('class', 'cl_label')
 					.attr('x', 0)
 					.attr('y', 10)
-					.text(lvData['features'].length > 1 ? cl.idx : cl.label);
+					.text(lvData['features'].length > 1 ? '' : cl.label);
 
 				gProto = container
 					.selectAll('.g_prototype.lv_' + lvData.idx + '.cl_' + cl.idx)
@@ -233,7 +233,7 @@ function Bar() {
 					.attr('class', 'cl_label')
 					.attr('x', 0)
 					.attr('y', 10)
-					.text(lvData['features'].length > 1 ? cl.idx : cl.label);
+					.text(lvData['features'].length > 1 ? '' : cl.label);
 
 				// if (lvData.features.length > 1) {
 				// 	gProto = container

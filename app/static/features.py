@@ -24,7 +24,7 @@ dataset_features = {
             'type': 'categorical',
             'scale': '',
             'domain': [0, 1, 2],
-            'labels': ['Under $35', 'Between $35', 'Over $75'],
+            'labels': ['Under $35', 'Between $35-75', 'Over $75'],
             'instances': []
         },
         { 

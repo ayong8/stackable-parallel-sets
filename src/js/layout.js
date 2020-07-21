@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import d3tooltip from 'd3-tooltip';
+import { data } from './data';
 
 export const gColors = {
   system: 'mediumpurple',
@@ -335,6 +336,7 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
           sortedCatNext: sortedCatNext.idx,
           // groupRatio: libRatioFilteredInstances,
           numInstancesRatioInCurr: filteredInstances.length / instancesInCurr.length,
+          numInstancesRatioInNext: filteredInstances.length / instancesInNext.length,
           cumNumInstancesRatioInCurr: cumNumInstancesRatioInCurr[sortedCatCurr.sortedIdx] / instancesInCurr.length,
           cumNumInstancesRatioInNext: cumNumInstancesRatioInNext[sortedCatNext.sortedIdx] / instancesInNext.length,
           instancesInCurr: instancesInCurr,
@@ -360,6 +362,7 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
         sortedCatCurr: d.sortedCatCurr,
         sortedCatNext: d.sortedCatNext,
         numInstancesRatioInCurr: d.numInstancesRatioInCurr,
+        numInstancesRatioInNext: d.numInstancesRatioInNext,
         lineWidth: lineWidth,
         widthForCurrCat: widthForCurrCat,
         instancesInCurr: d.instancesInCurr,
@@ -400,18 +403,26 @@ gLayout.renderCatToCatLines = function(selection, lvData, currFeature, nextFeatu
       .style('opacity', d => 0)
       .on('mouseover', function(d) {
         d3.select(this).classed('cat_line_mouseovered', true);
+        console.log('data: ', data);
         const catToCatLineHtml =
           '<div style="font-weight: 600">' +
           'Ratio: ' +
-          d.instancesInCatToCat.length +
+          (Math.ceil((d.instancesInCatToCat.length/data.numAllInstances)*100)/100) +
           '</br>' +
           'Ratio in upper category: ' +
           (Math.ceil((d.numInstancesRatioInCurr)*100)/100) +
+          '</br>' +
+          'Ratio in lower category: ' +
+          (Math.ceil((d.numInstancesRatioInNext)*100)/100) +
           '</br>' +
           '</div>';
 
         tooltip.html(catToCatLineHtml);
         tooltip.show();
+      })
+      .on('mouseout', function(d) {
+        d3.select(this).classed('cat_line_mouseovered', false);
+        tooltip.hide();
       });
 
     catLinesData
@@ -498,6 +509,7 @@ gLayout.renderClToClLines = function(selection, instances, currLvData, nextLvDat
         let filteredInstances = [],
           numFilteredInstances = 0,
           numInstancesRatioInCurr = 0,
+          numInstancesRatioInNext = 0,
           cumNumInstancesRatioInCurr = 0,
           cumNumInstancesRatioInNext = 0;
         
@@ -513,18 +525,21 @@ gLayout.renderClToClLines = function(selection, instances, currLvData, nextLvDat
           filteredInstances = [];
           numFilteredInstancesForCurr = data.calculateClToClFreqForBipartite(clCurr.instances);
           numInstancesRatioInCurr = numFilteredInstances / totalCntForCurr;
+          numInstancesRatioInNext = numFilteredInstances / totalCntForNext;
           cumNumInstancesRatioInCurr = cumNumInstancesInCurr[clCurr.idx] / totalCntForCurr;
           cumNumInstancesRatioInNext = cumNumInstancesInNext[clNext.idx] / totalCntForCurr;
         } else if (nextLvBipartiteMode == 1) {
           filteredInstances = [];
           numFilteredInstances = data.calculateClToClFreqForBipartite(clNext.instances);
           numInstancesRatioInCurr = numFilteredInstances / totalCntForNext;
+          numInstancesRatioInNext = numFilteredInstances / totalCntForNext;
           cumNumInstancesRatioInCurr = cumNumInstancesInCurr[clCurr.idx] / totalCntForNext;
           cumNumInstancesRatioInNext = cumNumInstancesInNext[clNext.idx] / totalCntForNext;
         } else {
           filteredInstances = _.intersectionBy(clCurr.instances, clNext.instances, 'idx');
           numFilteredInstances = filteredInstances.length;
           numInstancesRatioInCurr = numFilteredInstances / clCurr.instances.length;
+          numInstancesRatioInNext = numFilteredInstances / totalCntForNext;
           cumNumInstancesRatioInCurr = cumNumInstancesInCurr[clCurr.idx] / clCurr.instances.length;
           cumNumInstancesRatioInNext = cumNumInstancesInNext[clNext.idx] / clNext.instances.length;
         }
@@ -535,6 +550,7 @@ gLayout.renderClToClLines = function(selection, instances, currLvData, nextLvDat
           sortedClCurrIdx: clCurr.idx,
           sortedClNextIdx: clNext.idx,
           numInstancesRatioInCurr: numInstancesRatioInCurr,
+          numInstancesRatioInNext: numInstancesRatioInNext,
           cumNumInstancesRatioInCurr: cumNumInstancesRatioInCurr,
           cumNumInstancesRatioInNext: cumNumInstancesRatioInNext,
           instancesInCurr: clCurr.instances,
@@ -562,6 +578,7 @@ gLayout.renderClToClLines = function(selection, instances, currLvData, nextLvDat
         sortedClCurrIdx: d.sortedClCurrIdx,
         sortedClNextIdx: d.sortedClNextIdx,
         numInstancesRatioInCurr: d.numInstancesRatioInCurr,
+        numInstancesRatioInNext: d.numInstancesRatioInNext,
         lineWidth: lineWidth,
         heightForCat: widthForCurrCat,
         instancesInCurr: d.instancesInCurr,

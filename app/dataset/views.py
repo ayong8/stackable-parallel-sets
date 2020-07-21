@@ -333,7 +333,7 @@ class LoadData(APIView):
 
         df_dataset = pd.read_csv(file_name)
         
-        bipartite = False
+        bipartite = True
         df_dataset_bipartite = pd.DataFrame()
         if bipartite == True:
             df_dataset_bipartite = pd.read_csv(file_name_for_bipartite)

@@ -90,7 +90,7 @@ svg {
 
 /* Level */
 .level_rect {
-  fill: none; /*#dcdcdc;*/
+  fill: #f6f6f6; /*#dcdcdc;*/
   /* stroke: black;
   stroke-width: 1px; */
 }
@@ -208,6 +208,7 @@ svg {
 
 .cat_line_mouseovered {
   opacity: 0.5 !important;
+  stroke: green;
 }
 
 .proto_circle {
@@ -335,6 +336,11 @@ svg {
   border-bottom: 2px solid lightgray;
 }
 
+.aggr_description {
+  font-size: 0.7rem;
+  text-align: center;
+}
+
 .add_button {
   width: 25px;
   height: 25px;
@@ -439,7 +445,7 @@ svg {
 }
 
 .aggr_selected {
-  background-color: yellow;
+  background-color: #efefcc;
 }
 
 .lv {
@@ -516,6 +522,10 @@ svg {
 
 .secondary_instance_circle {
   fill: var(--bipartite-instance);
+}
+
+.secondary_instance_circle_mouseovered {
+  stroke: black;
 }
 
 .secondary_instance_label {
