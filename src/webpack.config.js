@@ -28,7 +28,7 @@ module.exports = {
     hot: true,
     proxy: {
       '/dataset/**': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8008',
         secure: false,
         changeOrigin: true,
       }
