@@ -25,11 +25,12 @@ module.exports = {
   devServer: {
     publicPath: '/',
     contentBase: dir_html,
-    port: 3005,
+    disableHostCheck: true,
+    port: 3004,
     hot: true,
     proxy: {
       '/dataset/**': {
-        target: 'http://localhost:8005',
+        target: 'http://localhost:8004',
         secure: false,
         changeOrigin: true,
       }
