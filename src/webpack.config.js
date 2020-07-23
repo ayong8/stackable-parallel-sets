@@ -25,6 +25,7 @@ module.exports = {
   devServer: {
     publicPath: '/',
     contentBase: dir_html,
+    port: 3008,
     hot: true,
     proxy: {
       '/dataset/**': {
