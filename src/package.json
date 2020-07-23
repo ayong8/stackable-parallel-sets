@@ -1,5 +1,5 @@
 {
-  "proxy": "http://localhost:8008",
+  "proxy": "http://localhost:8005",
   "devDependencies": {
     "@babel/cli": "^7.7.0",
     "@babel/core": "^7.7.2",
@@ -20,7 +20,7 @@
   "scripts": {
     "build": "webpack",
     "watch": "webpack --watch",
-    "start": "webpack-dev-server --port 3008 --hot --inline"
+    "start": "webpack-dev-server --port 3005 --hot --inline"
   },
   "babel": {
     "presets": [
