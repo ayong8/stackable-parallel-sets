@@ -26,11 +26,11 @@ module.exports = {
     publicPath: '/',
     contentBase: dir_html,
     disableHostCheck: true,
-    port: 9002,
+    port: 9001,
     hot: true,
     proxy: {
       '/dataset/**': {
-        target: 'http://localhost:9002',
+        target: 'http://localhost:9001',
         secure: false,
         changeOrigin: true,
       }
